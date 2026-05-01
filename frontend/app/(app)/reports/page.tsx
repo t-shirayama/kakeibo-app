@@ -1,10 +1,18 @@
+"use client";
+
 import { DashboardBars } from "@/components/dashboard-bars";
-import { EmptyState } from "@/components/state-block";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ApiErrorAlert } from "@/components/api-error-alert";
+import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
-import { categorySummary } from "@/lib/mock-data";
+import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
 export default function ReportsPage() {
+  const reportQuery = useQuery({ queryKey: ["monthly-report"], queryFn: api.get_monthly_report });
+  const exportMutation = useMutation({ mutationFn: api.export_transactions });
+  const categorySummary = reportQuery.data?.category_summaries ?? [];
+
   return (
     <>
       <PageHeader
@@ -16,21 +24,24 @@ export default function ReportsPage() {
               <option>2026年4月</option>
               <option>2026年3月</option>
             </select>
-            <button className="button secondary" type="button">
-              CSV
+            <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
+              {exportMutation.isPending ? "出力中" : "Excel"}
             </button>
           </div>
         }
       />
 
       <section className="grid two-column-grid">
+        {reportQuery.error || exportMutation.error ? <ApiErrorAlert error={reportQuery.error || exportMutation.error} /> : null}
         <div className="card panel">
           <h2 className="panel-title">月別支出</h2>
-          <DashboardBars />
+          {reportQuery.isLoading ? <LoadingState /> : <DashboardBars />}
         </div>
         <div className="card panel">
           <h2 className="panel-title">カテゴリ別サマリー</h2>
-          {categorySummary.length === 0 ? (
+          {reportQuery.isLoading ? (
+            <LoadingState />
+          ) : categorySummary.length === 0 ? (
             <EmptyState title="集計データがありません" description="明細が登録されるとカテゴリ別の集計が表示されます。" />
           ) : (
             <div className="category-list">

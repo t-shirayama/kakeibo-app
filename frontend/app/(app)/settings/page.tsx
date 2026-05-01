@@ -1,14 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { AlertTriangle, Save, Trash2 } from "lucide-react";
+import { ApiErrorAlert } from "@/components/api-error-alert";
 import { PageHeader } from "@/components/page-header";
+import { api } from "@/lib/api";
 
 export default function SettingsPage() {
   const [pageSize, setPageSize] = useState("20");
   const [dateFormat, setDateFormat] = useState("yyyy/MM/dd");
   const [darkMode, setDarkMode] = useState(false);
   const [confirmationText, setConfirmationText] = useState("");
+  const saveMutation = useMutation({
+    mutationFn: () => api.update_settings({ page_size: Number(pageSize), date_format: dateFormat, dark_mode: darkMode }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete_all_data(confirmationText),
+  });
 
   return (
     <>
@@ -16,14 +25,16 @@ export default function SettingsPage() {
         title="設定"
         subtitle="アカウント、表示、データ管理の基本設定です。"
         actions={
-          <button className="button" type="button">
+          <button className="button" type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
             <Save size={15} aria-hidden="true" />
-            保存
+            {saveMutation.isPending ? "保存中" : "保存"}
           </button>
         }
       />
 
       <section className="card panel">
+        {saveMutation.error || deleteMutation.error ? <ApiErrorAlert error={saveMutation.error || deleteMutation.error} /> : null}
+        {saveMutation.isSuccess ? <p className="muted">保存しました。</p> : null}
         <div className="settings-list">
           <div className="settings-row">
             <div>
@@ -84,9 +95,18 @@ export default function SettingsPage() {
             value={confirmationText}
             onChange={(event) => setConfirmationText(event.target.value)}
           />
-          <button className="button danger" type="button" disabled={confirmationText !== "DELETE"}>
+          <button
+            className="button danger"
+            type="button"
+            disabled={confirmationText !== "DELETE" || deleteMutation.isPending}
+            onClick={() => {
+              if (window.confirm("全データを削除しますか？")) {
+                deleteMutation.mutate();
+              }
+            }}
+          >
             <Trash2 size={15} aria-hidden="true" />
-            全データを削除
+            {deleteMutation.isPending ? "削除中" : "全データを削除"}
           </button>
         </div>
       </section>

@@ -178,3 +178,24 @@
 ```powershell
 rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"
 ```
+
+## 13. ローカル開発・フロントエンド/バックエンド接続改善
+
+- [x] READMEにWindowsとmacOS/Linux両方のローカル開発手順を追記する。
+- [x] READMEにPython 3.12以上とpip更新手順を明記する。
+- [x] backend READMEにPython 3.12仮想環境、pip更新、依存インストール手順を追記する。
+- [x] バックエンドがルート `.env` と `backend/.env` の両方を読み込めるようにする。
+- [x] バックエンドにCORS設定を追加し、フロントエンドからCookie付きAPI通信できるようにする。
+- [x] フロントエンドAPIアダプタをモックデータからバックエンドAPI呼び出しへ切り替える。
+- [x] ログイン画面を `/api/auth/login` に接続する。
+- [x] ダッシュボード画面を `/api/dashboard/summary` と `/api/dashboard/recent-transactions` に接続する。
+- [x] 明細一覧画面を `/api/transactions` に接続する。
+- [x] 明細の追加、編集、削除、ExcelエクスポートをAPIに接続する。
+- [x] カテゴリ管理画面を `/api/categories` に接続する。
+- [x] アップロード画面を `/api/uploads` に接続する。
+- [x] レポート画面を `/api/reports/monthly` とExcelエクスポートに接続する。
+- [x] 設定画面の保存と全データ削除をAPIに接続する。
+- [x] フロントエンドDTO型をバックエンドAPIレスポンスに合わせて更新する。
+- [x] `npm run typecheck` を実行して型エラーがないことを確認する。
+- [x] `npm run build` を実行してNext.js本番ビルドが成功することを確認する。
+- [x] 新規タスク実行前に `docs/tasks.md` へタスクを追加し、実行確認を取るルールを `.codex/AGENTS.md` に追記する。

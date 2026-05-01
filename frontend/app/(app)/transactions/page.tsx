@@ -1,12 +1,13 @@
 "use client";
 
 import { Edit3, Plus, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { EmptyState } from "@/components/state-block";
+import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
-import { categories, recentTransactions } from "@/lib/mock-data";
+import { api, type TransactionRequest } from "@/lib/api";
 import type { TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
@@ -21,20 +22,42 @@ export default function TransactionsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
   const [query, setQuery] = useState("");
-  const apiError = null;
+  const queryClient = useQueryClient();
+  const transactionsQuery = useQuery({ queryKey: ["transactions"], queryFn: api.list_transactions });
+  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: api.list_categories });
+  const saveMutation = useMutation({
+    mutationFn: (request: TransactionRequest) =>
+      editingTransaction
+        ? api.update_transaction(editingTransaction.transaction_id, request)
+        : api.create_transaction(request),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      setIsEditorOpen(false);
+      setEditingTransaction(null);
+    },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: api.delete_transaction,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+  });
+  const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
   const transactions = useMemo(() => {
+    const rows = transactionsQuery.data ?? [];
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) {
-      return recentTransactions;
+      return rows;
     }
-    return recentTransactions.filter((transaction) =>
-      [transaction.merchant_name, transaction.category_name, transaction.memo ?? ""]
+    return rows.filter((transaction) =>
+      [transaction.shop_name, transaction.category_name ?? "", transaction.memo ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery),
     );
-  }, [query]);
+  }, [query, transactionsQuery.data]);
+  const categories = categoriesQuery.data ?? [];
+  const categoryById = new Map(categories.map((category) => [category.category_id, category.name]));
+  const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
 
   return (
     <>
@@ -55,8 +78,8 @@ export default function TransactionsPage() {
               <option>先月</option>
               <option>今年</option>
             </select>
-            <button className="button secondary" type="button">
-              エクスポート
+            <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
+              {exportMutation.isPending ? "出力中" : "エクスポート"}
             </button>
             <button
               className="button"
@@ -76,7 +99,9 @@ export default function TransactionsPage() {
       {apiError ? <ApiErrorAlert error={apiError} /> : null}
 
       <section className="card table-wrap">
-        {transactions.length === 0 ? (
+        {transactionsQuery.isLoading || categoriesQuery.isLoading ? (
+          <LoadingState />
+        ) : transactions.length === 0 ? (
           <EmptyState title="明細がありません" description="検索条件を変更するか、手動で明細を追加してください。" />
         ) : (
           <table className="data-table">
@@ -95,14 +120,14 @@ export default function TransactionsPage() {
               {transactions.map((transaction) => (
                 <tr key={transaction.transaction_id}>
                   <td>{transaction.transaction_date}</td>
-                  <td>{transaction.merchant_name}</td>
+                  <td>{transaction.shop_name}</td>
                   <td>
-                    <span className={`badge ${badgeClassByCategory[transaction.category_name] ?? "daily"}`}>
-                      {transaction.category_name}
+                    <span className={`badge ${badgeClassByCategory[transaction.category_name ?? ""] ?? "daily"}`}>
+                      {transaction.category_name ?? categoryById.get(transaction.category_id) ?? "未分類"}
                     </span>
                   </td>
                   <td className="amount">{formatCurrency(transaction.amount)}</td>
-                  <td>{transaction.payment_method}</td>
+                  <td>{transaction.payment_method ?? "-"}</td>
                   <td>{transaction.memo ?? "-"}</td>
                   <td>
                     <div className="row-actions">
@@ -117,7 +142,16 @@ export default function TransactionsPage() {
                       >
                         <Edit3 size={15} aria-hidden="true" />
                       </button>
-                      <button className="icon-button" type="button" aria-label="明細を削除">
+                      <button
+                        className="icon-button"
+                        type="button"
+                        aria-label="明細を削除"
+                        onClick={() => {
+                          if (window.confirm("この明細を削除しますか？")) {
+                            deleteMutation.mutate(transaction.transaction_id);
+                          }
+                        }}
+                      >
                         <Trash2 size={15} aria-hidden="true" />
                       </button>
                     </div>
@@ -133,6 +167,11 @@ export default function TransactionsPage() {
         categories={categories}
         open={isEditorOpen}
         transaction={editingTransaction}
+        error={saveMutation.error}
+        isSubmitting={saveMutation.isPending}
+        onSubmit={async (request) => {
+          await saveMutation.mutateAsync(request);
+        }}
         onOpenChange={(open) => {
           setIsEditorOpen(open);
           if (!open) {

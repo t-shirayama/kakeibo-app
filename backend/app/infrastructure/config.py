@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_env: str = "local"
+    backend_cors_origins: str = Field(default="http://localhost:3000", validation_alias="BACKEND_CORS_ORIGINS")
     database_url: str = "mysql+pymysql://kakeibo:kakeibo@localhost:3306/kakeibo"
     jwt_secret: str = Field(default="change-me-in-env", validation_alias="JWT_SECRET_KEY")
     jwt_algorithm: str = "HS256"
@@ -22,9 +23,13 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = Field(default=10, validation_alias="MAX_UPLOAD_SIZE_MB")
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=("../.env", ".env"),
         extra="ignore",
     )
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.backend_cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache

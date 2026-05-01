@@ -1,20 +1,22 @@
 export type TransactionDto = {
   transaction_id: string;
   transaction_date: string;
-  merchant_name: string;
+  shop_name: string;
   category_id: string;
-  category_name: string;
   amount: number;
-  payment_method: string;
+  transaction_type: "expense" | "income";
+  payment_method: string | null;
+  card_user_name?: string | null;
   memo: string | null;
+  category_name?: string;
 };
 
 export type CategoryDto = {
   category_id: string;
   name: string;
   color: string;
-  monthly_budget: number;
-  match_keywords: string[];
+  description: string | null;
+  is_active: boolean;
 };
 
 export type CategorySummaryDto = {
@@ -26,18 +28,29 @@ export type CategorySummaryDto = {
 };
 
 export type UploadJobDto = {
-  upload_job_id: string;
+  upload_id: string;
   file_name: string;
-  status: "queued" | "processing" | "completed" | "failed";
-  imported_transaction_count: number;
-  created_at: string;
+  stored_file_path: string;
+  status: "processing" | "completed" | "failed";
+  imported_count: number;
+  error_message: string | null;
+  uploaded_at: string;
 };
 
 export type MonthlyReportDto = {
-  year_month: string;
-  total_income: number;
+  period: string;
+  start_date: string;
+  end_date: string;
   total_expense: number;
-  balance: number;
-  transaction_count: number;
+  average_daily_expense: number;
+  max_category: CategorySummaryDto | null;
+  min_category: CategorySummaryDto | null;
   category_summaries: CategorySummaryDto[];
+  period_summaries: Array<{
+    period: string;
+    total_expense: number;
+    total_income: number;
+    balance: number;
+    transaction_count: number;
+  }>;
 };
