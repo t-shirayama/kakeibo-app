@@ -37,7 +37,7 @@ class TransactionCategoryRepository:
             pattern = f"%{keyword}%"
             filters.append(or_(TransactionModel.shop_name.like(pattern), TransactionModel.memo.like(pattern)))
         if category_id:
-            filters.append(TransactionModel.category_id == str(category_id))
+            filters.append(self._category_filter(user_id=user_id, category_id=category_id))
         if date_from:
             filters.append(TransactionModel.transaction_date >= date_from)
         if date_to:
@@ -263,6 +263,33 @@ class TransactionCategoryRepository:
             )
         )
         return UUID(model.id) if model else None
+
+    def _category_filter(self, *, user_id: UUID, category_id: UUID):
+        if not self._is_uncategorized_category(user_id=user_id, category_id=category_id):
+            return TransactionModel.category_id == str(category_id)
+
+        unavailable_category_ids = select(CategoryModel.id).where(
+            CategoryModel.user_id == str(user_id),
+            CategoryModel.name != "未分類",
+            or_(CategoryModel.is_active.is_(False), CategoryModel.deleted_at.is_not(None)),
+        )
+        return or_(
+            TransactionModel.category_id == str(category_id),
+            TransactionModel.category_id.in_(unavailable_category_ids),
+        )
+
+    def _is_uncategorized_category(self, *, user_id: UUID, category_id: UUID) -> bool:
+        count = self._session.scalar(
+            select(func.count())
+            .select_from(CategoryModel)
+            .where(
+                CategoryModel.id == str(category_id),
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.name == "未分類",
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        return bool(count)
 
     def create_uncategorized_category(self, user_id: UUID) -> UUID:
         category = self.create_category(

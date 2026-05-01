@@ -102,6 +102,35 @@ def test_transaction_repository_filters_by_transaction_date(db_session: Session)
     assert result.items[0].shop_name == "May Cafe"
 
 
+def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_session: Session) -> None:
+    add_user(db_session)
+    repository = TransactionCategoryRepository(db_session)
+    uncategorized = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
+    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    repository.create_transaction(
+        Transaction(
+            id=uuid4(),
+            user_id=USER_ID,
+            category_id=category.id,
+            transaction_date=date(2026, 5, 1),
+            shop_name="Inactive Category Store",
+            amount=MoneyJPY(1200),
+            transaction_type=TransactionType.EXPENSE,
+        )
+    )
+
+    repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=False)
+
+    result = repository.list_transactions(
+        user_id=USER_ID,
+        page=Page(page=1, page_size=10),
+        category_id=uncategorized.id,
+    )
+
+    assert result.total == 1
+    assert result.items[0].shop_name == "Inactive Category Store"
+
+
 def test_category_repository_can_disable_and_enable_category(db_session: Session) -> None:
     add_user(db_session)
     repository = TransactionCategoryRepository(db_session)
