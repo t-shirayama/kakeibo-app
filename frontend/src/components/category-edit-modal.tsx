@@ -4,9 +4,11 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import type { CategoryRequest } from "@/lib/api";
+import type { CategoryDto } from "@/lib/types";
 
 type CategoryEditModalProps = {
   open: boolean;
+  category: CategoryDto | null;
   onOpenChange: (open: boolean) => void;
   onSubmit: (request: CategoryRequest) => Promise<void>;
   error?: Error | null;
@@ -15,27 +17,33 @@ type CategoryEditModalProps = {
 
 export function CategoryEditModal({
   open,
+  category,
   onOpenChange,
   onSubmit,
   error,
   isSubmitting = false,
 }: CategoryEditModalProps) {
+  const title = category ? "カテゴリを編集" : "カテゴリを追加";
+  const submitLabel = category ? "保存" : "追加";
+  const submittingLabel = category ? "保存中" : "追加中";
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content className="dialog-content" aria-describedby="category-edit-description">
           <div className="dialog-header">
-            <Dialog.Title className="dialog-title">カテゴリを追加</Dialog.Title>
+            <Dialog.Title className="dialog-title">{title}</Dialog.Title>
             <Dialog.Close className="icon-button" aria-label="閉じる">
               <X size={18} aria-hidden="true" />
             </Dialog.Close>
           </div>
           <Dialog.Description id="category-edit-description" className="sr-only">
-            カテゴリ名、色、説明を入力してカテゴリを追加します。
+            カテゴリ名、色、説明を入力してカテゴリを保存します。
           </Dialog.Description>
 
           <form
+            key={category?.category_id ?? "new-category"}
             className="modal-form"
             onSubmit={async (event) => {
               event.preventDefault();
@@ -50,15 +58,15 @@ export function CategoryEditModal({
             {error ? <ApiErrorAlert error={error} /> : null}
             <div className="form-field horizontal">
               <label htmlFor="category-name">カテゴリ名</label>
-              <input id="category-name" name="name" type="text" required />
+              <input id="category-name" name="name" type="text" defaultValue={category?.name ?? ""} required />
             </div>
             <div className="form-field horizontal">
               <label htmlFor="category-color">色</label>
-              <input id="category-color" name="color" type="color" defaultValue="#2f7df6" required />
+              <input id="category-color" name="color" type="color" defaultValue={category?.color ?? "#2f7df6"} required />
             </div>
             <div className="form-field horizontal">
               <label htmlFor="category-description">説明</label>
-              <input id="category-description" name="description" type="text" />
+              <input id="category-description" name="description" type="text" defaultValue={category?.description ?? ""} />
             </div>
 
             <div className="modal-actions">
@@ -66,7 +74,7 @@ export function CategoryEditModal({
                 キャンセル
               </Dialog.Close>
               <button className="button" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "追加中" : "追加"}
+                {isSubmitting ? submittingLabel : submitLabel}
               </button>
             </div>
           </form>

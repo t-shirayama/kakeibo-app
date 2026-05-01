@@ -345,6 +345,12 @@ textarea {
   background: rgb(156 114 222 / 16%);
 }
 
+.badge.inactive {
+  color: #64748b;
+  background: #eef2f7;
+  border: 1px solid #d8e0ea;
+}
+
 .muted {
   color: var(--muted);
 }

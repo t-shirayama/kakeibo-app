@@ -18,6 +18,7 @@ export type ApiClient = {
   update_settings: (request: SettingsRequest) => Promise<SettingsDto>;
   delete_all_data: (confirmationText: string) => Promise<{ status: string }>;
   create_category: (request: CategoryRequest) => Promise<CategoryDto>;
+  update_category: (categoryId: string, request: CategoryRequest) => Promise<CategoryDto>;
   set_category_active: (categoryId: string, isActive: boolean) => Promise<CategoryDto>;
   delete_category: (categoryId: string) => Promise<{ status: string }>;
 };
@@ -283,6 +284,13 @@ export const api: ApiClient = {
   async create_category(request) {
     return api_mutation<CategoryDto>("/api/categories", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+  },
+  async update_category(categoryId, request) {
+    return api_mutation<CategoryDto>(`/api/categories/${categoryId}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
     });

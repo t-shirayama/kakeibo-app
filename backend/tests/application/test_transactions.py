@@ -7,7 +7,7 @@ from zipfile import ZipFile
 
 from app.application.common import Page, PageResult
 from app.application.reports import ReportUseCases, TransactionWithCategory
-from app.application.transactions import TransactionCategoryUseCases, TransactionCommand
+from app.application.transactions import CategoryCommand, TransactionCategoryUseCases, TransactionCommand
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
 
@@ -205,6 +205,22 @@ def test_category_can_be_disabled_and_enabled() -> None:
 
     assert disabled.is_active is False
     assert enabled.is_active is True
+
+
+def test_update_category_changes_name_color_and_description() -> None:
+    repository = FakeTransactionCategoryRepository()
+    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+
+    category = use_cases.update_category(
+        user_id=USER_ID,
+        category_id=FOOD_ID,
+        command=CategoryCommand(name="外食", color="#123456", description="外食費"),
+    )
+
+    assert category.name == "外食"
+    assert category.color == "#123456"
+    assert category.description == "外食費"
+    assert category.is_active is True
 
 
 def test_monthly_report_summarizes_expenses_by_category() -> None:

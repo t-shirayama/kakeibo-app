@@ -1,16 +1,18 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Edit3, Plus, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryEditModal } from "@/components/category-edit-modal";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
-import { api } from "@/lib/api";
+import { api, type CategoryRequest } from "@/lib/api";
+import type { CategoryDto } from "@/lib/types";
 
 export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
   const queryClient = useQueryClient();
   const categoriesQuery = useQuery({
     queryKey: ["categories", "include-inactive"],
@@ -21,6 +23,16 @@ export default function CategoriesPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
       setIsEditorOpen(false);
+      setEditingCategory(null);
+    },
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ categoryId, request }: { categoryId: string; request: CategoryRequest }) =>
+      api.update_category(categoryId, request),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setIsEditorOpen(false);
+      setEditingCategory(null);
     },
   });
   const statusMutation = useMutation({
@@ -33,7 +45,8 @@ export default function CategoriesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
   });
   const categories = categoriesQuery.data ?? [];
-  const apiError = categoriesQuery.error || createMutation.error || statusMutation.error || deleteMutation.error;
+  const editorError = createMutation.error || updateMutation.error;
+  const apiError = categoriesQuery.error || editorError || statusMutation.error || deleteMutation.error;
 
   return (
     <>
@@ -44,8 +57,11 @@ export default function CategoriesPage() {
           <button
             className="button"
             type="button"
-            onClick={() => setIsEditorOpen(true)}
-            disabled={createMutation.isPending}
+            onClick={() => {
+              setEditingCategory(null);
+              setIsEditorOpen(true);
+            }}
+            disabled={createMutation.isPending || updateMutation.isPending}
           >
             <Plus size={15} aria-hidden="true" />
             カテゴリを追加
@@ -71,7 +87,21 @@ export default function CategoriesPage() {
                     <div className="muted">{category.description ?? "説明なし"}</div>
                   </div>
                   <div className="row-actions">
-                    <span className="amount">{category.is_active ? "有効" : "無効"}</span>
+                    <span className={`badge ${category.is_active ? "" : "inactive"}`}>
+                      {category.is_active ? "有効" : "無効"}
+                    </span>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label={`${category.name}を編集`}
+                      onClick={() => {
+                        setEditingCategory(category);
+                        setIsEditorOpen(true);
+                      }}
+                      disabled={createMutation.isPending || updateMutation.isPending}
+                    >
+                      <Edit3 size={15} aria-hidden="true" />
+                    </button>
                     <button
                       className="button secondary compact"
                       type="button"
@@ -132,10 +162,20 @@ export default function CategoriesPage() {
 
       <CategoryEditModal
         open={isEditorOpen}
-        error={createMutation.error}
-        isSubmitting={createMutation.isPending}
-        onOpenChange={setIsEditorOpen}
+        category={editingCategory}
+        error={editorError}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+        onOpenChange={(open) => {
+          setIsEditorOpen(open);
+          if (!open) {
+            setEditingCategory(null);
+          }
+        }}
         onSubmit={async (request) => {
+          if (editingCategory) {
+            await updateMutation.mutateAsync({ categoryId: editingCategory.category_id, request });
+            return;
+          }
           await createMutation.mutateAsync(request);
         }}
       />
