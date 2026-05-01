@@ -78,7 +78,7 @@ class AuthRepository:
         )
         if token is None:
             return None
-        return RefreshTokenRecord(id=token.id, user_id=UUID(token.user_id), expires_at=token.expires_at)
+        return RefreshTokenRecord(id=token.id, user_id=UUID(token.user_id), expires_at=_as_utc(token.expires_at))
 
     def revoke_refresh_token(self, token_id: str, *, revoked_at: datetime) -> None:
         token = self._session.get(RefreshTokenModel, token_id)
@@ -105,7 +105,7 @@ class AuthRepository:
         )
         if token is None:
             return None
-        return PasswordResetTokenRecord(id=token.id, user_id=UUID(token.user_id), expires_at=token.expires_at)
+        return PasswordResetTokenRecord(id=token.id, user_id=UUID(token.user_id), expires_at=_as_utc(token.expires_at))
 
     def mark_password_reset_token_used(self, token_id: str, *, used_at: datetime) -> None:
         token = self._session.get(PasswordResetTokenModel, token_id)
@@ -122,3 +122,9 @@ class AuthRepository:
             password_hash=user.password_hash,
             is_admin=user.is_admin,
         )
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)

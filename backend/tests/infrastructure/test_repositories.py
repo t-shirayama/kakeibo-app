@@ -7,12 +7,16 @@ from sqlalchemy.orm import Session
 
 from app.application.auth.password_hasher import PasswordHasher
 from app.application.auth.ports import UserRecord
+from app.application.auth.token_hash import hash_token
 from app.application.common import Page
 from app.application.settings import SettingsUseCases
 from app.domain.entities import Category, Transaction, TransactionType, UploadStatus
 from app.domain.value_objects import MoneyJPY
+from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
+from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
+from app.infrastructure.repositories.auth import AuthRepository
 from app.infrastructure.repositories.settings import SettingsRepository
 from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 
@@ -112,6 +116,38 @@ def test_category_repository_can_disable_and_enable_category(db_session: Session
     assert [category.name for category in inactive_categories] == ["食費"]
     assert active_categories == []
     assert enabled.is_active is True
+
+
+def test_auth_repository_returns_token_expiration_as_utc_aware_datetime(db_session: Session) -> None:
+    add_user(db_session)
+    refresh_expires_at = datetime(2026, 5, 6, 9, 0)
+    reset_expires_at = datetime(2026, 5, 1, 9, 30)
+    db_session.add(
+        RefreshTokenModel(
+            id="refresh-token-id",
+            user_id=str(USER_ID),
+            token_hash=hash_token("refresh-token"),
+            expires_at=refresh_expires_at,
+        )
+    )
+    db_session.add(
+        PasswordResetTokenModel(
+            id="password-reset-token-id",
+            user_id=str(USER_ID),
+            token_hash=hash_token("password-reset-token"),
+            expires_at=reset_expires_at,
+        )
+    )
+    db_session.commit()
+
+    repository = AuthRepository(db_session)
+    refresh_token = repository.get_active_refresh_token(hash_token("refresh-token"))
+    reset_token = repository.get_active_password_reset_token(hash_token("password-reset-token"))
+
+    assert refresh_token is not None
+    assert refresh_token.expires_at.tzinfo is UTC
+    assert reset_token is not None
+    assert reset_token.expires_at.tzinfo is UTC
 
 
 def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Session) -> None:
