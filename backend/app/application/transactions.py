@@ -1,0 +1,175 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date
+from uuid import UUID
+
+from app.application.common import Page, PageResult
+from app.domain.entities import Category, Transaction, TransactionType
+from app.domain.value_objects import MoneyJPY
+from app.infrastructure.repositories.transactions import TransactionCategoryRepository
+
+
+class TransactionCategoryError(ValueError):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class TransactionCommand:
+    transaction_date: date
+    shop_name: str
+    amount: int
+    transaction_type: TransactionType
+    category_id: UUID | None = None
+    payment_method: str | None = None
+    card_user_name: str | None = None
+    memo: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryCommand:
+    name: str
+    color: str
+    description: str | None = None
+
+
+class TransactionCategoryUseCases:
+    def __init__(self, repository: TransactionCategoryRepository) -> None:
+        self._repository = repository
+
+    def list_transactions(
+        self,
+        *,
+        user_id: UUID,
+        page: Page,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+    ) -> PageResult[Transaction]:
+        return self._repository.list_transactions(
+            user_id=user_id,
+            page=page,
+            keyword=keyword,
+            category_id=category_id,
+        )
+
+    def create_transaction(self, *, user_id: UUID, command: TransactionCommand) -> Transaction:
+        category_id = command.category_id or self._repository.find_category_id_for_shop(
+            user_id=user_id,
+            shop_name=command.shop_name,
+            card_user_name=command.card_user_name,
+            payment_method=command.payment_method,
+        )
+        category_id = category_id or self._repository.get_uncategorized_category_id(user_id)
+        if category_id is None:
+            category_id = self._repository.create_uncategorized_category(user_id)
+
+        self._ensure_category_available(user_id=user_id, category_id=category_id)
+        transaction = Transaction(
+            id=self._repository.next_id(),
+            user_id=user_id,
+            category_id=category_id,
+            transaction_date=command.transaction_date,
+            shop_name=command.shop_name,
+            amount=MoneyJPY(command.amount),
+            transaction_type=command.transaction_type,
+            payment_method=command.payment_method,
+            card_user_name=command.card_user_name,
+            memo=command.memo,
+        )
+        return self._repository.create_transaction(transaction)
+
+    def get_transaction(self, *, user_id: UUID, transaction_id: UUID) -> Transaction:
+        transaction = self._repository.get_transaction(user_id=user_id, transaction_id=transaction_id)
+        if transaction is None:
+            raise TransactionCategoryError("Transaction not found.")
+        return transaction
+
+    def update_transaction(self, *, user_id: UUID, transaction_id: UUID, command: TransactionCommand) -> Transaction:
+        existing = self.get_transaction(user_id=user_id, transaction_id=transaction_id)
+        category_id = command.category_id or existing.category_id
+        self._ensure_category_available(user_id=user_id, category_id=category_id)
+        updated = Transaction(
+            id=existing.id,
+            user_id=user_id,
+            category_id=category_id,
+            transaction_date=command.transaction_date,
+            shop_name=command.shop_name,
+            amount=MoneyJPY(command.amount),
+            transaction_type=command.transaction_type,
+            payment_method=command.payment_method,
+            card_user_name=command.card_user_name,
+            memo=command.memo,
+            source_upload_id=existing.source_upload_id,
+            source_file_name=existing.source_file_name,
+            source_row_number=existing.source_row_number,
+            source_page_number=existing.source_page_number,
+            source_format=existing.source_format,
+            source_hash=existing.source_hash,
+        )
+        transaction = self._repository.update_transaction(updated)
+        self._repository.create_audit_log(
+            user_id=user_id,
+            action="transaction.updated",
+            resource_type="transaction",
+            resource_id=transaction_id,
+            details={"shop_name": transaction.shop_name, "amount": transaction.amount.amount},
+        )
+        return transaction
+
+    def delete_transaction(self, *, user_id: UUID, transaction_id: UUID) -> None:
+        self.get_transaction(user_id=user_id, transaction_id=transaction_id)
+        self._repository.soft_delete_transaction(user_id=user_id, transaction_id=transaction_id)
+        self._repository.create_audit_log(
+            user_id=user_id,
+            action="transaction.deleted",
+            resource_type="transaction",
+            resource_id=transaction_id,
+            details={},
+        )
+
+    def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
+        return self._repository.list_categories(user_id=user_id, include_inactive=include_inactive)
+
+    def create_category(self, *, user_id: UUID, command: CategoryCommand) -> Category:
+        if self._repository.category_name_exists(user_id=user_id, name=command.name):
+            raise TransactionCategoryError("Category name already exists.")
+        return self._repository.create_category(
+            Category(
+                id=self._repository.next_id(),
+                user_id=user_id,
+                name=command.name,
+                color=command.color,
+                description=command.description,
+            )
+        )
+
+    def update_category(self, *, user_id: UUID, category_id: UUID, command: CategoryCommand) -> Category:
+        category = self._repository.get_category(user_id=user_id, category_id=category_id)
+        if category is None:
+            raise TransactionCategoryError("Category not found.")
+        if category.name.casefold() != command.name.casefold() and self._repository.category_name_exists(
+            user_id=user_id,
+            name=command.name,
+        ):
+            raise TransactionCategoryError("Category name already exists.")
+        return self._repository.update_category(
+            Category(
+                id=category.id,
+                user_id=user_id,
+                name=command.name,
+                color=command.color,
+                description=command.description,
+                is_active=category.is_active,
+            )
+        )
+
+    def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
+        category = self._repository.get_category(user_id=user_id, category_id=category_id)
+        if category is None:
+            raise TransactionCategoryError("Category not found.")
+        self._repository.deactivate_category(user_id=user_id, category_id=category_id)
+
+    def _ensure_category_available(self, *, user_id: UUID, category_id: UUID) -> None:
+        category = self._repository.get_category(user_id=user_id, category_id=category_id)
+        if category is None or not category.is_active:
+            raise TransactionCategoryError("Category not found or inactive.")
