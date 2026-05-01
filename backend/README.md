@@ -36,6 +36,8 @@ uvicorn app.main:app --reload
 
 Swagger UI is available at `/docs`.
 
+When backend dependencies change, activate the same virtual environment and run `python -m pip install -e ".[dev]"` again. The dependency set includes `cryptography` for MySQL 8.4 `caching_sha2_password` authentication through PyMySQL.
+
 ## Sample user
 
 `alembic upgrade head` inserts local verification sample data.

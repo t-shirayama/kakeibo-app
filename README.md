@@ -110,6 +110,8 @@ python -m pip install -e ".[dev]"
 alembic upgrade head
 ```
 
+依存関係が更新された場合も、同じ仮想環境を有効化して `python -m pip install -e ".[dev]"` を再実行してください。MySQL 8.4 の認証方式に対応するため、バックエンド依存には `cryptography` を含めています。
+
 ### バックエンド起動
 
 Windows PowerShell:
