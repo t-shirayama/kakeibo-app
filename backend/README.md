@@ -26,6 +26,10 @@ Dependencies are not installed by this scaffold. After installing them in your p
 
 ```bash
 cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
 uvicorn app.main:app --reload
 ```
 
@@ -51,4 +55,3 @@ cd backend
 alembic revision --autogenerate -m "init"
 alembic upgrade head
 ```
-
