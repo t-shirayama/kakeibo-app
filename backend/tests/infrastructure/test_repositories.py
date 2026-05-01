@@ -98,6 +98,22 @@ def test_transaction_repository_filters_by_transaction_date(db_session: Session)
     assert result.items[0].shop_name == "May Cafe"
 
 
+def test_category_repository_can_disable_and_enable_category(db_session: Session) -> None:
+    add_user(db_session)
+    repository = TransactionCategoryRepository(db_session)
+    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+
+    disabled = repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=False)
+    inactive_categories = repository.list_categories(user_id=USER_ID, include_inactive=True)
+    active_categories = repository.list_categories(user_id=USER_ID)
+    enabled = repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=True)
+
+    assert disabled.is_active is False
+    assert [category.name for category in inactive_categories] == ["食費"]
+    assert active_categories == []
+    assert enabled.is_active is True
+
+
 def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Session) -> None:
     hasher = PasswordHasher()
     password_hash = hasher.hash_password("StrongPass123!")

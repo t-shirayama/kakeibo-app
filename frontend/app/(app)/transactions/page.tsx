@@ -24,7 +24,7 @@ export default function TransactionsPage() {
     queryKey: ["transactions", periodRange],
     queryFn: () => api.list_transactions(periodRange),
   });
-  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: api.list_categories });
+  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
   const saveMutation = useMutation({
     mutationFn: (request: TransactionRequest) =>
       editingTransaction

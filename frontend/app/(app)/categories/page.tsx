@@ -1,20 +1,39 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
+import { CategoryEditModal } from "@/components/category-edit-modal";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
 
 export default function CategoriesPage() {
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const queryClient = useQueryClient();
-  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: api.list_categories });
+  const categoriesQuery = useQuery({
+    queryKey: ["categories", "include-inactive"],
+    queryFn: () => api.list_categories({ include_inactive: true }),
+  });
   const createMutation = useMutation({
     mutationFn: api.create_category,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setIsEditorOpen(false);
+    },
+  });
+  const statusMutation = useMutation({
+    mutationFn: ({ categoryId, isActive }: { categoryId: string; isActive: boolean }) =>
+      api.set_category_active(categoryId, isActive),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: api.delete_category,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
   });
   const categories = categoriesQuery.data ?? [];
+  const apiError = categoriesQuery.error || createMutation.error || statusMutation.error || deleteMutation.error;
 
   return (
     <>
@@ -25,13 +44,7 @@ export default function CategoriesPage() {
           <button
             className="button"
             type="button"
-            onClick={() => {
-              const name = window.prompt("カテゴリ名");
-              if (!name) {
-                return;
-              }
-              createMutation.mutate({ name, color: "#2f7df6", description: null });
-            }}
+            onClick={() => setIsEditorOpen(true)}
             disabled={createMutation.isPending}
           >
             <Plus size={15} aria-hidden="true" />
@@ -43,7 +56,7 @@ export default function CategoriesPage() {
       <section className="grid two-column-grid">
         <div className="card panel">
           <h2 className="panel-title">支出カテゴリ</h2>
-          {categoriesQuery.error || createMutation.error ? <ApiErrorAlert error={categoriesQuery.error || createMutation.error} /> : null}
+          {apiError ? <ApiErrorAlert error={apiError} /> : null}
           {categoriesQuery.isLoading ? (
             <LoadingState />
           ) : categories.length === 0 ? (
@@ -57,7 +70,35 @@ export default function CategoriesPage() {
                     <strong>{category.name}</strong>
                     <div className="muted">{category.description ?? "説明なし"}</div>
                   </div>
-                  <span className="amount">{category.is_active ? "有効" : "無効"}</span>
+                  <div className="row-actions">
+                    <span className="amount">{category.is_active ? "有効" : "無効"}</span>
+                    <button
+                      className="button secondary compact"
+                      type="button"
+                      onClick={() =>
+                        statusMutation.mutate({
+                          categoryId: category.category_id,
+                          isActive: !category.is_active,
+                        })
+                      }
+                      disabled={statusMutation.isPending}
+                    >
+                      {category.is_active ? "無効化" : "有効化"}
+                    </button>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label={`${category.name}を削除`}
+                      onClick={() => {
+                        if (window.confirm("このカテゴリを削除しますか？")) {
+                          deleteMutation.mutate(category.category_id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -88,6 +129,16 @@ export default function CategoriesPage() {
           </div>
         </div>
       </section>
+
+      <CategoryEditModal
+        open={isEditorOpen}
+        error={createMutation.error}
+        isSubmitting={createMutation.isPending}
+        onOpenChange={setIsEditorOpen}
+        onSubmit={async (request) => {
+          await createMutation.mutateAsync(request);
+        }}
+      />
     </>
   );
 }

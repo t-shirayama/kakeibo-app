@@ -30,6 +30,10 @@ class CategoryRequest(BaseModel):
     description: str | None = Field(default=None, max_length=255)
 
 
+class CategoryStatusRequest(BaseModel):
+    is_active: bool
+
+
 @router.get("", response_model=list[CategoryResponse])
 def list_categories(
     include_inactive: bool = False,
@@ -79,6 +83,24 @@ def update_category(
         )
     except TransactionCategoryError as exc:
         raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+    return _category_response(category)
+
+
+@router.patch("/{category_id}/status", response_model=CategoryResponse, dependencies=[Depends(validate_csrf_token)])
+def set_category_status(
+    category_id: UUID,
+    request: CategoryStatusRequest,
+    current_user: UserRecord = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+) -> CategoryResponse:
+    try:
+        category = _use_cases(session).set_category_active(
+            user_id=current_user.id,
+            category_id=category_id,
+            is_active=request.is_active,
+        )
+    except TransactionCategoryError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _category_response(category)
 
 

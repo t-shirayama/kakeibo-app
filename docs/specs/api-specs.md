@@ -84,12 +84,15 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 - `GET /api/categories`
   - カテゴリ一覧を取得する。
+  - `include_inactive=true` 指定時は無効カテゴリも取得する。
 - `POST /api/categories`
   - カテゴリを追加する。
 - `PUT /api/categories/{category_id}`
   - カテゴリを更新する。
+- `PATCH /api/categories/{category_id}/status`
+  - カテゴリの有効/無効を切り替える。
 - `DELETE /api/categories/{category_id}`
-  - カテゴリを削除または無効化する。
+  - カテゴリを論理削除する。
 
 ### アップロード
 

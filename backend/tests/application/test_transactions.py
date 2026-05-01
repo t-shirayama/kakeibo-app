@@ -108,6 +108,19 @@ class FakeTransactionCategoryRepository:
         self.categories[category.id] = category
         return category
 
+    def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
+        category = self.categories[category_id]
+        updated = Category(
+            id=category.id,
+            user_id=category.user_id,
+            name=category.name,
+            color=category.color,
+            description=category.description,
+            is_active=is_active,
+        )
+        self.categories[category_id] = updated
+        return updated
+
     def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
         category = self.categories[category_id]
         self.categories[category_id] = category.deactivate()
@@ -181,6 +194,17 @@ def test_delete_transaction_records_audit_log() -> None:
     use_cases.delete_transaction(user_id=USER_ID, transaction_id=transaction.id)
 
     assert ("transaction.deleted", transaction.id) in repository.audit_logs
+
+
+def test_category_can_be_disabled_and_enabled() -> None:
+    repository = FakeTransactionCategoryRepository()
+    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+
+    disabled = use_cases.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=False)
+    enabled = use_cases.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=True)
+
+    assert disabled.is_active is False
+    assert enabled.is_active is True
 
 
 def test_monthly_report_summarizes_expenses_by_category() -> None:

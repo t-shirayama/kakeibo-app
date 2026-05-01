@@ -179,6 +179,12 @@ class TransactionCategoryUseCases:
             )
         )
 
+    def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
+        category = self._repository.get_category(user_id=user_id, category_id=category_id)
+        if category is None:
+            raise TransactionCategoryError("Category not found.")
+        return self._repository.set_category_active(user_id=user_id, category_id=category_id, is_active=is_active)
+
     def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
         category = self._repository.get_category(user_id=user_id, category_id=category_id)
         if category is None:

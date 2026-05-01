@@ -223,6 +223,22 @@ class TransactionCategoryRepository:
         self._session.refresh(model)
         return self._to_category(model)
 
+    def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
+        model = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.id == str(category_id),
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        if model is None:
+            raise ValueError("Category not found.")
+        model.is_active = is_active
+        model.updated_at = datetime.now(UTC)
+        self._session.commit()
+        self._session.refresh(model)
+        return self._to_category(model)
+
     def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
         model = self._session.scalar(
             select(CategoryModel).where(

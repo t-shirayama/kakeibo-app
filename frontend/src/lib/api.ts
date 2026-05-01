@@ -5,7 +5,7 @@ import type { ApiErrorShape } from "@/components/api-error-alert";
 
 export type ApiClient = {
   list_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
-  list_categories: () => Promise<CategoryDto[]>;
+  list_categories: (params?: CategoryListParams) => Promise<CategoryDto[]>;
   create_transaction: (request: TransactionRequest) => Promise<TransactionDto>;
   update_transaction: (transactionId: string, request: TransactionRequest) => Promise<TransactionDto>;
   delete_transaction: (transactionId: string) => Promise<{ status: string }>;
@@ -18,6 +18,8 @@ export type ApiClient = {
   update_settings: (request: SettingsRequest) => Promise<SettingsDto>;
   delete_all_data: (confirmationText: string) => Promise<{ status: string }>;
   create_category: (request: CategoryRequest) => Promise<CategoryDto>;
+  set_category_active: (categoryId: string, isActive: boolean) => Promise<CategoryDto>;
+  delete_category: (categoryId: string) => Promise<{ status: string }>;
 };
 
 export type LoginRequest = {
@@ -51,6 +53,10 @@ export type CategoryRequest = {
   name: string;
   color: string;
   description: string | null;
+};
+
+export type CategoryListParams = {
+  include_inactive?: boolean;
 };
 
 export type SettingsRequest = {
@@ -196,8 +202,13 @@ export const api: ApiClient = {
     const response = await api_fetch<{ items: TransactionDto[] }>(`/api/transactions?${searchParams.toString()}`);
     return response.items;
   },
-  async list_categories() {
-    return api_fetch<CategoryDto[]>("/api/categories");
+  async list_categories(params = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.include_inactive) {
+      searchParams.set("include_inactive", "true");
+    }
+    const queryString = searchParams.toString();
+    return api_fetch<CategoryDto[]>(`/api/categories${queryString ? `?${queryString}` : ""}`);
   },
   async create_transaction(request) {
     return api_mutation<TransactionDto>("/api/transactions", {
@@ -275,5 +286,15 @@ export const api: ApiClient = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
     });
+  },
+  async set_category_active(categoryId, isActive) {
+    return api_mutation<CategoryDto>(`/api/categories/${categoryId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
+  async delete_category(categoryId) {
+    return api_mutation<{ status: string }>(`/api/categories/${categoryId}`, { method: "DELETE" });
   },
 };
