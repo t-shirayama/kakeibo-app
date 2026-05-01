@@ -190,6 +190,8 @@ npm run test:e2e:ui
 
 E2Eは既定で `kakeibo_e2e` を使い、実行前にDBを作成して Alembic の `downgrade base` → `upgrade head` でサンプルデータへ戻します。通常の開発DB `kakeibo` は変更しません。接続先を変える場合は `E2E_DATABASE_URL` を設定してください。DB作成と権限付与には `E2E_ADMIN_DATABASE_URL` を使い、未指定時は `mysql+pymysql://root:root_password@localhost:3306/mysql` を使います。
 
+E2Eの実行方法と安定化方針は [docs/e2e.md](docs/e2e.md)、シナリオ詳細は `docs/e2e/` 配下を参照してください。
+
 既に開発用のバックエンドやフロントエンドが起動している場合は停止するか、次のように別ポートを指定してください。
 
 ```powershell

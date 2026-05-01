@@ -19,6 +19,7 @@ docs/
 ├── README.md
 ├── designs/
 ├── e2e.md
+├── e2e/
 ├── requirements.md
 ├── requirements/
 └── specs/
@@ -53,11 +54,11 @@ docs/
 
 テスト方針の正本は [プロジェクトルール](specs/project-rules.md) です。
 
-E2Eの実行方法、シナリオ、更新方針は [E2Eテスト](e2e.md) を参照してください。
+E2Eの実行方法と更新方針は [E2Eテスト](e2e.md) を参照してください。シナリオ詳細は `docs/e2e/` 配下に分割しています。
 
 ## 運用
 
 - 仕様や実装方針を変更した場合は、関連するSSOT文書を同じ作業内で更新します。
 - 画面の振る舞いや表示項目を変更した場合は、`docs/requirements/` の該当画面要件を更新します。
-- E2Eの対象や観点を変更した場合は、`docs/e2e.md` を更新します。
+- E2Eの対象や観点を変更した場合は、`docs/e2e.md` と該当する `docs/e2e/` 配下のシナリオを更新します。
 - Codex向けの最小ルールは `.codex/AGENTS.md` に置きます。

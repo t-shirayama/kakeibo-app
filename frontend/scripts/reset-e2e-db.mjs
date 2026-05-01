@@ -13,7 +13,12 @@ const databaseUrl =
 const adminDatabaseUrl =
   process.env.E2E_ADMIN_DATABASE_URL ?? "mysql+pymysql://root:root_password@localhost:3306/mysql";
 const python = resolvePython();
-const env = { ...process.env, DATABASE_URL: databaseUrl, COOKIE_SECURE: "false" };
+const env = {
+  ...process.env,
+  COOKIE_SECURE: "false",
+  DATABASE_URL: databaseUrl,
+  JWT_SECRET_KEY: process.env.E2E_JWT_SECRET_KEY ?? "e2e-local-jwt-secret-key-with-at-least-32-bytes",
+};
 
 runPython(
   [

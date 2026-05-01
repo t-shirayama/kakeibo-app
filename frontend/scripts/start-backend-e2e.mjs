@@ -18,6 +18,7 @@ const env = {
   BACKEND_CORS_ORIGINS: process.env.E2E_FRONTEND_ORIGIN ?? `http://127.0.0.1:${frontendPort}`,
   COOKIE_SECURE: "false",
   DATABASE_URL: databaseUrl,
+  JWT_SECRET_KEY: process.env.E2E_JWT_SECRET_KEY ?? "e2e-local-jwt-secret-key-with-at-least-32-bytes",
   NEXT_PUBLIC_API_BASE_URL: process.env.E2E_API_BASE_URL ?? `http://127.0.0.1:${backendPort}`,
   PYTHONUNBUFFERED: "1",
 };
