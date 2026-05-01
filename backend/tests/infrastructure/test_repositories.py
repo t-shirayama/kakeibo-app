@@ -69,6 +69,35 @@ def test_transaction_repository_creates_lists_and_soft_deletes(db_session: Sessi
     assert repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10)).total == 0
 
 
+def test_transaction_repository_filters_by_transaction_date(db_session: Session) -> None:
+    add_user(db_session)
+    repository = TransactionCategoryRepository(db_session)
+    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+
+    for transaction_date, shop_name in [(date(2026, 5, 1), "May Cafe"), (date(2026, 4, 30), "April Market")]:
+        repository.create_transaction(
+            Transaction(
+                id=uuid4(),
+                user_id=USER_ID,
+                category_id=category.id,
+                transaction_date=transaction_date,
+                shop_name=shop_name,
+                amount=MoneyJPY(1200),
+                transaction_type=TransactionType.EXPENSE,
+            )
+        )
+
+    result = repository.list_transactions(
+        user_id=USER_ID,
+        page=Page(page=1, page_size=10),
+        date_from=date(2026, 5, 1),
+        date_to=date(2026, 5, 31),
+    )
+
+    assert result.total == 1
+    assert result.items[0].shop_name == "May Cafe"
+
+
 def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Session) -> None:
     hasher = PasswordHasher()
     password_hash = hasher.hash_password("StrongPass123!")

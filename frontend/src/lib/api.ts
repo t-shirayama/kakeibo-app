@@ -4,7 +4,7 @@ import { getLoginPath } from "./auth";
 import type { ApiErrorShape } from "@/components/api-error-alert";
 
 export type ApiClient = {
-  list_transactions: () => Promise<TransactionDto[]>;
+  list_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
   list_categories: () => Promise<CategoryDto[]>;
   create_transaction: (request: TransactionRequest) => Promise<TransactionDto>;
   update_transaction: (transactionId: string, request: TransactionRequest) => Promise<TransactionDto>;
@@ -40,6 +40,11 @@ export type TransactionRequest = {
   payment_method: string | null;
   card_user_name?: string | null;
   memo: string | null;
+};
+
+export type TransactionListParams = {
+  date_from?: string;
+  date_to?: string;
 };
 
 export type CategoryRequest = {
@@ -179,8 +184,16 @@ export function get_api_base_url(): string {
 }
 
 export const api: ApiClient = {
-  async list_transactions() {
-    const response = await api_fetch<{ items: TransactionDto[] }>("/api/transactions?page=1&page_size=100");
+  async list_transactions(params = {}) {
+    const searchParams = new URLSearchParams({ page: "1", page_size: "100" });
+    if (params.date_from) {
+      searchParams.set("date_from", params.date_from);
+    }
+    if (params.date_to) {
+      searchParams.set("date_to", params.date_to);
+    }
+
+    const response = await api_fetch<{ items: TransactionDto[] }>(`/api/transactions?${searchParams.toString()}`);
     return response.items;
   },
   async list_categories() {

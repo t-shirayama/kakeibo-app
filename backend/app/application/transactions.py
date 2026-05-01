@@ -50,12 +50,16 @@ class TransactionCategoryUseCases:
         page: Page,
         keyword: str | None = None,
         category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
     ) -> PageResult[Transaction]:
         return self._repository.list_transactions(
             user_id=user_id,
             page=page,
             keyword=keyword,
             category_id=category_id,
+            date_from=date_from,
+            date_to=date_to,
         )
 
     def create_transaction(self, *, user_id: UUID, command: TransactionCommand) -> Transaction:

@@ -61,6 +61,8 @@ def list_transactions(
     page_size: int = Query(default=20, ge=1, le=100),
     keyword: str | None = Query(default=None),
     category_id: UUID | None = Query(default=None),
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> TransactionListResponse:
@@ -69,6 +71,8 @@ def list_transactions(
         page=Page(page=page, page_size=page_size),
         keyword=keyword,
         category_id=category_id,
+        date_from=date_from,
+        date_to=date_to,
     )
     return _list_response(result)
 

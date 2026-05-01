@@ -68,6 +68,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 - `GET /api/transactions`
   - 明細一覧を検索、期間、カテゴリ、ページ指定で取得する。
+  - 期間指定には `date_from` と `date_to` を `YYYY-MM-DD` 形式で指定する。
 - `POST /api/transactions`
   - 明細を手動登録する。
 - `GET /api/transactions/{transaction_id}`

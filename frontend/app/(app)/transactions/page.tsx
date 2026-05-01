@@ -11,12 +11,19 @@ import { api, type TransactionRequest } from "@/lib/api";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
+type PeriodKey = "current_month" | "previous_month" | "current_year";
+
 export default function TransactionsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
   const [query, setQuery] = useState("");
+  const [period, setPeriod] = useState<PeriodKey>("current_month");
   const queryClient = useQueryClient();
-  const transactionsQuery = useQuery({ queryKey: ["transactions"], queryFn: api.list_transactions });
+  const periodRange = useMemo(() => getPeriodRange(period), [period]);
+  const transactionsQuery = useQuery({
+    queryKey: ["transactions", periodRange],
+    queryFn: () => api.list_transactions(periodRange),
+  });
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: api.list_categories });
   const saveMutation = useMutation({
     mutationFn: (request: TransactionRequest) =>
@@ -66,10 +73,15 @@ export default function TransactionsPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
-            <select className="select" aria-label="期間">
-              <option>今月</option>
-              <option>先月</option>
-              <option>今年</option>
+            <select
+              className="select"
+              aria-label="期間"
+              value={period}
+              onChange={(event) => setPeriod(event.target.value as PeriodKey)}
+            >
+              <option value="current_month">今月</option>
+              <option value="previous_month">先月</option>
+              <option value="current_year">今年</option>
             </select>
             <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
               {exportMutation.isPending ? "出力中" : "エクスポート"}
@@ -174,6 +186,39 @@ export default function TransactionsPage() {
       />
     </>
   );
+}
+
+function getPeriodRange(period: PeriodKey): { date_from: string; date_to: string } {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+
+  if (period === "previous_month") {
+    const previousMonth = new Date(year, month - 1, 1);
+    return {
+      date_from: formatDateParam(new Date(previousMonth.getFullYear(), previousMonth.getMonth(), 1)),
+      date_to: formatDateParam(new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0)),
+    };
+  }
+
+  if (period === "current_year") {
+    return {
+      date_from: formatDateParam(new Date(year, 0, 1)),
+      date_to: formatDateParam(new Date(year, 11, 31)),
+    };
+  }
+
+  return {
+    date_from: formatDateParam(new Date(year, month, 1)),
+    date_to: formatDateParam(new Date(year, month + 1, 0)),
+  };
+}
+
+function formatDateParam(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getCategoryBadgeStyle(category: CategoryDto | undefined): React.CSSProperties {

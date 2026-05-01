@@ -29,6 +29,8 @@ class TransactionCategoryRepository:
         page: Page,
         keyword: str | None = None,
         category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
     ) -> PageResult[Transaction]:
         filters = [TransactionModel.user_id == str(user_id), TransactionModel.deleted_at.is_(None)]
         if keyword:
@@ -36,6 +38,10 @@ class TransactionCategoryRepository:
             filters.append(or_(TransactionModel.shop_name.like(pattern), TransactionModel.memo.like(pattern)))
         if category_id:
             filters.append(TransactionModel.category_id == str(category_id))
+        if date_from:
+            filters.append(TransactionModel.transaction_date >= date_from)
+        if date_to:
+            filters.append(TransactionModel.transaction_date <= date_to)
 
         total = self._session.scalar(select(func.count()).select_from(TransactionModel).where(*filters)) or 0
         rows = self._session.scalars(

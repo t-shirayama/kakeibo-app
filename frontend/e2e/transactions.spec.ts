@@ -5,7 +5,13 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toHaveCount(0);
 
+  await page.getByLabel("期間").selectOption({ label: "先月" });
+  await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
+
+  await page.getByLabel("期間").selectOption({ label: "今年" });
   await page.getByLabel("明細検索").fill("Amazon");
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);

@@ -39,8 +39,21 @@ class FakeTransactionCategoryRepository:
     def next_id(self) -> UUID:
         return uuid4()
 
-    def list_transactions(self, *, user_id: UUID, page: Page, keyword: str | None = None, category_id: UUID | None = None):
+    def list_transactions(
+        self,
+        *,
+        user_id: UUID,
+        page: Page,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+        date_from=None,
+        date_to=None,
+    ):
         items = [transaction for transaction in self.transactions.values() if transaction.user_id == user_id]
+        if date_from:
+            items = [transaction for transaction in items if transaction.transaction_date >= date_from]
+        if date_to:
+            items = [transaction for transaction in items if transaction.transaction_date <= date_to]
         return PageResult(items=items, total=len(items), page=page.page, page_size=page.page_size)
 
     def list_transactions_with_categories(self, *, user_id: UUID, start_date=None, end_date=None, limit=None):
