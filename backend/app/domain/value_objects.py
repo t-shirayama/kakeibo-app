@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from zoneinfo import ZoneInfo
+from datetime import UTC, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-TOKYO_TZ = ZoneInfo("Asia/Tokyo")
+try:
+    TOKYO_TZ = ZoneInfo("Asia/Tokyo")
+except ZoneInfoNotFoundError:
+    TOKYO_TZ = timezone(timedelta(hours=9), "Asia/Tokyo")
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,4 +35,3 @@ class UtcDateTime:
 
     def to_tokyo(self) -> datetime:
         return self.value.astimezone(TOKYO_TZ)
-

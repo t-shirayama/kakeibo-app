@@ -1,4 +1,5 @@
 import { DashboardBars } from "@/components/dashboard-bars";
+import { EmptyState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { categorySummary } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/format";
@@ -15,7 +16,9 @@ export default function ReportsPage() {
               <option>2026年4月</option>
               <option>2026年3月</option>
             </select>
-            <button className="button secondary" type="button">CSV</button>
+            <button className="button secondary" type="button">
+              CSV
+            </button>
           </div>
         }
       />
@@ -27,15 +30,19 @@ export default function ReportsPage() {
         </div>
         <div className="card panel">
           <h2 className="panel-title">カテゴリ別サマリー</h2>
-          <div className="category-list">
-            {categorySummary.map((category) => (
-              <div className="category-row" key={category.category_id}>
-                <span className="swatch" style={{ background: category.color }} />
-                <strong>{category.name}</strong>
-                <span className="amount">{formatCurrency(category.amount)}</span>
-              </div>
-            ))}
-          </div>
+          {categorySummary.length === 0 ? (
+            <EmptyState title="集計データがありません" description="明細が登録されるとカテゴリ別の集計が表示されます。" />
+          ) : (
+            <div className="category-list">
+              {categorySummary.map((category) => (
+                <div className="category-row" key={category.category_id}>
+                  <span className="swatch" style={{ background: category.color }} />
+                  <strong>{category.name}</strong>
+                  <span className="amount">{formatCurrency(category.amount)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>

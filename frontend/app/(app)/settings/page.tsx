@@ -31,7 +31,9 @@ export default function SettingsPage() {
               <h2>PDF取り込み</h2>
               <p>明細の自動分類と重複検知を有効にします。</p>
             </div>
-            <button className="button secondary" type="button">詳細</button>
+            <button className="button secondary" type="button">
+              詳細
+            </button>
           </div>
         </div>
       </section>

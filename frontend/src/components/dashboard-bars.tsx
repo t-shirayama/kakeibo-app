@@ -20,9 +20,11 @@ export function DashboardBars() {
           />
         ))}
       </div>
-      <div className="toolbar" style={{ justifyContent: "space-around", marginTop: 10 }}>
+      <div className="toolbar chart-labels">
         {monthlyValues.map((month) => (
-          <span className="muted" key={month.label}>{month.label}</span>
+          <span className="muted" key={month.label}>
+            {month.label}
+          </span>
         ))}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function PasswordResetPage() {
   return (
     <main className="login-page">
       <section className="login-card">
@@ -8,24 +8,20 @@ export default function LoginPage() {
           <span className="brand-mark">K</span>
           <span>かけいぼノート</span>
         </div>
-        <h1 className="page-title">ログイン</h1>
+        <h1 className="page-title">パスワードリセット</h1>
         <p className="page-subtitle login-subtitle">
-          明細の取り込みと家計管理を続けるにはログインしてください。
+          登録済みのメールアドレスに再設定用リンクを送信します。
         </p>
         <form className="form-stack">
           <div className="form-field">
             <label htmlFor="email">メールアドレス</label>
             <input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" />
           </div>
-          <div className="form-field">
-            <label htmlFor="password">パスワード</label>
-            <input id="password" name="password" type="password" autoComplete="current-password" />
-          </div>
-          <div className="login-links">
-            <Link href="/password-reset">パスワードを忘れた場合</Link>
-          </div>
-          <Link className="button" href="/dashboard">
-            ログイン
+          <button className="button" type="submit">
+            送信
+          </button>
+          <Link className="button secondary" href="/login">
+            ログインに戻る
           </Link>
         </form>
       </section>

@@ -1,4 +1,4 @@
-import type { CategoryDto, CategorySummaryDto, TransactionDto } from "./types";
+import type { CategoryDto, CategorySummaryDto, TransactionDto, UploadJobDto } from "./types";
 
 export const categories: CategoryDto[] = [
   {
@@ -41,17 +41,17 @@ export const categorySummary: CategorySummaryDto[] = [
 export const recentTransactions: TransactionDto[] = [
   {
     transaction_id: "txn_001",
-    transaction_date: "2026/04/28",
+    transaction_date: "2026-04-28",
     merchant_name: "セブン-イレブン",
     category_id: "cat_food",
     category_name: "食費",
     amount: 842,
     payment_method: "クレジットカード",
-    memo: "朝食のおにぎり",
+    memo: "朝食・おにぎり",
   },
   {
     transaction_id: "txn_002",
-    transaction_date: "2026/04/27",
+    transaction_date: "2026-04-27",
     merchant_name: "Amazon.co.jp",
     category_id: "cat_daily",
     category_name: "日用品",
@@ -61,7 +61,7 @@ export const recentTransactions: TransactionDto[] = [
   },
   {
     transaction_id: "txn_003",
-    transaction_date: "2026/04/27",
+    transaction_date: "2026-04-27",
     merchant_name: "JR東日本",
     category_id: "cat_transport",
     category_name: "交通費",
@@ -71,7 +71,7 @@ export const recentTransactions: TransactionDto[] = [
   },
   {
     transaction_id: "txn_004",
-    transaction_date: "2026/04/25",
+    transaction_date: "2026-04-25",
     merchant_name: "TOHOシネマズ",
     category_id: "cat_entertainment",
     category_name: "娯楽",
@@ -81,12 +81,22 @@ export const recentTransactions: TransactionDto[] = [
   },
   {
     transaction_id: "txn_005",
-    transaction_date: "2026/04/24",
+    transaction_date: "2026-04-24",
     merchant_name: "成城石井",
     category_id: "cat_food",
     category_name: "食費",
     amount: 4280,
     payment_method: "デビットカード",
     memo: "夕食",
+  },
+];
+
+export const uploadJobs: UploadJobDto[] = [
+  {
+    upload_job_id: "upload_001",
+    file_name: "card-statement-2026-04.pdf",
+    status: "completed",
+    imported_transaction_count: 38,
+    created_at: "2026-05-01 09:12",
   },
 ];

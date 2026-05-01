@@ -242,6 +242,29 @@ textarea {
   border-color: var(--border);
 }
 
+.button.compact {
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--muted-strong);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: var(--primary);
+  border-color: #bfd2ef;
+  background: #f8fbff;
+}
+
 .input,
 .select {
   min-height: 36px;
@@ -319,6 +342,12 @@ textarea {
   font-weight: 800;
 }
 
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .chart-bars {
   display: flex;
   align-items: end;
@@ -334,6 +363,15 @@ textarea {
   min-height: 18px;
   background: #8fb8ff;
   border-radius: 3px 3px 0 0;
+}
+
+.chart-labels {
+  justify-content: space-around;
+  margin-top: 10px;
+}
+
+.section-gap {
+  margin-top: 20px;
 }
 
 .category-list {
@@ -442,6 +480,176 @@ textarea {
   border-radius: 6px;
 }
 
+.form-field select {
+  min-height: 40px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.form-field.horizontal {
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 30px;
+}
+
+.login-brand {
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.login-subtitle {
+  margin-bottom: 24px;
+}
+
+.login-links {
+  display: flex;
+  justify-content: flex-end;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.api-error-alert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  color: #8a3b12;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+}
+
+.api-error-alert strong,
+.api-error-alert p {
+  margin: 0;
+}
+
+.api-error-alert p {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.api-error-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: #9a5a22;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.state-block {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 34px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.state-block h2 {
+  margin: 12px 0 6px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.state-block p {
+  max-width: 420px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.state-action {
+  margin-top: 16px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+.error-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(17 24 39 / 58%);
+}
+
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 51;
+  width: min(472px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 30px 40px 34px;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgb(15 23 42 / 24%);
+  transform: translate(-50%, -50%);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 850;
+}
+
+.modal-form {
+  display: grid;
+  gap: 22px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.modal-actions .button {
+  min-width: 102px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 1080px) {
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -492,6 +700,24 @@ textarea {
   .settings-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .api-error-alert {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .api-error-alert .button {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .form-field.horizontal {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .dialog-content {
+    padding: 24px 20px;
   }
 
   .dashboard-grid {
