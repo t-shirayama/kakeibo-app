@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     csrf_token_minutes: int = Field(default=30, validation_alias="CSRF_TOKEN_EXPIRE_MINUTES")
     cookie_secure: bool = Field(default=True, validation_alias="COOKIE_SECURE")
     cookie_samesite: str = "lax"
+    admin_setup_token: str | None = Field(default=None, validation_alias="ADMIN_SETUP_TOKEN")
     upload_storage_root: str = Field(default="storage/uploads", validation_alias="UPLOAD_STORAGE_ROOT")
     max_upload_size_mb: int = Field(default=10, validation_alias="MAX_UPLOAD_SIZE_MB")
 

@@ -25,6 +25,7 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | id | UUID | ユーザーID |
 | email | string | メールアドレス |
 | password_hash | string | パスワードハッシュ |
+| is_admin | boolean | 管理者権限 |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
 | deleted_at | datetime | 論理削除日時 |
@@ -40,6 +41,7 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | token_hash | string | リフレッシュトークンのハッシュ |
 | expires_at | datetime | 有効期限 |
 | revoked_at | datetime | 失効日時 |
+| replaced_by_token_id | UUID | ローテーション後の置換先トークンID |
 | created_at | datetime | 作成日時 |
 
 ### password_reset_tokens

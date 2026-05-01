@@ -64,6 +64,7 @@ user_registration = "admin_created"
 password_min_length = 12
 password_requires = ["uppercase", "lowercase", "number", "symbol"]
 password_reset_initial_release = true
+admin_bootstrap = "POST /api/auth/bootstrap-admin with ADMIN_SETUP_TOKEN; subsequent user creation requires admin JWT"
 
 [domain]
 money = "integer JPY; negative means cancellation; zero is allowed"

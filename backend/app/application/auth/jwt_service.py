@@ -25,6 +25,13 @@ class JwtService:
             token_type="refresh",
         )
 
+    def issue_reset_token(self, subject: str) -> str:
+        return self._encode(
+            subject=subject,
+            expires_in=timedelta(minutes=30),
+            token_type="password_reset",
+        )
+
     def decode(self, token: str) -> dict[str, Any]:
         return jwt.decode(
             token,
@@ -46,4 +53,3 @@ class JwtService:
             self._settings.jwt_secret,
             algorithm=self._settings.jwt_algorithm,
         )
-

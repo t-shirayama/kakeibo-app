@@ -36,6 +36,10 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 ## 認証
 
+- `POST /api/auth/bootstrap-admin`
+  - 初回管理者を作成する。`X-Admin-Setup-Token` とCSRFトークンヘッダーを必須とする。
+- `POST /api/auth/admin/users`
+  - 管理者がユーザーを作成する。
 - `POST /api/auth/login`
   - ログインし、JWTを発行する。
 - `POST /api/auth/refresh`
@@ -47,7 +51,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `GET /api/auth/csrf`
   - CSRFトークンをレスポンスボディで取得する。
 - `POST /api/auth/password-reset`
-  - パスワードリセットを開始する。
+  - パスワードリセットを開始する。初期実装ではメール通知を行わないため、存在するユーザーの場合は検証用トークンを返す。
 - `POST /api/auth/password-reset/confirm`
   - パスワードリセットを完了する。
 
