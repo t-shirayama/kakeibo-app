@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+from uuid import UUID
+
+from app.application.importing.pdf_importer import CardStatementParser
+from app.application.transactions import TransactionCategoryUseCases, TransactionCommand
+from app.domain.entities import TransactionType, Upload, UploadStatus
+from app.infrastructure.repositories.transactions import TransactionCategoryRepository
+from app.infrastructure.repositories.uploads import UploadRepository
+from app.infrastructure.storage import LocalUploadStorage
+
+
+class PdfUploadError(ValueError):
+    pass
+
+
+class PdfUploadUseCases:
+    def __init__(
+        self,
+        *,
+        upload_repository: UploadRepository,
+        transaction_repository: TransactionCategoryRepository,
+        parser: CardStatementParser,
+        storage: LocalUploadStorage,
+        max_upload_size_mb: int,
+    ) -> None:
+        self._upload_repository = upload_repository
+        self._transaction_repository = transaction_repository
+        self._transactions = TransactionCategoryUseCases(transaction_repository)
+        self._parser = parser
+        self._storage = storage
+        self._max_upload_size = max_upload_size_mb * 1024 * 1024
+
+    def import_pdf(self, *, user_id: UUID, file_name: str, content: bytes) -> Upload:
+        self._validate_pdf(file_name=file_name, content=content)
+        upload_id = self._upload_repository.next_id()
+        stored_file_path = self._storage.save_original(user_id=user_id, upload_id=upload_id, content=content)
+        upload = self._upload_repository.create_upload(
+            upload_id=upload_id,
+            user_id=user_id,
+            file_name=file_name,
+            stored_file_path=stored_file_path,
+            status=UploadStatus.PROCESSING,
+        )
+
+        try:
+            imported = self._parser.parse(content)
+            imported_count = 0
+            for item in imported:
+                if self._transaction_repository.source_hash_exists(user_id=user_id, source_hash=item.source_hash):
+                    continue
+                self._transactions.create_transaction(
+                    user_id=user_id,
+                    command=TransactionCommand(
+                        transaction_date=item.transaction_date,
+                        shop_name=item.shop_name,
+                        amount=item.amount.amount,
+                        transaction_type=TransactionType.EXPENSE,
+                        payment_method=item.payment_method,
+                        card_user_name=item.card_user_name,
+                        source_upload_id=upload_id,
+                        source_file_name=file_name,
+                        source_row_number=item.source_row_number,
+                        source_page_number=item.source_page_number,
+                        source_format=item.source_format,
+                        source_hash=item.source_hash,
+                    ),
+                )
+                imported_count += 1
+            upload = self._upload_repository.mark_completed(upload_id=upload_id, imported_count=imported_count)
+        except Exception as exc:
+            upload = self._upload_repository.mark_failed(upload_id=upload_id, error_message=str(exc))
+            self._upload_repository.create_audit_log(
+                user_id=user_id,
+                action="upload.failed",
+                resource_type="upload",
+                resource_id=upload_id,
+                details={"file_name": file_name, "error": str(exc)},
+            )
+        return upload
+
+    def list_uploads(self, *, user_id: UUID) -> list[Upload]:
+        return self._upload_repository.list_uploads(user_id=user_id)
+
+    def get_upload(self, *, user_id: UUID, upload_id: UUID) -> Upload:
+        upload = self._upload_repository.get_upload(user_id=user_id, upload_id=upload_id)
+        if upload is None:
+            raise PdfUploadError("Upload not found.")
+        return upload
+
+    def delete_upload(self, *, user_id: UUID, upload_id: UUID) -> None:
+        upload = self._upload_repository.soft_delete_upload(user_id=user_id, upload_id=upload_id)
+        if upload is None:
+            raise PdfUploadError("Upload not found.")
+        self._storage.delete(upload.stored_file_path)
+
+    def _validate_pdf(self, *, file_name: str, content: bytes) -> None:
+        if not file_name.lower().endswith(".pdf"):
+            raise PdfUploadError("Only PDF files are supported.")
+        if len(content) > self._max_upload_size:
+            raise PdfUploadError("PDF file size exceeds the limit.")
+        if not content:
+            raise PdfUploadError("PDF file is empty.")

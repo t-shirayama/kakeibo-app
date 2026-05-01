@@ -68,6 +68,12 @@ PDF原本はユーザーが削除するまで保存する。
 
 楽天カード明細PDFのテストデータは、実PDFではなく抽出後テキストfixtureと期待値JSONで管理する。
 
+実装では `POST /api/uploads` でPDFを受け付け、`GET /api/uploads` と `GET /api/uploads/{upload_id}` で履歴を確認する。
+
+`DELETE /api/uploads/{upload_id}` はアップロード履歴を論理削除し、保存済みPDF原本をストレージから即削除する。
+
+解析失敗時はアップロード履歴を失敗状態に更新し、監査ログへ `upload.failed` を記録する。
+
 ## 拡張方針
 
 - PDFフォーマットごとに抽出ルールを分ける。

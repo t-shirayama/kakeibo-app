@@ -75,6 +75,18 @@ class TransactionCategoryRepository:
         self._session.refresh(model)
         return self._to_transaction(model)
 
+    def source_hash_exists(self, *, user_id: UUID, source_hash: str) -> bool:
+        count = self._session.scalar(
+            select(func.count())
+            .select_from(TransactionModel)
+            .where(
+                TransactionModel.user_id == str(user_id),
+                TransactionModel.source_hash == source_hash,
+                TransactionModel.deleted_at.is_(None),
+            )
+        )
+        return bool(count)
+
     def get_transaction(self, *, user_id: UUID, transaction_id: UUID) -> Transaction | None:
         model = self._session.scalar(
             select(TransactionModel).where(

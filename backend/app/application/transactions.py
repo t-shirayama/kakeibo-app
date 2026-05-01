@@ -24,6 +24,12 @@ class TransactionCommand:
     payment_method: str | None = None
     card_user_name: str | None = None
     memo: str | None = None
+    source_upload_id: UUID | None = None
+    source_file_name: str | None = None
+    source_row_number: int | None = None
+    source_page_number: int | None = None
+    source_format: str | None = None
+    source_hash: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +81,12 @@ class TransactionCategoryUseCases:
             payment_method=command.payment_method,
             card_user_name=command.card_user_name,
             memo=command.memo,
+            source_upload_id=command.source_upload_id,
+            source_file_name=command.source_file_name,
+            source_row_number=command.source_row_number,
+            source_page_number=command.source_page_number,
+            source_format=command.source_format,
+            source_hash=command.source_hash,
         )
         return self._repository.create_transaction(transaction)
 

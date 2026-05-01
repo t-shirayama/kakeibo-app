@@ -1,0 +1,32 @@
+[
+  {
+    "transaction_date": "2026-04-28",
+    "shop_name": "セブン-イレブン",
+    "card_user_name": "本人",
+    "payment_method": "1回払い",
+    "amount": 842,
+    "source_row_number": 1,
+    "source_page_number": 1,
+    "source_format": "rakuten_card_pdf"
+  },
+  {
+    "transaction_date": "2026-04-27",
+    "shop_name": "Amazon.co.jp",
+    "card_user_name": "家族",
+    "payment_method": "1回払い",
+    "amount": 3200,
+    "source_row_number": 2,
+    "source_page_number": 1,
+    "source_format": "rakuten_card_pdf"
+  },
+  {
+    "transaction_date": "2026-04-26",
+    "shop_name": "取消 サンプルストア",
+    "card_user_name": "本人",
+    "payment_method": "1回払い",
+    "amount": -1518,
+    "source_row_number": 3,
+    "source_page_number": 1,
+    "source_format": "rakuten_card_pdf"
+  }
+]

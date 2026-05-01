@@ -90,20 +90,20 @@
 
 ## 6. PDF取込
 
-- [ ] PDFアップロードAPIを実装する。
-- [ ] 最大アップロードサイズ10MBを検証する。
-- [ ] PDF原本を `storage/uploads/{user_id}/{upload_id}/original.pdf` に保存する。
-- [ ] PyMuPDFによる楽天カード明細PDF抽出を実装する。
-- [ ] 抽出後テキストfixtureを作成する。
-- [ ] 期待値JSON fixtureを作成する。
-- [ ] 利用日、利用店名、利用者、支払方法、利用金額を抽出する。
-- [ ] 支払方法は楽天PDFの値をそのまま保存する。
-- [ ] 初回取込カテゴリを未分類にする。
-- [ ] 重複判定キーを実装する。
-- [ ] `source_file_name`, `source_row_number`, `source_page_number`, `source_format`, `source_hash` を保存する。
-- [ ] 解析失敗をアップロード履歴に記録する。
-- [ ] アップロード失敗を監査ログに記録する。
-- [ ] アップロード履歴論理削除時にPDF原本を即削除する。
+- [x] PDFアップロードAPIを実装する。
+- [x] 最大アップロードサイズ10MBを検証する。
+- [x] PDF原本を `storage/uploads/{user_id}/{upload_id}/original.pdf` に保存する。
+- [x] PyMuPDFによる楽天カード明細PDF抽出を実装する。
+- [x] 抽出後テキストfixtureを作成する。
+- [x] 期待値JSON fixtureを作成する。
+- [x] 利用日、利用店名、利用者、支払方法、利用金額を抽出する。
+- [x] 支払方法は楽天PDFの値をそのまま保存する。
+- [x] 初回取込カテゴリを未分類にする。
+- [x] 重複判定キーを実装する。
+- [x] `source_file_name`, `source_row_number`, `source_page_number`, `source_format`, `source_hash` を保存する。
+- [x] 解析失敗をアップロード履歴に記録する。
+- [x] アップロード失敗を監査ログに記録する。
+- [x] アップロード履歴論理削除時にPDF原本を即削除する。
 
 ## 7. レポート・エクスポート
 
@@ -163,7 +163,7 @@
 - [ ] リポジトリ実装のテストを追加する。
 - [ ] APIテストを追加する。
 - [x] 認証・CSRFのテストを追加する。
-- [ ] PDF抽出のfixtureテストを追加する。
+- [x] PDF抽出のfixtureテストを追加する。
 - [ ] Excel出力のテストを追加する。
 - [ ] フロントエンドの主要画面テストを追加する。
 

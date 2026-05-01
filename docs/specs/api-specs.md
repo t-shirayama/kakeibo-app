@@ -98,6 +98,8 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - アップロード履歴を取得する。
 - `GET /api/uploads/{upload_id}`
   - アップロード結果を取得する。
+- `DELETE /api/uploads/{upload_id}`
+  - アップロード履歴を論理削除し、保存済みPDF原本をストレージから即削除する。
 
 ### レポート
 

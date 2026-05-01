@@ -10,6 +10,7 @@ dependencies = [
     "pyjwt>=2.9.0",
     "pymupdf>=1.24.0",
     "pymysql>=1.1.0",
+    "python-multipart>=0.0.12",
     "sqlalchemy>=2.0.0",
     "uvicorn[standard]>=0.32.0",
 ]
@@ -31,4 +32,3 @@ packages = ["app"]
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-q"
-
