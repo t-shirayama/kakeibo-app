@@ -4,7 +4,7 @@ export const SESSION_COOKIE_NAME = "kakeibo_session";
 export const ACCESS_COOKIE_NAME = "kakeibo_access";
 
 export function isAuthGuardEnabled() {
-  return process.env.NEXT_PUBLIC_AUTH_GUARD_ENABLED === "true";
+  return process.env.AUTH_GUARD_ENABLED === "true" || process.env.NEXT_PUBLIC_AUTH_GUARD_ENABLED === "true";
 }
 
 export function hasSessionCookie(request: NextRequest) {

@@ -16,6 +16,9 @@ venv/
 # Node / Next.js
 node_modules/
 .next/
+frontend/e2e/.auth/
+frontend/playwright-report/
+frontend/test-results/
 *.tsbuildinfo
 out/
 dist/

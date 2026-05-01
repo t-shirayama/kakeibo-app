@@ -203,6 +203,45 @@ npm run test:pages
 npm run build
 ```
 
+### E2Eテスト
+
+Playwrightで、Next.js + FastAPI + MySQL を使ったフルスタックE2Eを実行できます。
+
+前提:
+
+- MySQLを起動しておく: `docker compose up -d mysql`
+- バックエンド依存をインストールしておく: `cd backend` 後に `python -m pip install -e ".[dev]"`
+- フロントエンド依存をインストールしておく: `cd frontend` 後に `npm install`
+- 初回のみ Playwright ブラウザをインストールする: `npx playwright install chromium`
+
+実行:
+
+```powershell
+cd frontend
+npm run test:e2e
+```
+
+デバッグ用:
+
+```powershell
+npm run test:e2e:headed
+npm run test:e2e:ui
+```
+
+E2Eは既定で `kakeibo_e2e` を使い、実行前にDBを作成して Alembic の `downgrade base` → `upgrade head` でサンプルデータへ戻します。通常の開発DB `kakeibo` は変更しません。接続先を変える場合は `E2E_DATABASE_URL` を設定してください。DB作成と権限付与には `E2E_ADMIN_DATABASE_URL` を使い、未指定時は `mysql+pymysql://root:root_password@localhost:3306/mysql` を使います。
+
+既に開発用のバックエンドやフロントエンドが起動している場合は停止するか、次のように別ポートを指定してください。
+
+```powershell
+$env:E2E_BACKEND_PORT="18000"
+$env:E2E_API_BASE_URL="http://127.0.0.1:18000"
+$env:E2E_FRONTEND_PORT="3100"
+$env:E2E_BASE_URL="http://127.0.0.1:3100"
+npm run test:e2e
+```
+
+`npm run dev` 中に `npm run build` や E2E を同じ `.next` に対して同時実行すると、Next.js のチャンクが入れ替わってブラウザ側で `ChunkLoadError` が出ることがあります。その場合は dev サーバーを再起動してください。
+
 まずはアプリが起動すること、Swagger UIが表示されること、主要画面が表示されることを確認します。
 
 ## 重要な仕様

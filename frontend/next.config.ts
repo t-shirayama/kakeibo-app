@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    AUTH_GUARD_ENABLED: process.env.AUTH_GUARD_ENABLED,
+  },
   reactStrictMode: true,
   webpack: (config, { dev }) => {
     if (dev) {

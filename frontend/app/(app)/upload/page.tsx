@@ -70,6 +70,7 @@ export default function UploadPage() {
                   <th>状態</th>
                   <th>取引件数</th>
                   <th>取り込み日時</th>
+                  <th>エラー</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,6 +80,7 @@ export default function UploadPage() {
                     <td>{statusLabel[job.status]}</td>
                     <td>{job.imported_count}件</td>
                     <td>{job.uploaded_at}</td>
+                    <td>{job.error_message ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
