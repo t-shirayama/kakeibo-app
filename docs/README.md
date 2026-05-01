@@ -30,6 +30,10 @@ docs/
 - [API仕様](specs/api-specs.md)
 - [DBスキーマ](specs/db-schema.md)
 - [用語集](specs/glossary.md)
+- [バックエンド設計](specs/backend-architecture.md)
+- [フロントエンド設計](specs/frontend-architecture.md)
+- [PDF取込仕様](specs/pdf-import.md)
+- [セキュリティ仕様](specs/security.md)
 - [ADR](specs/adrs/)
 
 ## 画面要件
@@ -43,4 +47,7 @@ docs/
 - アーキテクチャはドメイン駆動設計（DDD）を採用します。
 - バックエンドは FastAPI で開発します。
 - フロントエンドは Next.js で開発します。
+- フロントエンドは Next.js App Router を使います。
+- データベースは MySQL を使います。
+- 認証はJWTを使います。
 - ドメインルールはバックエンドのドメイン層に集約します。
