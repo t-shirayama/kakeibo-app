@@ -91,6 +91,12 @@ error_shape = "error.code, error.message, error.details, error.request_id"
 pagination = "page/page_size offset pagination"
 id_case = "snake_case"
 
+[sample_data]
+migration = "backend/alembic/versions/20260501_0002_sample_data.py"
+email = "sample@example.com"
+password = "SamplePassw0rd!"
+scope = "local verification data for dashboard, transactions, categories, uploads, reports, settings, and export"
+
 [release_scope.initial]
 email_notifications = false
 multi_currency = false

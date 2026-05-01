@@ -30,10 +30,18 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
 Swagger UI is available at `/docs`.
+
+## Sample user
+
+`alembic upgrade head` inserts local verification sample data.
+
+- Email: `sample@example.com`
+- Password: `SamplePassw0rd!`
 
 ## Conventions
 

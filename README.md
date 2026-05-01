@@ -134,6 +134,17 @@ uvicorn app.main:app --reload
 - Health Check: http://localhost:8000/api/health
 - CSRF Token: http://localhost:8000/api/auth/csrf
 
+### 動作確認用ログイン
+
+`alembic upgrade head` を実行すると、全画面確認用のサンプルユーザーとサンプルデータが投入されます。
+
+| 項目 | 値 |
+| --- | --- |
+| メールアドレス | `sample@example.com` |
+| パスワード | `SamplePassw0rd!` |
+
+サンプルデータには、カテゴリ、明細、アップロード履歴、ユーザー設定、監査ログが含まれます。明細は2025年12月から2026年5月まで配置しているため、ダッシュボード、明細一覧、カテゴリ管理、アップロード、レポート、設定、Excelエクスポートの確認に使えます。
+
 ### フロントエンド起動
 
 別ターミナルで起動します。
