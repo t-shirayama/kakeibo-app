@@ -19,6 +19,7 @@
 - PDF取込仕様: docs/specs/pdf-import.md を参照すること
 - セキュリティ仕様: docs/specs/security.md を参照すること
 - 画面別要件: docs/requirements.md および docs/requirements/ を参照すること
+- E2Eテスト方針: docs/e2e.md を参照すること
 
 ## ドキュメント更新ルール
 
@@ -33,6 +34,7 @@
 - セキュリティ、認証、認可、Cookie、CSRF、パスワード、ファイルアップロードの方針を変更した場合は `docs/specs/security.md` を更新すること
 - PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import.md` を更新すること
 - 用語を追加・変更した場合は `docs/specs/glossary.md` を更新すること
+- コードを修正した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新すること。更新しない場合は、既存テストで同じリスクを検証できる理由を最終回答で説明すること
 - ドキュメント更新後は `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` を実行し、意図しない未確定事項が残っていないか確認すること
 - 最終回答では、変更したドキュメントと、同期確認を行ったことを簡潔に報告すること
 

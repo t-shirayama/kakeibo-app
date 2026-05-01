@@ -10,6 +10,7 @@
 docs/
 ├── README.md
 ├── designs/
+├── e2e.md
 ├── requirements.md
 ├── requirements/
 └── specs/
@@ -35,6 +36,7 @@ docs/
 - [PDF取込仕様](specs/pdf-import.md)
 - [セキュリティ仕様](specs/security.md)
 - [ADR](specs/adrs/)
+- [E2Eテスト](e2e.md)
 
 ## 画面要件
 
@@ -43,6 +45,8 @@ docs/
 画面デザイン画像は `docs/designs/` 配下に置きます。
 
 実装タスクは [tasks.md](tasks.md) を参照してください。
+
+E2Eテストの実行方法、シナリオ、更新方針は [e2e.md](e2e.md) を参照してください。
 
 ## 重要な前提
 
