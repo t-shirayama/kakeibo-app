@@ -29,6 +29,10 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - エクスポート形式はExcel（`.xlsx`）とする。
 - MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
 - スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
+- APIエラーは `error.code`, `error.message`, `error.details`, `error.request_id` を持つ共通形式で返す。
+- ページネーションは `page` と `page_size` を使うoffset/page方式とする。
+- ID項目名は `transaction_id` などのsnake_caseで統一する。
+- フロントDTOもsnake_caseのまま扱う。
 
 ## 認証
 
@@ -42,6 +46,10 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - ログイン中ユーザーの情報を取得する。
 - `GET /api/auth/csrf`
   - CSRFトークンをレスポンスボディで取得する。
+- `POST /api/auth/password-reset`
+  - パスワードリセットを開始する。
+- `POST /api/auth/password-reset/confirm`
+  - パスワードリセットを完了する。
 
 ## エンドポイント案
 
@@ -65,7 +73,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `DELETE /api/transactions/{transaction_id}`
   - 明細を削除する。
 - `GET /api/transactions/export`
-  - 明細をExcel（`.xlsx`）でエクスポートする。
+  - 明細一覧、カテゴリ集計、月別集計を含むExcel（`.xlsx`）をエクスポートする。
 
 ### カテゴリ
 
@@ -101,6 +109,6 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `PUT /api/settings`
   - ユーザー設定を更新する。
 - `POST /api/settings/export`
-  - ユーザーデータをExcel（`.xlsx`）でエクスポートする。
+  - 明細一覧、カテゴリ集計、月別集計を含むExcel（`.xlsx`）をエクスポートする。
 - `DELETE /api/settings/data`
   - ユーザーデータを削除する。

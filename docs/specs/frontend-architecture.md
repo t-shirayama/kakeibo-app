@@ -30,11 +30,13 @@ APIクライアントはOpenAPIから自動生成する。
 - API呼び出し
 - クライアント側のUI状態管理
 - ローディング、エラー、空状態の表示
+- APIエラーは `error.code`, `error.message`, `error.details`, `error.request_id` の共通形式として扱う。
 
 ## API連携
 
 - API契約はFastAPIのOpenAPIを正とする。
 - 画面表示に必要なデータはAPI DTOとして受け取る。
+- フロントDTOはsnake_caseのまま扱う。
 - 金額表示、日付表示などの表示整形はフロントエンドで行う。
 - 業務ルールの判定はバックエンドに委譲する。
 

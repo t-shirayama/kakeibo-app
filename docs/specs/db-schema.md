@@ -42,6 +42,19 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | revoked_at | datetime | 失効日時 |
 | created_at | datetime | 作成日時 |
 
+### password_reset_tokens
+
+パスワードリセットトークンを表す。
+
+| カラム | 型 | 内容 |
+| --- | --- | --- |
+| id | UUID | パスワードリセットトークンID |
+| user_id | UUID | ユーザーID |
+| token_hash | string | パスワードリセットトークンのハッシュ |
+| expires_at | datetime | 有効期限 |
+| used_at | datetime | 使用日時 |
+| created_at | datetime | 作成日時 |
+
 ### categories
 
 カテゴリを表す。
@@ -117,3 +130,17 @@ PDFアップロード履歴を表す。
 | page_size | integer | 1ページあたりの件数 |
 | dark_mode | boolean | ダークモード |
 | updated_at | datetime | 更新日時 |
+
+### audit_logs
+
+監査ログを表す。
+
+| カラム | 型 | 内容 |
+| --- | --- | --- |
+| id | UUID | 監査ログID |
+| user_id | UUID | 操作ユーザーID |
+| action | string | 操作種別 |
+| resource_type | string | 対象リソース種別 |
+| resource_id | UUID | 対象リソースID |
+| details | json | 詳細 |
+| created_at | datetime | 作成日時 |
