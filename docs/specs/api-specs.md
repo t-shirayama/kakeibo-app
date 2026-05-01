@@ -113,8 +113,8 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `GET /api/settings`
   - ユーザー設定を取得する。
 - `PUT /api/settings`
-  - ユーザー設定を更新する。
+  - ユーザー設定を更新する。`page_size` は10、20、50のいずれかとし、通貨はJPY固定で扱う。
 - `POST /api/settings/export`
   - 明細一覧、カテゴリ集計、月別集計を含むExcel（`.xlsx`）をエクスポートする。
 - `DELETE /api/settings/data`
-  - ユーザーデータを削除する。
+  - ユーザーデータを削除する。確認文字列 `DELETE` またはパスワード再入力を必須とし、削除後に認証Cookieを削除する。
