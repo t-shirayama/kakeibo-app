@@ -28,4 +28,7 @@
 - ORMは SQLAlchemy、マイグレーションは Alembic を使うこと
 - 認証はJWTを使うこと
 - JWTは HttpOnly Cookie に保存し、リフレッシュトークンを使うこと
+- JWTのアクセストークンは15分、リフレッシュトークンは5日、ローテーションありにすること
+- CSRF対策として SameSite=Lax とCSRFトークンヘッダーを使うこと
+- DB日時はUTC保存、表示時はAsia/Tokyo変換にすること
 - 実装時は docs/specs/project-rules.md のレイヤ構成、依存関係、ドメインモデルのルールに従うこと
