@@ -2,6 +2,8 @@
 
 このドキュメントは、フルスタックE2Eの目的、実行方法、シナリオ、更新方針をまとめる。
 
+テスト方針全体の正本は `docs/specs/project-rules.md` とし、このドキュメントにはE2Eに固有の詳細を置く。
+
 ## 目的
 
 Playwrightで Next.js、FastAPI、MySQL を実際に接続し、ユーザー操作からAPI、認証Cookie、DB永続化までの結合を確認する。

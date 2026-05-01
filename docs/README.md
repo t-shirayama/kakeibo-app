@@ -2,7 +2,15 @@
 
 このディレクトリはプロジェクトドキュメントの入口です。
 
-実装や仕様確認で迷った場合は、まずこのファイルを読み、次に `docs/specs/project-rules.md` を確認してください。
+実装や仕様確認で迷った場合は、まずこのファイルで参照先を確認し、次に `docs/specs/project-rules.md` を読んでください。
+
+## 参照順
+
+1. プロジェクト全体のルールを確認する: [プロジェクトルール](specs/project-rules.md)
+2. 画面別の要件を確認する: [画面要件入口](requirements.md)
+3. E2Eテストの実行方法やシナリオを確認する: [E2Eテスト](e2e.md)
+4. 個別仕様を確認する: `docs/specs/` 配下の該当文書
+5. 画面デザイン画像を確認する: `docs/designs/`
 
 ## 構成
 
@@ -19,6 +27,10 @@ docs/
     ├── db-schema.md
     ├── glossary.md
     ├── project-rules.md
+    ├── backend-architecture.md
+    ├── frontend-architecture.md
+    ├── pdf-import.md
+    ├── security.md
     └── adrs/
 ```
 
@@ -36,29 +48,16 @@ docs/
 - [PDF取込仕様](specs/pdf-import.md)
 - [セキュリティ仕様](specs/security.md)
 - [ADR](specs/adrs/)
-- [E2Eテスト](e2e.md)
 
-## 画面要件
+## テスト
 
-画面別要件は [requirements.md](requirements.md) を入口にして確認します。
+テスト方針の正本は [プロジェクトルール](specs/project-rules.md) です。
 
-画面デザイン画像は `docs/designs/` 配下に置きます。
+E2Eの実行方法、シナリオ、更新方針は [E2Eテスト](e2e.md) を参照してください。
 
-実装タスクは [tasks.md](tasks.md) を参照してください。
+## 運用
 
-E2Eテストの実行方法、シナリオ、更新方針は [e2e.md](e2e.md) を参照してください。
-
-## 重要な前提
-
-- アーキテクチャはドメイン駆動設計（DDD）を採用します。
-- バックエンドは FastAPI で開発します。
-- フロントエンドは Next.js で開発します。
-- フロントエンドは Next.js App Router を使います。
-- データベースは MySQL 8.4 を使います。
-- 認証はJWTを使います。
-- JWTは HttpOnly Cookie に保存し、リフレッシュトークンを使います。
-- PDF原本は初期は `storage/uploads/` に保存します。
-- 最大アップロードサイズは10MBです。
-- エクスポート形式はExcel（`.xlsx`）です。
-- 0円明細を許可します。
-- ドメインルールはバックエンドのドメイン層に集約します。
+- 仕様や実装方針を変更した場合は、関連するSSOT文書を同じ作業内で更新します。
+- 画面の振る舞いや表示項目を変更した場合は、`docs/requirements/` の該当画面要件を更新します。
+- E2Eの対象や観点を変更した場合は、`docs/e2e.md` を更新します。
+- Codex向けの最小ルールは `.codex/AGENTS.md` に置きます。
