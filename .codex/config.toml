@@ -47,6 +47,7 @@ ui = ["shadcn/ui", "Tailwind CSS"]
 server_state = "TanStack Query"
 api_client = "OpenAPI generated client"
 dto_case = "snake_case"
+auth_guard_env = "NEXT_PUBLIC_AUTH_GUARD_ENABLED"
 
 [auth]
 type = "JWT"
@@ -58,6 +59,7 @@ csrf_endpoint = "GET /api/auth/csrf"
 csrf_ttl = "30m"
 csrf_storage = "response_body_only"
 cookie_samesite = "Lax"
+access_cookie_name = "kakeibo_access"
 cookie_secure_production = true
 cookie_secure_local = false
 user_registration = "admin_created"

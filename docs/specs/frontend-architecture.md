@@ -39,6 +39,8 @@ APIクライアントはOpenAPIから自動生成する。
 - フロントDTOはsnake_caseのまま扱う。
 - 金額表示、日付表示などの表示整形はフロントエンドで行う。
 - 業務ルールの判定はバックエンドに委譲する。
+- APIエラーはバックエンド共通形式を `ApiError` と `ApiErrorAlert` で扱う。
+- 手書きAPI呼び出しは `src/lib/api.ts` に集約し、生成クライアント導入後も画面側の呼び出し口を安定させる。
 
 ## 認証
 
@@ -52,3 +54,5 @@ APIクライアントはOpenAPIから自動生成する。
 - CSRFトークンはフロントエンドのメモリに保持し、期限切れまたは403時に再取得する。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 - 認証が必要な画面は未ログイン時にログイン画面へ誘導する。
+- 未ログイン誘導は `NEXT_PUBLIC_AUTH_GUARD_ENABLED=true` の場合にmiddlewareで有効化する。
+- middlewareの判定はバックエンドのアクセストークンCookie `kakeibo_access` を見る。
