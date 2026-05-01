@@ -8,15 +8,8 @@ import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
 import { api, type TransactionRequest } from "@/lib/api";
-import type { TransactionDto } from "@/lib/types";
+import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
-
-const badgeClassByCategory: Record<string, string> = {
-  食費: "food",
-  日用品: "daily",
-  交通費: "transport",
-  娯楽: "entertainment",
-};
 
 export default function TransactionsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -56,7 +49,7 @@ export default function TransactionsPage() {
     );
   }, [query, transactionsQuery.data]);
   const categories = categoriesQuery.data ?? [];
-  const categoryById = new Map(categories.map((category) => [category.category_id, category.name]));
+  const categoryById = new Map(categories.map((category) => [category.category_id, category]));
   const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
 
   return (
@@ -122,8 +115,8 @@ export default function TransactionsPage() {
                   <td>{transaction.transaction_date}</td>
                   <td>{transaction.shop_name}</td>
                   <td>
-                    <span className={`badge ${badgeClassByCategory[transaction.category_name ?? ""] ?? "daily"}`}>
-                      {transaction.category_name ?? categoryById.get(transaction.category_id) ?? "未分類"}
+                    <span className="badge" style={getCategoryBadgeStyle(categoryById.get(transaction.category_id))}>
+                      {transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類"}
                     </span>
                   </td>
                   <td className="amount">{formatCurrency(transaction.amount)}</td>
@@ -181,4 +174,27 @@ export default function TransactionsPage() {
       />
     </>
   );
+}
+
+function getCategoryBadgeStyle(category: CategoryDto | undefined): React.CSSProperties {
+  const backgroundColor = category?.color ?? "#e2e8f0";
+  return {
+    backgroundColor,
+    borderColor: backgroundColor,
+    color: getReadableTextColor(backgroundColor),
+  };
+}
+
+function getReadableTextColor(hexColor: string): "#17233c" | "#ffffff" {
+  const normalized = hexColor.replace("#", "");
+  if (!/^[\da-f]{6}$/i.test(normalized)) {
+    return "#17233c";
+  }
+
+  const red = parseInt(normalized.slice(0, 2), 16);
+  const green = parseInt(normalized.slice(2, 4), 16);
+  const blue = parseInt(normalized.slice(4, 6), 16);
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+  return luminance > 0.62 ? "#17233c" : "#ffffff";
 }

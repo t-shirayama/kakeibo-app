@@ -1,5 +1,6 @@
 import type { CategoryDto, CategorySummaryDto, MonthlyReportDto, TransactionDto, UploadJobDto } from "./types";
 import { clear_csrf_token, get_csrf_token } from "./csrf";
+import { getLoginPath } from "./auth";
 import type { ApiErrorShape } from "@/components/api-error-alert";
 
 export type ApiClient = {
@@ -87,17 +88,21 @@ export async function with_csrf_headers(init: RequestInit = {}): Promise<Request
 }
 
 export async function api_fetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await retry_after_csrf_refresh(
-    () => fetch(`${get_api_base_url()}${path}`, { ...init, credentials: "include" }),
-    async (nextResponse) => nextResponse,
+  const response = await retry_after_auth_refresh(path, () =>
+    retry_after_csrf_refresh(
+      () => fetch(`${get_api_base_url()}${path}`, { ...init, credentials: "include" }),
+      async (nextResponse) => nextResponse,
+    ),
   );
   return parse_json_response<T>(response);
 }
 
 export async function api_mutation<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await retry_after_csrf_refresh(
-    async () => fetch(`${get_api_base_url()}${path}`, await with_csrf_headers(init)),
-    async (nextResponse) => nextResponse,
+  const response = await retry_after_auth_refresh(path, () =>
+    retry_after_csrf_refresh(
+      async () => fetch(`${get_api_base_url()}${path}`, await with_csrf_headers(init)),
+      async (nextResponse) => nextResponse,
+    ),
   );
   return parse_json_response<T>(response);
 }
@@ -112,6 +117,52 @@ export async function retry_after_csrf_refresh<T>(
     response = await request();
   }
   return parse(response);
+}
+
+async function retry_after_auth_refresh(path: string, request: () => Promise<Response>): Promise<Response> {
+  let response = await request();
+  if (response.status !== 401 || skips_auth_redirect(path)) {
+    return response;
+  }
+
+  const refreshed = await refresh_auth_session();
+  if (!refreshed) {
+    redirect_to_login();
+    return response;
+  }
+
+  response = await request();
+  if (response.status === 401) {
+    redirect_to_login();
+  }
+  return response;
+}
+
+async function refresh_auth_session(): Promise<boolean> {
+  const response = await retry_after_csrf_refresh(
+    async () =>
+      fetch(`${get_api_base_url()}/api/auth/refresh`, await with_csrf_headers({ method: "POST" })),
+    async (nextResponse) => nextResponse,
+  );
+  return response.ok;
+}
+
+function skips_auth_redirect(path: string): boolean {
+  return [
+    "/api/auth/csrf",
+    "/api/auth/login",
+    "/api/auth/refresh",
+    "/api/auth/password-reset",
+    "/api/auth/password-reset/confirm",
+  ].includes(path);
+}
+
+function redirect_to_login(): void {
+  if (typeof window === "undefined" || window.location.pathname === "/login") {
+    return;
+  }
+
+  window.location.assign(getLoginPath(`${window.location.pathname}${window.location.search}`));
 }
 
 async function parse_json_response<T>(response: Response): Promise<T> {
@@ -153,7 +204,9 @@ export const api: ApiClient = {
     return api_mutation<{ status: string }>(`/api/transactions/${transactionId}`, { method: "DELETE" });
   },
   async export_transactions() {
-    const response = await fetch(`${get_api_base_url()}/api/transactions/export`, { credentials: "include" });
+    const response = await retry_after_auth_refresh("/api/transactions/export", () =>
+      fetch(`${get_api_base_url()}/api/transactions/export`, { credentials: "include" }),
+    );
     if (!response.ok) {
       await parse_json_response<never>(response);
     }
