@@ -1,8 +1,10 @@
 "use client";
 
-import { Edit3, Plus, Trash2 } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Edit3, Plus, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryEditModal } from "@/components/category-edit-modal";
 import { EmptyState, LoadingState } from "@/components/state-block";
@@ -12,6 +14,7 @@ import type { CategoryDto } from "@/lib/types";
 
 export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
   const queryClient = useQueryClient();
   const categoriesQuery = useQuery({
@@ -45,6 +48,10 @@ export default function CategoriesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
   });
   const categories = categoriesQuery.data ?? [];
+  const uncategorizedCategory = useMemo(
+    () => categories.find((category) => category.name === "未分類"),
+    [categories],
+  );
   const editorError = createMutation.error || updateMutation.error;
   const apiError = categoriesQuery.error || editorError || statusMutation.error || deleteMutation.error;
 
@@ -143,7 +150,7 @@ export default function CategoriesPage() {
                 <h2>店名キーワード</h2>
                 <p>PDF明細の店名に一致する語句でカテゴリ候補を作成します。</p>
               </div>
-              <button className="button secondary" type="button">
+              <button className="button secondary" type="button" onClick={() => setIsRuleDialogOpen(true)}>
                 編集
               </button>
             </div>
@@ -152,9 +159,18 @@ export default function CategoriesPage() {
                 <h2>未分類の扱い</h2>
                 <p>自動分類できない取引は明細一覧で確認できます。</p>
               </div>
-              <button className="button secondary" type="button">
-                確認
-              </button>
+              {uncategorizedCategory ? (
+                <Link
+                  className="button secondary"
+                  href={`/transactions?category_id=${uncategorizedCategory.category_id}&period=current_year`}
+                >
+                  確認
+                </Link>
+              ) : (
+                <button className="button secondary" type="button" disabled>
+                  確認
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -179,6 +195,45 @@ export default function CategoriesPage() {
           await createMutation.mutateAsync(request);
         }}
       />
+
+      <Dialog.Root open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content" aria-describedby="category-rule-description">
+            <div className="dialog-header">
+              <Dialog.Title className="dialog-title">店名キーワードの分類ルール</Dialog.Title>
+              <Dialog.Close className="icon-button" aria-label="分類ルールを閉じる">
+                <X size={18} aria-hidden="true" />
+              </Dialog.Close>
+            </div>
+            <Dialog.Description id="category-rule-description" className="sr-only">
+              店名キーワードによる自動分類の現在の扱いを確認します。
+            </Dialog.Description>
+            <div className="settings-list">
+              <div className="settings-row">
+                <div>
+                  <h2>現在の自動分類</h2>
+                  <p>同じ店名、カード利用者、支払い方法の過去明細がある場合、その明細のカテゴリを候補として再利用します。</p>
+                </div>
+              </div>
+              <div className="settings-row">
+                <div>
+                  <h2>編集方法</h2>
+                  <p>店名ごとの分類を変える場合は、明細一覧で対象明細のカテゴリを編集してください。次回以降の同一店名分類に反映されます。</p>
+                </div>
+                <Link className="button secondary" href="/transactions?period=current_year">
+                  明細一覧へ
+                </Link>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <Dialog.Close className="button" type="button">
+                閉じる
+              </Dialog.Close>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

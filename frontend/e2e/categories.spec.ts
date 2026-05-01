@@ -36,4 +36,12 @@ test("shows category colors and creates a category", async ({ page }) => {
   page.once("dialog", (dialog) => dialog.accept());
   await editedRow.getByRole("button", { name: "E2Eカテゴリ 編集済みを削除" }).click();
   await expect(page.getByText("E2Eカテゴリ 編集済み")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "編集", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "店名キーワードの分類ルール" })).toBeVisible();
+  await page.getByRole("button", { name: "閉じる", exact: true }).click();
+
+  await page.getByRole("link", { name: "確認" }).click();
+  await expect(page).toHaveURL(/\/transactions\?category_id=.*&period=current_year$/);
+  await expect(page.locator('select[aria-label="カテゴリ絞り込み"] option:checked')).toHaveText("未分類");
 });

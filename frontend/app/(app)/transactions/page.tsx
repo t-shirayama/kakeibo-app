@@ -1,6 +1,7 @@
 "use client";
 
 import { Edit3, Plus, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
@@ -14,15 +15,17 @@ import { formatCurrency } from "@/lib/format";
 type PeriodKey = "current_month" | "previous_month" | "current_year";
 
 export default function TransactionsPage() {
+  const searchParams = useSearchParams();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
   const [query, setQuery] = useState("");
-  const [period, setPeriod] = useState<PeriodKey>("current_month");
+  const [period, setPeriod] = useState<PeriodKey>(() => parsePeriod(searchParams.get("period")));
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category_id") ?? "");
   const queryClient = useQueryClient();
   const periodRange = useMemo(() => getPeriodRange(period), [period]);
   const transactionsQuery = useQuery({
-    queryKey: ["transactions", periodRange],
-    queryFn: () => api.list_transactions(periodRange),
+    queryKey: ["transactions", periodRange, categoryFilter],
+    queryFn: () => api.list_transactions({ ...periodRange, category_id: categoryFilter || undefined }),
   });
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
   const saveMutation = useMutation({
@@ -82,6 +85,19 @@ export default function TransactionsPage() {
               <option value="current_month">今月</option>
               <option value="previous_month">先月</option>
               <option value="current_year">今年</option>
+            </select>
+            <select
+              className="select"
+              aria-label="カテゴリ絞り込み"
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+            >
+              <option value="">すべてのカテゴリ</option>
+              {categories.map((category) => (
+                <option key={category.category_id} value={category.category_id}>
+                  {category.name}
+                </option>
+              ))}
             </select>
             <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
               {exportMutation.isPending ? "出力中" : "エクスポート"}
@@ -186,6 +202,10 @@ export default function TransactionsPage() {
       />
     </>
   );
+}
+
+function parsePeriod(value: string | null): PeriodKey {
+  return value === "previous_month" || value === "current_year" ? value : "current_month";
 }
 
 function getPeriodRange(period: PeriodKey): { date_from: string; date_to: string } {

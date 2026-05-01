@@ -48,6 +48,7 @@ export type TransactionRequest = {
 export type TransactionListParams = {
   date_from?: string;
   date_to?: string;
+  category_id?: string;
 };
 
 export type CategoryRequest = {
@@ -198,6 +199,9 @@ export const api: ApiClient = {
     }
     if (params.date_to) {
       searchParams.set("date_to", params.date_to);
+    }
+    if (params.category_id) {
+      searchParams.set("category_id", params.category_id);
     }
 
     const response = await api_fetch<{ items: TransactionDto[] }>(`/api/transactions?${searchParams.toString()}`);
