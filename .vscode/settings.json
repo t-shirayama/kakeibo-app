@@ -1,13 +1,18 @@
 {
   "cSpell.words": [
     "adrs",
+    "healthcheck",
     "kakeibo",
+    "mysqladmin",
     "Pydantic",
+    "pytest",
     "qualname",
     "Rakuten",
     "shadcn",
     "sqlalchemy",
     "SSOT",
-    "Suica"
+    "Suica",
+    "uvicorn",
+    "venv"
   ]
 }

@@ -63,7 +63,64 @@ MySQL 8.4 は Docker Compose で起動します。
 docker compose up -d mysql
 ```
 
-バックエンドは `backend/`、フロントエンドは `frontend/` に配置します。依存関係を入れた後の起動コマンドは各ディレクトリのREADMEを参照してください。
+バックエンドは `backend/`、フロントエンドは `frontend/` に配置します。
+
+### バックエンド起動
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+uvicorn app.main:app --reload
+```
+
+確認先:
+
+- Swagger UI: http://localhost:8000/docs
+- Health Check: http://localhost:8000/api/health
+- CSRF Token: http://localhost:8000/api/auth/csrf
+
+### フロントエンド起動
+
+別ターミナルで起動します。
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+確認先:
+
+- http://localhost:3000
+- http://localhost:3000/dashboard
+- http://localhost:3000/transactions
+- http://localhost:3000/categories
+- http://localhost:3000/upload
+- http://localhost:3000/reports
+- http://localhost:3000/settings
+- http://localhost:3000/login
+
+### 静的チェック
+
+バックエンド:
+
+```powershell
+cd backend
+python -m compileall app tests
+pytest
+```
+
+フロントエンド:
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+```
+
+現時点ではDBマイグレーション初版や本格APIは未実装です。まずはアプリが起動すること、Swagger UIが表示されること、画面スケルトンが表示されることを確認します。
 
 ## 重要な仕様
 
