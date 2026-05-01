@@ -1,0 +1,97 @@
+# Codex project context.
+# This file is an AI-friendly index, not the SSOT.
+# Canonical specs live under docs/specs/.
+
+[project]
+name = "kakeibo-app"
+language = "ja"
+summary = "家計簿アプリ。PDF明細を取り込み、明細管理、カテゴリ管理、レポート表示を行う。"
+
+[docs]
+entrypoint = "docs/README.md"
+agents = ".codex/AGENTS.md"
+requirements_index = "docs/requirements.md"
+designs_dir = "docs/designs"
+update_rule = "When specs, architecture, API, DB, security, PDF import, glossary, or screen requirements change, update the related docs in the same task and check for unresolved items."
+
+[docs.specs]
+project_rules = "docs/specs/project-rules.md"
+domain_model = "docs/specs/domain-model.md"
+api_specs = "docs/specs/api-specs.md"
+db_schema = "docs/specs/db-schema.md"
+glossary = "docs/specs/glossary.md"
+backend_architecture = "docs/specs/backend-architecture.md"
+frontend_architecture = "docs/specs/frontend-architecture.md"
+pdf_import = "docs/specs/pdf-import.md"
+security = "docs/specs/security.md"
+adrs = "docs/specs/adrs"
+
+[architecture]
+style = "DDD"
+backend = "FastAPI"
+frontend = "Next.js App Router"
+database = "MySQL 8.4"
+orm = "SQLAlchemy"
+migrations = "Alembic"
+
+[backend]
+root = "backend"
+app_root = "backend/app"
+layers = ["domain", "application", "infrastructure", "presentation"]
+pdf_library = "PyMuPDF"
+jwt_library = "PyJWT"
+
+[frontend]
+root = "frontend"
+ui = ["shadcn/ui", "Tailwind CSS"]
+server_state = "TanStack Query"
+api_client = "OpenAPI generated client"
+dto_case = "snake_case"
+
+[auth]
+type = "JWT"
+storage = "HttpOnly Cookie"
+access_token_ttl = "15m"
+refresh_token_ttl = "5d"
+refresh_token_rotation = true
+csrf_endpoint = "GET /api/auth/csrf"
+csrf_ttl = "30m"
+csrf_storage = "response_body_only"
+cookie_samesite = "Lax"
+cookie_secure_production = true
+cookie_secure_local = false
+user_registration = "admin_created"
+password_min_length = 12
+password_requires = ["uppercase", "lowercase", "number", "symbol"]
+password_reset_initial_release = true
+
+[domain]
+money = "integer JPY; negative means cancellation; zero is allowed"
+timezone_storage = "UTC"
+timezone_display = "Asia/Tokyo"
+soft_delete = ["transactions", "categories", "uploads"]
+export_format = "xlsx"
+
+[pdf_import]
+initial_format = "Rakuten card statement PDF"
+source_storage = "storage/uploads/{user_id}/{upload_id}/original.pdf"
+fixture_strategy = "extracted text fixture plus expected JSON"
+category_initial = "uncategorized"
+category_auto_rule = "reuse past classification for same item; fallback to uncategorized"
+delete_original_when_upload_deleted = true
+
+[api]
+schema_source = "FastAPI OpenAPI"
+docs_ui = "Swagger UI"
+schema_policy = "MVP Request/Response DTO outline in docs/specs/api-specs.md; exact machine-readable contract in Pydantic/OpenAPI"
+error_shape = "error.code, error.message, error.details, error.request_id"
+pagination = "page/page_size offset pagination"
+id_case = "snake_case"
+
+[release_scope.initial]
+email_notifications = false
+multi_currency = false
+s3_compatible_storage = false
+dark_mode_ui = false
+weekly_reports = true
+yearly_reports = true
