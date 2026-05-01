@@ -12,13 +12,15 @@ type TransactionEditModalProps = {
 };
 
 export function TransactionEditModal({ categories, open, transaction, onOpenChange }: TransactionEditModalProps) {
+  const title = transaction ? "明細を編集" : "明細を追加";
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content className="dialog-content" aria-describedby="transaction-edit-description">
           <div className="dialog-header">
-            <Dialog.Title className="dialog-title">明細を編集</Dialog.Title>
+            <Dialog.Title className="dialog-title">{title}</Dialog.Title>
             <Dialog.Close className="icon-button" aria-label="閉じる">
               <X size={18} aria-hidden="true" />
             </Dialog.Close>
@@ -27,7 +29,13 @@ export function TransactionEditModal({ categories, open, transaction, onOpenChan
             取引明細の日付、店名、カテゴリ、金額、支払い方法、メモを編集します。
           </Dialog.Description>
 
-          <form className="modal-form">
+          <form
+            className="modal-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onOpenChange(false);
+            }}
+          >
             <div className="form-field horizontal">
               <label htmlFor="transaction-date">日付</label>
               <input id="transaction-date" type="date" defaultValue={transaction?.transaction_date ?? ""} />
@@ -64,7 +72,7 @@ export function TransactionEditModal({ categories, open, transaction, onOpenChan
                 キャンセル
               </Dialog.Close>
               <button className="button" type="submit">
-                保存
+                {transaction ? "保存" : "追加"}
               </button>
             </div>
           </form>

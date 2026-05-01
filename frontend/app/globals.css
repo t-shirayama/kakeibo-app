@@ -511,6 +511,29 @@ textarea {
   font-weight: 750;
 }
 
+.success-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  color: #145c3d;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+}
+
+.success-panel strong,
+.success-panel p {
+  margin: 0;
+}
+
+.success-panel p {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
 .api-error-alert {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
