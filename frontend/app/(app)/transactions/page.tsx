@@ -12,7 +12,7 @@ import { api, type TransactionRequest } from "@/lib/api";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
-type PeriodKey = "current_month" | "previous_month" | "current_year";
+type PeriodKey = "current_month" | "previous_month" | "current_year" | "all";
 
 export default function TransactionsPage() {
   const searchParams = useSearchParams();
@@ -45,6 +45,11 @@ export default function TransactionsPage() {
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
+  const categories = categoriesQuery.data ?? [];
+  const categoryById = useMemo(
+    () => new Map(categories.map((category) => [category.category_id, category])),
+    [categories],
+  );
   const transactions = useMemo(() => {
     const rows = transactionsQuery.data ?? [];
     const normalizedQuery = query.trim().toLowerCase();
@@ -52,14 +57,16 @@ export default function TransactionsPage() {
       return rows;
     }
     return rows.filter((transaction) =>
-      [transaction.shop_name, transaction.category_name ?? "", transaction.memo ?? ""]
+      [
+        transaction.shop_name,
+        transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類",
+        transaction.memo ?? "",
+      ]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery),
     );
-  }, [query, transactionsQuery.data]);
-  const categories = categoriesQuery.data ?? [];
-  const categoryById = new Map(categories.map((category) => [category.category_id, category]));
+  }, [categoryById, query, transactionsQuery.data]);
   const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
 
   return (
@@ -85,6 +92,7 @@ export default function TransactionsPage() {
               <option value="current_month">今月</option>
               <option value="previous_month">先月</option>
               <option value="current_year">今年</option>
+              <option value="all">全期間</option>
             </select>
             <select
               className="select"
@@ -205,10 +213,14 @@ export default function TransactionsPage() {
 }
 
 function parsePeriod(value: string | null): PeriodKey {
-  return value === "previous_month" || value === "current_year" ? value : "current_month";
+  return value === "previous_month" || value === "current_year" || value === "all" ? value : "current_month";
 }
 
-function getPeriodRange(period: PeriodKey): { date_from: string; date_to: string } {
+function getPeriodRange(period: PeriodKey): { date_from?: string; date_to?: string } {
+  if (period === "all") {
+    return {};
+  }
+
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();

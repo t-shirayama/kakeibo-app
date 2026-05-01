@@ -162,7 +162,7 @@ export default function CategoriesPage() {
               {uncategorizedCategory ? (
                 <Link
                   className="button secondary"
-                  href={`/transactions?category_id=${uncategorizedCategory.category_id}&period=current_year`}
+                  href={`/transactions?category_id=${uncategorizedCategory.category_id}&period=all`}
                 >
                   確認
                 </Link>

@@ -22,6 +22,16 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
 
   await page.getByLabel("明細検索").fill("");
+  await page.getByLabel("期間").selectOption({ label: "全期間" });
+  await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "未分類" });
+  await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
+
+  await page.getByLabel("明細検索").fill("未分類");
+  await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
+
+  await page.getByLabel("明細検索").fill("");
+  await page.getByLabel("期間").selectOption({ label: "今年" });
+  await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
   await page.getByRole("button", { name: "手動で追加" }).click();
   await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
   await page.getByLabel("日付").fill("2026-05-02");
