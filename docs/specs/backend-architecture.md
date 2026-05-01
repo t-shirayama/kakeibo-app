@@ -72,6 +72,7 @@ backend/
 - リフレッシュトークンはローテーションする。
 - CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
+- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 
 ## データベース
@@ -88,3 +89,4 @@ backend/
 
 - JWTライブラリは何を使うか。
 - アップロード済みPDFのパスを相対パスで保存するか。
+- CSRFトークンの有効期限を何分にするか。

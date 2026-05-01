@@ -24,7 +24,11 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - リフレッシュトークンはローテーションする。
 - CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
+- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
+- エクスポート形式はExcel（`.xlsx`）とする。
+- MVPで実装する主要APIのリクエスト・レスポンススキーマは、実装前にPydanticスキーマとして固定する。
+- スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
 
 ## 認証
 
@@ -37,7 +41,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `GET /api/auth/me`
   - ログイン中ユーザーの情報を取得する。
 - `GET /api/auth/csrf`
-  - CSRFトークンを取得する。
+  - CSRFトークンをレスポンスボディで取得する。
 
 ## エンドポイント案
 
@@ -61,7 +65,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `DELETE /api/transactions/{transaction_id}`
   - 明細を削除する。
 - `GET /api/transactions/export`
-  - 明細をエクスポートする。
+  - 明細をExcel（`.xlsx`）でエクスポートする。
 
 ### カテゴリ
 
@@ -97,12 +101,10 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `PUT /api/settings`
   - ユーザー設定を更新する。
 - `POST /api/settings/export`
-  - ユーザーデータをエクスポートする。
+  - ユーザーデータをExcel（`.xlsx`）でエクスポートする。
 - `DELETE /api/settings/data`
   - ユーザーデータを削除する。
 
 ## 確認事項
 
-- エクスポート形式をCSV、PDF、画像のどれにするか。
-- APIの詳細なリクエスト・レスポンススキーマをどこまで先に固定するか。
-- CSRFトークンをCookieにも持たせるか、レスポンスボディのみで返すか。
+- APIの詳細スキーマをどの粒度で `api-specs.md` に書くか。
