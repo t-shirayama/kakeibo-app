@@ -3,8 +3,10 @@
     "adrs",
     "kakeibo",
     "Pydantic",
+    "qualname",
     "Rakuten",
     "shadcn",
+    "sqlalchemy",
     "SSOT",
     "Suica"
   ]
