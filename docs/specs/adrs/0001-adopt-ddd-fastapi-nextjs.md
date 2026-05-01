@@ -16,10 +16,15 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - バックエンドは FastAPI で開発する。
 - フロントエンドは Next.js で開発する。
 - フロントエンドは Next.js App Router を使う。
-- データベースは MySQL を使う。
+- データベースは MySQL 8.4 を使う。
+- ORMは SQLAlchemy、マイグレーションは Alembic を使う。
 - 認証はJWTを使う。
+- JWTは HttpOnly Cookie に保存する。
+- リフレッシュトークンを使う。
 - API契約の機械可読な正はFastAPIが生成するOpenAPIとし、Swagger UIで確認する。
 - 初期のPDF取込対象は楽天カード明細PDFとし、ルールベースで抽出する。
+- アップロード済みPDFは原本として保存する。
+- 楽天カード明細の利用者列は明細の独立項目として扱う。
 - `docs/specs/` を仕様書のSSOTとする。
 
 ## 結果

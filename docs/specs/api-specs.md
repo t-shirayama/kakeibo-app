@@ -18,13 +18,15 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - 認可対象のリソースはログインユーザー本人のデータに限定する。
 - 認証はJWTを使う。
 - 認証が必要なAPIは `Authorization: Bearer <token>` を受け付ける。
+- JWTは HttpOnly Cookie に保存する。
+- リフレッシュトークンを使う。
 
 ## 認証
 
 - `POST /api/auth/login`
   - ログインし、JWTを発行する。
 - `POST /api/auth/refresh`
-  - 必要に応じてアクセストークンを更新する。
+  - リフレッシュトークンを使ってアクセストークンを更新する。
 - `POST /api/auth/logout`
   - ログアウトする。
 - `GET /api/auth/me`
@@ -96,5 +98,5 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 - エクスポート形式をCSV、PDF、画像のどれにするか。
 - APIの詳細なリクエスト・レスポンススキーマをどこまで先に固定するか。
-- JWTの保存場所をCookieにするか、メモリにするか。
-- リフレッシュトークンを使うか。
+- CookieベースJWTでのCSRF対策をどうするか。
+- アクセストークンとリフレッシュトークンの有効期限をどうするか。

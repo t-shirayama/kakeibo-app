@@ -2,7 +2,9 @@
 
 ## 方針
 
-データベースは MySQL を使う。スキーマはドメインモデルを永続化するための案として管理する。
+データベースは MySQL 8.4 を使う。スキーマはドメインモデルを永続化するための案として管理する。
+
+ORMは SQLAlchemy、マイグレーションは Alembic を使う。
 
 ドメイン層はデータベーススキーマやORMに依存しない。永続化形式への変換はインフラ層で行う。
 
@@ -21,6 +23,19 @@
 | password_hash | string | パスワードハッシュ |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
+
+### refresh_tokens
+
+リフレッシュトークンを表す。
+
+| カラム | 型 | 内容 |
+| --- | --- | --- |
+| id | UUID | リフレッシュトークンID |
+| user_id | UUID | ユーザーID |
+| token_hash | string | リフレッシュトークンのハッシュ |
+| expires_at | datetime | 有効期限 |
+| revoked_at | datetime | 失効日時 |
+| created_at | datetime | 作成日時 |
 
 ### categories
 
@@ -52,6 +67,7 @@
 | category_id | UUID | カテゴリID |
 | transaction_date | date | 日付 |
 | shop_name | string | 店名 |
+| card_user_name | string | 楽天カード明細の利用者 |
 | amount | integer | 金額 |
 | transaction_type | string | 支出または収入 |
 | payment_method | string | 支払い方法 |
@@ -69,6 +85,7 @@ PDFアップロード履歴を表す。
 | id | UUID | アップロードID |
 | user_id | UUID | ユーザーID |
 | file_name | string | ファイル名 |
+| stored_file_path | string | 保存済みPDF原本のパス |
 | status | string | 処理中、完了、失敗 |
 | imported_count | integer | 取込件数 |
 | error_message | string | エラー理由 |
@@ -90,6 +107,6 @@ PDFアップロード履歴を表す。
 
 ## 確認事項
 
-- MySQLのバージョンをどうするか。
-- ORMとマイグレーションツールをどうするか。
-- アップロード元ファイルの保存先をDB外にするか。
+- UUIDをMySQL上で `CHAR(36)` と `BINARY(16)` のどちらで保存するか。
+- アップロード元PDFの保存先をローカル、S3互換ストレージ、DB外のどれにするか。
+- リフレッシュトークンをローテーションするか。

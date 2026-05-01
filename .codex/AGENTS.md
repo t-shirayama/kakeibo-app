@@ -24,6 +24,8 @@
 - ドメイン駆動設計（DDD）を採用すること
 - バックエンドは FastAPI、フロントエンドは Next.js で開発すること
 - フロントエンドは Next.js App Router を使うこと
-- データベースは MySQL を使うこと
+- データベースは MySQL 8.4 を使うこと
+- ORMは SQLAlchemy、マイグレーションは Alembic を使うこと
 - 認証はJWTを使うこと
+- JWTは HttpOnly Cookie に保存し、リフレッシュトークンを使うこと
 - 実装時は docs/specs/project-rules.md のレイヤ構成、依存関係、ドメインモデルのルールに従うこと
