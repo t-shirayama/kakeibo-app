@@ -3,12 +3,13 @@ from __future__ import annotations
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
 from app.application.common import Page, PageResult
+from app.application.reports import ReportUseCases
 from app.application.transactions import TransactionCategoryError, TransactionCategoryUseCases, TransactionCommand
 from app.domain.entities import Transaction, TransactionType
 from app.infrastructure.db.session import get_db_session
@@ -70,6 +71,19 @@ def list_transactions(
         category_id=category_id,
     )
     return _list_response(result)
+
+
+@router.get("/export")
+def export_transactions(
+    current_user: UserRecord = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+) -> Response:
+    content = ReportUseCases(TransactionCategoryRepository(session)).export_workbook(user_id=current_user.id)
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="kakeibo-export.xlsx"'},
+    )
 
 
 @router.post("", response_model=TransactionResponse, dependencies=[Depends(validate_csrf_token)])

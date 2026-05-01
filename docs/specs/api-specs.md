@@ -105,6 +105,10 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 - `GET /api/reports/monthly`
   - 月別支出推移を取得する。
+- `GET /api/reports/weekly`
+  - 週別支出レポートを取得する。
+- `GET /api/reports/yearly`
+  - 年別支出レポートを取得する。
 - `GET /api/reports/categories`
   - カテゴリ別支出割合と推移を取得する。
 

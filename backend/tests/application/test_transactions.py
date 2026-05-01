@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from datetime import date
+from io import BytesIO
 from uuid import UUID, uuid4
+from zipfile import ZipFile
 
 from app.application.common import Page, PageResult
+from app.application.reports import ReportUseCases, TransactionWithCategory
 from app.application.transactions import TransactionCategoryUseCases, TransactionCommand
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
@@ -39,6 +42,26 @@ class FakeTransactionCategoryRepository:
     def list_transactions(self, *, user_id: UUID, page: Page, keyword: str | None = None, category_id: UUID | None = None):
         items = [transaction for transaction in self.transactions.values() if transaction.user_id == user_id]
         return PageResult(items=items, total=len(items), page=page.page, page_size=page.page_size)
+
+    def list_transactions_with_categories(self, *, user_id: UUID, start_date=None, end_date=None, limit=None):
+        rows = []
+        for transaction in self.transactions.values():
+            if transaction.user_id != user_id:
+                continue
+            if start_date and transaction.transaction_date < start_date:
+                continue
+            if end_date and transaction.transaction_date > end_date:
+                continue
+            category = self.categories[transaction.category_id]
+            rows.append(
+                TransactionWithCategory(
+                    transaction=transaction,
+                    category_name=category.name,
+                    category_color=category.color,
+                )
+            )
+        rows.sort(key=lambda row: row.transaction.transaction_date, reverse=True)
+        return rows[:limit] if limit is not None else rows
 
     def create_transaction(self, transaction: Transaction) -> Transaction:
         self.transactions[transaction.id] = transaction
@@ -145,3 +168,64 @@ def test_delete_transaction_records_audit_log() -> None:
     use_cases.delete_transaction(user_id=USER_ID, transaction_id=transaction.id)
 
     assert ("transaction.deleted", transaction.id) in repository.audit_logs
+
+
+def test_monthly_report_summarizes_expenses_by_category() -> None:
+    repository = FakeTransactionCategoryRepository()
+    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=make_command(shop_name="Cafe", category_id=FOOD_ID),
+    )
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=make_command(shop_name="Market", category_id=FOOD_ID),
+    )
+
+    report = report_use_cases.monthly_report(user_id=USER_ID, year=2026, month=5)
+
+    assert report.total_expense == 2400
+    assert report.average_daily_expense == 77
+    assert report.max_category is not None
+    assert report.max_category.name == "食費"
+    assert report.category_summaries[0].ratio == 1
+
+
+def test_dashboard_summary_compares_previous_month() -> None:
+    repository = FakeTransactionCategoryRepository()
+    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    transaction_use_cases.create_transaction(user_id=USER_ID, command=make_command(category_id=FOOD_ID))
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 4, 1),
+            shop_name="April Store",
+            amount=500,
+            transaction_type=TransactionType.EXPENSE,
+            category_id=FOOD_ID,
+        ),
+    )
+
+    summary = report_use_cases.dashboard_summary(user_id=USER_ID, year=2026, month=5)
+
+    assert summary.total_expense == 1200
+    assert summary.expense_change == 700
+    assert summary.transaction_count == 1
+
+
+def test_report_export_workbook_contains_required_sheets() -> None:
+    repository = FakeTransactionCategoryRepository()
+    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    transaction_use_cases.create_transaction(user_id=USER_ID, command=make_command(category_id=FOOD_ID))
+
+    workbook = report_use_cases.export_workbook(user_id=USER_ID)
+
+    with ZipFile(BytesIO(workbook)) as archive:
+        workbook_xml = archive.read("xl/workbook.xml").decode("utf-8")
+
+    assert "明細一覧" in workbook_xml
+    assert "カテゴリ集計" in workbook_xml
+    assert "月別集計" in workbook_xml

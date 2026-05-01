@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.application.common import Page, PageResult
+from app.application.reports import TransactionWithCategory
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
 from app.infrastructure.models.audit_log import AuditLogModel
@@ -50,6 +51,38 @@ class TransactionCategoryRepository:
             page=page.page,
             page_size=page.page_size,
         )
+
+    def list_transactions_with_categories(
+        self,
+        *,
+        user_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        limit: int | None = None,
+    ) -> list[TransactionWithCategory]:
+        filters = [TransactionModel.user_id == str(user_id), TransactionModel.deleted_at.is_(None)]
+        if start_date:
+            filters.append(TransactionModel.transaction_date >= start_date)
+        if end_date:
+            filters.append(TransactionModel.transaction_date <= end_date)
+
+        statement = (
+            select(TransactionModel, CategoryModel.name, CategoryModel.color)
+            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id)
+            .where(*filters)
+            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
+        )
+        if limit is not None:
+            statement = statement.limit(limit)
+
+        return [
+            TransactionWithCategory(
+                transaction=self._to_transaction(transaction),
+                category_name=category_name,
+                category_color=category_color,
+            )
+            for transaction, category_name, category_color in self._session.execute(statement).all()
+        ]
 
     def create_transaction(self, transaction: Transaction) -> Transaction:
         model = TransactionModel(
