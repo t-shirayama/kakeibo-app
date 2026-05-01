@@ -117,6 +117,7 @@ pytest
 ```powershell
 cd frontend
 npm run typecheck
+npm run test:pages
 npm run build
 ```
 
