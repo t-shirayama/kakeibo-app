@@ -8,7 +8,7 @@ ORMは SQLAlchemy、マイグレーションは Alembic を使う。
 
 ドメイン層はデータベーススキーマやORMに依存しない。永続化形式への変換はインフラ層で行う。
 
-金額は整数JPYとして保存する。日時はDBにUTCで保存し、表示時に `Asia/Tokyo` へ変換する。
+金額は整数JPYとして保存し、マイナス金額は取消明細を表す。日時はDBにUTCで保存し、表示時に `Asia/Tokyo` へ変換する。
 
 UUIDはMySQL上では `CHAR(36)` として保存する。
 
@@ -53,6 +53,7 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | is_active | boolean | 有効状態 |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
+| deleted_at | datetime | 論理削除日時 |
 
 制約:
 
@@ -77,6 +78,7 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | source_upload_id | UUID | 取込元アップロードID |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
+| deleted_at | datetime | 論理削除日時 |
 
 ### uploads
 
@@ -92,6 +94,7 @@ PDFアップロード履歴を表す。
 | imported_count | integer | 取込件数 |
 | error_message | string | エラー理由 |
 | uploaded_at | datetime | アップロード日時 |
+| deleted_at | datetime | 論理削除日時 |
 
 ### user_settings
 
@@ -110,4 +113,4 @@ PDFアップロード履歴を表す。
 ## 確認事項
 
 - `stored_file_path` は `storage/uploads/` 配下の相対パスで保存するか、絶対パスで保存するか。
-- `deleted_at` を各テーブルへ追加して論理削除にするか。
+- ユーザー削除時の関連データ削除方針。

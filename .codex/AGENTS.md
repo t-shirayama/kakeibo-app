@@ -30,5 +30,8 @@
 - JWTは HttpOnly Cookie に保存し、リフレッシュトークンを使うこと
 - JWTのアクセストークンは15分、リフレッシュトークンは5日、ローテーションありにすること
 - CSRF対策として SameSite=Lax とCSRFトークンヘッダーを使うこと
+- CSRFトークンは GET /api/auth/csrf で取得すること
 - DB日時はUTC保存、表示時はAsia/Tokyo変換にすること
+- 金額は整数JPYで、マイナス金額は取消明細を表すこと
+- 明細、カテゴリ、アップロード履歴は論理削除すること
 - 実装時は docs/specs/project-rules.md のレイヤ構成、依存関係、ドメインモデルのルールに従うこと
