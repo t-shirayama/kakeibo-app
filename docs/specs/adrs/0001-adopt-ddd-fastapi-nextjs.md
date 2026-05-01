@@ -26,7 +26,9 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
 - CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
+- CSRFトークンの有効期限は30分とする。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
+- JWTライブラリは PyJWT を使う。
 - API契約の機械可読な正はFastAPIが生成するOpenAPIとし、Swagger UIで確認する。
 - 初期のPDF取込対象は楽天カード明細PDFとし、ルールベースで抽出する。
 - アップロード済みPDFは原本としてローカルの `storage/uploads/` に保存し、ユーザーが削除するまで保持する。
@@ -35,12 +37,18 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - UUIDはMySQL上では `CHAR(36)` として保存する。
 - 最大アップロードサイズは10MBとする。
 - エクスポート形式はExcel（`.xlsx`）とする。
-- MVPで実装する主要APIのリクエスト・レスポンススキーマは、実装前にPydanticスキーマとして固定する。
+- MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
 - スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
 - マイナス金額は取消明細を表す。
+- 0円明細を許可する。
 - 支払い方法は楽天PDFの値をそのまま保存する。
 - 収入明細は支出明細と同じ `transactions` テーブルで扱い、`transaction_type` で区別する。
 - 明細、カテゴリ、アップロード履歴は論理削除する。
+- UIライブラリは shadcn/ui と Tailwind CSS を使う。
+- サーバー状態管理は TanStack Query を使う。
+- APIクライアントはOpenAPIから自動生成する。
+- 楽天カード明細PDFのテストデータは、抽出後テキストfixtureと期待値JSONで管理する。
+- PDF原本の保存パスは `storage/uploads/{user_id}/{upload_id}/original.pdf` の相対パスとする。
 - `docs/specs/` を仕様書のSSOTとする。
 
 ## 結果

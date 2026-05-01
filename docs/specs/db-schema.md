@@ -8,9 +8,11 @@ ORMは SQLAlchemy、マイグレーションは Alembic を使う。
 
 ドメイン層はデータベーススキーマやORMに依存しない。永続化形式への変換はインフラ層で行う。
 
-金額は整数JPYとして保存し、マイナス金額は取消明細を表す。日時はDBにUTCで保存し、表示時に `Asia/Tokyo` へ変換する。
+金額は整数JPYとして保存し、マイナス金額は取消明細を表す。0円明細を許可する。日時はDBにUTCで保存し、表示時に `Asia/Tokyo` へ変換する。
 
 UUIDはMySQL上では `CHAR(36)` として保存する。
+
+ユーザー削除時はユーザーと関連データを論理削除し、保存済みPDF原本はストレージから削除する。
 
 ## テーブル案
 
@@ -25,6 +27,7 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | password_hash | string | パスワードハッシュ |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
+| deleted_at | datetime | 論理削除日時 |
 
 ### refresh_tokens
 
@@ -76,6 +79,11 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | payment_method | string | 支払い方法 |
 | memo | string | メモ |
 | source_upload_id | UUID | 取込元アップロードID |
+| source_file_name | string | 抽出元ファイル名 |
+| source_row_number | integer | 抽出元行番号 |
+| source_page_number | integer | 抽出元ページ番号 |
+| source_format | string | 抽出元フォーマット |
+| source_hash | string | 重複判定用ハッシュ |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
 | deleted_at | datetime | 論理削除日時 |
@@ -109,8 +117,3 @@ PDFアップロード履歴を表す。
 | page_size | integer | 1ページあたりの件数 |
 | dark_mode | boolean | ダークモード |
 | updated_at | datetime | 更新日時 |
-
-## 確認事項
-
-- `stored_file_path` は `storage/uploads/` 配下の相対パスで保存するか、絶対パスで保存するか。
-- ユーザー削除時の関連データ削除方針。

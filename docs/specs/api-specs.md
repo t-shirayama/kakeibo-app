@@ -27,7 +27,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
 - エクスポート形式はExcel（`.xlsx`）とする。
-- MVPで実装する主要APIのリクエスト・レスポンススキーマは、実装前にPydanticスキーマとして固定する。
+- MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
 - スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
 
 ## 認証
@@ -104,7 +104,3 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - ユーザーデータをExcel（`.xlsx`）でエクスポートする。
 - `DELETE /api/settings/data`
   - ユーザーデータを削除する。
-
-## 確認事項
-
-- APIの詳細スキーマをどの粒度で `api-specs.md` に書くか。
