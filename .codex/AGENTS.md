@@ -11,7 +11,7 @@
 1. ドキュメント入口: `docs/README.md`
 2. プロジェクトルール: `docs/specs/project-rules.md`
 3. 画面要件: `docs/requirements.md` および `docs/requirements/`
-4. E2Eテスト方針: `docs/e2e.md`
+4. E2Eテスト方針: `docs/e2e/index.md`
 5. 個別仕様: `docs/specs/` 配下の該当文書
 
 ## 作業ルール

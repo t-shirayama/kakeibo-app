@@ -20,7 +20,8 @@
 - `docs/README.md`: 人間向けのドキュメント入口。参照先の案内を置く。
 - `.codex/AGENTS.md`: Codex向けの最小ルールと参照索引。仕様本文は置かない。
 - `.codex/config.toml`: Codexの設定ファイル。プロジェクト仕様のSSOTではない。
-- `docs/e2e.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
+- `docs/e2e/index.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
+- `docs/e2e.md`: 既存リンク互換用の案内ファイル。E2Eの正規入口へ誘導する。
 - `docs/e2e/`: E2Eのシナリオ詳細を置く。
 
 画面デザイン画像は `docs/designs/` に置く。
@@ -39,7 +40,7 @@
 - セキュリティ、認証、認可、Cookie、CSRF、パスワード、ファイルアップロードの方針を変更した場合は `docs/specs/security.md` を更新する。
 - PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import.md` を更新する。
 - 用語を追加・変更した場合は `docs/specs/glossary.md` を更新する。
-- E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/e2e.md` と該当する `docs/e2e/` 配下のシナリオを更新する。
+- E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/e2e/index.md` と該当する `docs/e2e/` 配下のシナリオを更新する。
 - コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
 - ドキュメント更新後は `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` を実行し、意図しない未確定事項が残っていないか確認する。
 
@@ -163,7 +164,7 @@ backend/
 - ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
-- 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。E2Eの詳細は `docs/e2e.md` を参照する。
+- 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。E2Eの詳細は `docs/e2e/index.md` を参照する。
 - コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
 - 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
 - バックエンドテストは `docker compose run --rm backend python -m pytest`、フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` / `docker compose run --rm --no-deps frontend npm run build`、E2Eは `docker compose run --rm e2e` を基本コマンドとする。
