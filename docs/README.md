@@ -11,6 +11,7 @@
 3. E2Eテストの実行方法やシナリオを確認する: [E2Eテスト](e2e.md)
 4. 個別仕様を確認する: `docs/specs/` 配下の該当文書
 5. 画面デザイン画像を確認する: `docs/designs/`
+6. 実装タスクを確認する: [タスク管理](tasks/)
 
 ## 構成
 
@@ -22,6 +23,7 @@ docs/
 ├── e2e/
 ├── requirements.md
 ├── requirements/
+├── tasks/
 └── specs/
     ├── domain-model.md
     ├── api-specs.md
@@ -55,6 +57,10 @@ docs/
 テスト方針の正本は [プロジェクトルール](specs/project-rules.md) です。
 
 E2Eの実行方法と更新方針は [E2Eテスト](e2e.md) を参照してください。シナリオ詳細は `docs/e2e/` 配下に分割しています。
+
+## タスク
+
+未完了タスクは [未完了タスク](tasks/open.md)、完了済みタスクは [完了済みタスク](tasks/completed.md) で管理します。
 
 ## 運用
 
