@@ -4,6 +4,7 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   await page.goto("/dashboard");
 
   await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
+  await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
   await expect(page.getByText("今月の支出合計")).toBeVisible();
   await expect(page.getByText("今月の収入合計")).toBeVisible();
   await expect(page.getByText("今月の残高")).toBeVisible();
@@ -26,3 +27,56 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   await expect(page.getByRole("heading", { name: "最近の明細" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
 });
+
+test("changes dashboard month with month picker and arrow buttons", async ({ page }) => {
+  await page.goto("/dashboard");
+
+  const monthInput = page.getByLabel("表示月");
+  const currentValue = await monthInput.inputValue();
+  const pickerMonth = addMonths(currentValue, -2);
+  const pickerRequest = page.waitForRequest((request) => matchesDashboardSummaryRequest(request.url(), pickerMonth));
+
+  await monthInput.fill(pickerMonth.value);
+  await pickerRequest;
+
+  await expect(monthInput).toHaveValue(pickerMonth.value);
+  await expect(page.getByText(`${pickerMonth.label}の支出合計`)).toBeVisible();
+
+  const nextMonth = addMonths(pickerMonth.value, 1);
+  const nextRequest = page.waitForRequest((request) => matchesDashboardSummaryRequest(request.url(), nextMonth));
+
+  await page.getByRole("button", { name: "翌月" }).click();
+  await nextRequest;
+
+  await expect(monthInput).toHaveValue(nextMonth.value);
+  await expect(page.getByText(`${nextMonth.label}の支出合計`)).toBeVisible();
+
+  await page.getByRole("button", { name: "前月" }).click();
+
+  await expect(monthInput).toHaveValue(pickerMonth.value);
+  await expect(page.getByText(`${pickerMonth.label}の支出合計`)).toBeVisible();
+});
+
+function matchesDashboardSummaryRequest(url: string, target: { year: number; month: number }) {
+  const parsedUrl = new URL(url);
+
+  return parsedUrl.pathname.endsWith("/api/dashboard/summary") && parsedUrl.searchParams.get("year") === String(target.year) && parsedUrl.searchParams.get("month") === String(target.month);
+}
+
+function addMonths(value: string, amount: number) {
+  const { year, month } = parseYearMonth(value);
+  const date = new Date(year, month - 1 + amount, 1);
+  const nextValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+  return {
+    ...parseYearMonth(nextValue),
+    value: nextValue,
+    label: `${date.getFullYear()}年${date.getMonth() + 1}月`,
+  };
+}
+
+function parseYearMonth(value: string) {
+  const [year, month] = value.split("-").map(Number);
+
+  return { year, month };
+}

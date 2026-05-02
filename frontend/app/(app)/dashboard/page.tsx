@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { DashboardBars } from "@/components/dashboard-bars";
 import { CategoryPieChart } from "@/components/category-pie-chart";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
 import { api, api_fetch } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type DashboardSummary = {
   total_expense: number;
@@ -42,10 +44,14 @@ function getPositiveTone(value: number) {
 }
 
 export default function DashboardPage() {
+  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth);
+  const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
+  const metricPeriodLabel = selectedYearMonth === getCurrentYearMonth() ? "今月" : formatYearMonthLabel(selectedYearMonth);
+
   // ダッシュボードは複数APIを並行取得し、片方が失敗しても取れる情報は表示する。
   const summaryQuery = useQuery({
-    queryKey: ["dashboard-summary"],
-    queryFn: () => api_fetch<DashboardSummary>("/api/dashboard/summary"),
+    queryKey: ["dashboard-summary", selectedPeriod.year, selectedPeriod.month],
+    queryFn: () => api_fetch<DashboardSummary>(`/api/dashboard/summary?year=${selectedPeriod.year}&month=${selectedPeriod.month}`),
   });
   const recentQuery = useQuery({ queryKey: ["recent-transactions"], queryFn: () => api_fetch<Awaited<ReturnType<typeof api.list_transactions>>>("/api/dashboard/recent-transactions") });
   const summary = summaryQuery.data;
@@ -56,11 +62,28 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="ダッシュボード" subtitle="今月の支出、収入、カテゴリ別の傾向を確認できます。" />
+      <PageHeader
+        title="ダッシュボード"
+        subtitle="対象月の支出、収入、カテゴリ別の傾向を確認できます。"
+        actions={
+          <div className="month-switcher" aria-label="対象月の切り替え">
+            <button className="icon-button" type="button" aria-label="前月" onClick={() => setSelectedYearMonth((value) => addMonths(value, -1))}>
+              <ChevronLeft size={16} aria-hidden="true" />
+            </button>
+            <label className="month-input-label">
+              <span>表示月</span>
+              <input className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => setSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
+            </label>
+            <button className="icon-button" type="button" aria-label="翌月" onClick={() => setSelectedYearMonth((value) => addMonths(value, 1))}>
+              <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        }
+      />
 
       <section className="grid dashboard-grid" aria-label="今月の集計">
         <MetricCard
-          label="今月の支出合計"
+          label={`${metricPeriodLabel}の支出合計`}
           value={formatCurrency(summary?.total_expense ?? 0)}
           delta={{
             value: formatCurrency(summary?.expense_change ?? 0),
@@ -69,7 +92,7 @@ export default function DashboardPage() {
           }}
         />
         <MetricCard
-          label="今月の収入合計"
+          label={`${metricPeriodLabel}の収入合計`}
           value={formatCurrency(summary?.total_income ?? 0)}
           delta={{
             value: formatCurrency(summary?.income_change ?? 0),
@@ -78,7 +101,7 @@ export default function DashboardPage() {
           }}
         />
         <MetricCard
-          label="今月の残高"
+          label={`${metricPeriodLabel}の残高`}
           value={formatCurrency(summary?.balance ?? 0)}
           delta={{
             value: formatCurrency(summary?.balance_change ?? 0),
@@ -158,4 +181,38 @@ export default function DashboardPage() {
       </section>
     </>
   );
+}
+
+function getCurrentYearMonth() {
+  const parts = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? String(new Date().getFullYear());
+  const month = parts.find((part) => part.type === "month")?.value ?? String(new Date().getMonth() + 1).padStart(2, "0");
+
+  return `${year}-${month}`;
+}
+
+function parseYearMonth(value: string) {
+  const [year, month] = value.split("-").map(Number);
+
+  return {
+    year: Number.isInteger(year) ? year : Number(getCurrentYearMonth().slice(0, 4)),
+    month: Number.isInteger(month) ? month : Number(getCurrentYearMonth().slice(5, 7)),
+  };
+}
+
+function addMonths(value: string, amount: number) {
+  const { year, month } = parseYearMonth(value);
+  const date = new Date(year, month - 1 + amount, 1);
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatYearMonthLabel(value: string) {
+  const { year, month } = parseYearMonth(value);
+
+  return `${year}年${month}月`;
 }
