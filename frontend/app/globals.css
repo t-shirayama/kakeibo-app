@@ -693,6 +693,15 @@ textarea {
   transform: translate(-50%, -50%);
 }
 
+.message-dialog-overlay {
+  z-index: 60;
+}
+
+.message-dialog-content {
+  z-index: 61;
+  width: min(440px, calc(100vw - 32px));
+}
+
 .dialog-header {
   display: flex;
   align-items: center;
@@ -705,6 +714,40 @@ textarea {
   margin: 0;
   font-size: 22px;
   font-weight: 850;
+}
+
+.message-dialog-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.message-dialog-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: #1f66d2;
+  background: #eaf2ff;
+  border-radius: 8px;
+}
+
+.message-dialog-icon.danger {
+  color: #be123c;
+  background: #fff1f2;
+}
+
+.message-dialog-description {
+  margin: -6px 0 0;
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.message-dialog-description p {
+  margin: 0;
 }
 
 .modal-form {

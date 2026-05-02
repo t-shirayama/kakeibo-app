@@ -62,12 +62,13 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await page.getByRole("button", { name: "エクスポート" }).click();
   await downloadResponse;
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("row")
     .filter({ hasText: "E2Eテスト店舗 編集済み" })
     .getByRole("button", { name: "明細を削除" })
     .click();
+  await expect(page.getByRole("heading", { name: "この明細を削除しますか？" })).toBeVisible();
+  await page.getByRole("button", { name: "削除する" }).click();
 
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toHaveCount(0);
 });
@@ -84,8 +85,10 @@ test("asks whether to update categories for the same shop name", async ({ page }
   await expect(bulkRows).toHaveCount(2);
   await bulkRows.first().getByRole("button", { name: "明細を編集" }).click();
   await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "日用品" });
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "保存" }).click();
+  const bulkDialog = page.getByRole("dialog").filter({ hasText: "同じ店名の明細を一括更新しますか？" });
+  await expect(bulkDialog.getByRole("heading", { name: "同じ店名の明細を一括更新しますか？" })).toBeVisible();
+  await bulkDialog.getByRole("button", { name: "一括更新する" }).click();
   await expect(page.getByRole("row").filter({ hasText: "E2E一括店舗" }).filter({ hasText: "日用品" })).toHaveCount(2);
 
   await createTransaction(page, { shopName: "E2E単独店舗", amount: "3333", category: "食費" });
@@ -95,10 +98,14 @@ test("asks whether to update categories for the same shop name", async ({ page }
   await expect(singleRows).toHaveCount(2);
   await singleRows.first().getByRole("button", { name: "明細を編集" }).click();
   await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "日用品" });
-  page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "保存" }).click();
-  await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "日用品" })).toHaveCount(1);
-  await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "食費" })).toHaveCount(1);
+  const cancelDialog = page.getByRole("dialog").filter({ hasText: "同じ店名の明細を一括更新しますか？" });
+  await expect(cancelDialog.getByRole("heading", { name: "同じ店名の明細を一括更新しますか？" })).toBeVisible();
+  await cancelDialog.getByRole("button", { name: "キャンセル" }).click();
+  await expect(page.getByRole("heading", { name: "明細を編集" })).toBeVisible();
+  await page.getByRole("button", { name: "閉じる" }).click();
+  await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "食費" })).toHaveCount(2);
+  await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "日用品" })).toHaveCount(0);
 });
 
 async function createTransaction(

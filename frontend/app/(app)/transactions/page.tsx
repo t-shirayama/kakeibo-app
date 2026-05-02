@@ -3,8 +3,9 @@
 import { Edit3, Plus, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
+import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
@@ -13,11 +14,24 @@ import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
 type PeriodKey = "current_month" | "previous_month" | "current_year" | "all";
+type SaveTransactionInput = {
+  request: TransactionRequest;
+  updateSameShop: boolean;
+};
+type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
 
 export default function TransactionsPage() {
   const searchParams = useSearchParams();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
+  const [isPreparingSave, setIsPreparingSave] = useState(false);
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const [query, setQuery] = useState("");
   const [period, setPeriod] = useState<PeriodKey>(() => parsePeriod(searchParams.get("period")));
   const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category_id") ?? "");
@@ -29,15 +43,13 @@ export default function TransactionsPage() {
   });
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
   const saveMutation = useMutation({
-    mutationFn: async (request: TransactionRequest) => {
+    mutationFn: async ({ request, updateSameShop }: SaveTransactionInput) => {
       if (!editingTransaction) {
         return api.create_transaction(request);
       }
 
-      const categoryChanged = request.category_id !== editingTransaction.category_id;
-      const shouldUpdateSameShop = categoryChanged && request.category_id ? await confirmSameShopCategoryUpdate(editingTransaction) : false;
       const transaction = await api.update_transaction(editingTransaction.transaction_id, request);
-      if (shouldUpdateSameShop && request.category_id) {
+      if (updateSameShop && request.category_id) {
         await api.update_same_shop_category(editingTransaction.transaction_id, editingTransaction.shop_name, request.category_id);
       }
       return transaction;
@@ -79,15 +91,76 @@ export default function TransactionsPage() {
     );
   }, [categoryById, query, transactionsQuery.data]);
   const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
+  const isSaving = saveMutation.isPending || isPreparingSave;
 
-  async function confirmSameShopCategoryUpdate(transaction: TransactionDto): Promise<boolean> {
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  async function chooseSameShopCategoryUpdate(transaction: TransactionDto, request: TransactionRequest): Promise<"bulk" | "single" | "cancel"> {
+    if (request.category_id === transaction.category_id || !request.category_id) {
+      return "single";
+    }
+
     const { count } = await api.count_same_shop_transactions(transaction.transaction_id);
     if (count === 0) {
-      return false;
+      return "single";
     }
-    return window.confirm(
-      `同じ店名「${transaction.shop_name}」の明細が他に${count}件あります。カテゴリをまとめて更新しますか？\n\nOK: 同じ店名の明細も更新\nキャンセル: この明細だけ更新`,
-    );
+
+    const action = await showMessageDialog({
+      title: "同じ店名の明細を一括更新しますか？",
+      description: (
+        <p>
+          同じ店名「{transaction.shop_name}」の明細が他に{count}件あります。カテゴリを変更する場合は、同じ店名の明細もまとめて更新します。
+        </p>
+      ),
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "bulk", label: "一括更新する", variant: "primary" },
+      ],
+    });
+    return action === "bulk" ? "bulk" : "cancel";
+  }
+
+  async function handleSubmit(request: TransactionRequest) {
+    if (!editingTransaction) {
+      await saveMutation.mutateAsync({ request, updateSameShop: false });
+      return;
+    }
+
+    setIsPreparingSave(true);
+    try {
+      const updateChoice = await chooseSameShopCategoryUpdate(editingTransaction, request);
+      if (updateChoice === "cancel") {
+        return;
+      }
+      await saveMutation.mutateAsync({ request, updateSameShop: updateChoice === "bulk" });
+    } finally {
+      setIsPreparingSave(false);
+    }
+  }
+
+  async function handleDelete(transactionId: string) {
+    const action = await showMessageDialog({
+      title: "この明細を削除しますか？",
+      description: <p>削除した明細は一覧に表示されなくなります。</p>,
+      tone: "danger",
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "delete", label: "削除する", variant: "danger" },
+      ],
+    });
+    if (action === "delete") {
+      deleteMutation.mutate(transactionId);
+    }
   }
 
   return (
@@ -196,11 +269,7 @@ export default function TransactionsPage() {
                         className="icon-button"
                         type="button"
                         aria-label="明細を削除"
-                        onClick={() => {
-                          if (window.confirm("この明細を削除しますか？")) {
-                            deleteMutation.mutate(transaction.transaction_id);
-                          }
-                        }}
+                        onClick={() => void handleDelete(transaction.transaction_id)}
                       >
                         <Trash2 size={15} aria-hidden="true" />
                       </button>
@@ -218,10 +287,8 @@ export default function TransactionsPage() {
         open={isEditorOpen}
         transaction={editingTransaction}
         error={saveMutation.error}
-        isSubmitting={saveMutation.isPending}
-        onSubmit={async (request) => {
-          await saveMutation.mutateAsync(request);
-        }}
+        isSubmitting={isSaving}
+        onSubmit={handleSubmit}
         onOpenChange={(open) => {
           setIsEditorOpen(open);
           if (!open) {
@@ -229,6 +296,21 @@ export default function TransactionsPage() {
           }
         }}
       />
+      {messageDialog ? (
+        <MessageDialog
+          open
+          title={messageDialog.title}
+          description={messageDialog.description}
+          actions={messageDialog.actions}
+          tone={messageDialog.tone}
+          onAction={messageDialog.onAction}
+          onOpenChange={(open) => {
+            if (!open) {
+              messageDialog.onAction("cancel");
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 }
