@@ -21,6 +21,7 @@ class UploadStatus(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Transaction:
+    # 明細は取り込み元情報も含めて不変にし、更新時は新しい値として作り直す。
     id: UUID
     user_id: UUID
     category_id: UUID
@@ -39,6 +40,7 @@ class Transaction:
     source_hash: str | None = None
 
     def __post_init__(self) -> None:
+        # ドメイン層で必須項目を守ることで、APIやDB以外から生成されても同じ不変条件になる。
         if self.transaction_date is None:
             raise ValueError("Transaction date is required.")
         if not self.shop_name.strip():
@@ -53,6 +55,7 @@ class Transaction:
 
 @dataclass(frozen=True, slots=True)
 class Category:
+    # カテゴリは過去明細の参照を壊さないため、削除ではなく無効化できる形にしている。
     id: UUID
     user_id: UUID
     name: str
@@ -103,6 +106,7 @@ class Upload:
 
 @dataclass(frozen=True, slots=True)
 class AuditLog:
+    # 監査ログの詳細は作成後に変更されないよう読み取り専用Mappingへ変換する。
     id: UUID
     user_id: UUID
     action: str
@@ -120,6 +124,7 @@ class AuditLog:
 
 
 def ensure_unique_category_names(categories: list[Category]) -> None:
+    # 表記ゆれによる重複を避けるため、ユーザー単位かつ大文字小文字を無視して判定する。
     seen: set[tuple[UUID, str]] = set()
     for category in categories:
         key = (category.user_id, category.name.casefold())

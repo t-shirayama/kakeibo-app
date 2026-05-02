@@ -18,6 +18,7 @@ FOOD_ID = UUID("33333333-3333-3333-3333-333333333333")
 
 
 class FakeTransactionCategoryRepository:
+    # ユースケースの業務判断だけを検証するため、DBを使わない最小のリポジトリを用意する。
     def __init__(self) -> None:
         self.categories = {
             UNCATEGORIZED_ID: Category(
@@ -168,6 +169,7 @@ def make_command(shop_name: str = "Store", category_id: UUID | None = None) -> T
 
 
 def test_create_transaction_falls_back_to_uncategorized() -> None:
+    # カテゴリ推定できない明細は、登録失敗ではなく未分類へ入ることを確認する。
     repository = FakeTransactionCategoryRepository()
     use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
 
@@ -177,6 +179,7 @@ def test_create_transaction_falls_back_to_uncategorized() -> None:
 
 
 def test_create_transaction_reuses_past_category_for_same_shop() -> None:
+    # 同一店舗の過去分類を使い、PDF取込後の手動分類が次回に反映されることを守る。
     repository = FakeTransactionCategoryRepository()
     use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
 
@@ -269,6 +272,7 @@ def test_dashboard_summary_compares_previous_month() -> None:
 
 
 def test_report_export_workbook_contains_required_sheets() -> None:
+    # Excel仕様として求められる3シートが生成物に含まれることを確認する。
     repository = FakeTransactionCategoryRepository()
     transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
     report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]

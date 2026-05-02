@@ -12,6 +12,7 @@ const routes = [
 test("navigates between all primary screens from the sidebar", async ({ page }) => {
   await page.goto("/dashboard");
 
+  // サイドバーの主要導線が全画面へ遷移できることをまとめて確認する。
   for (const [label, path] of routes) {
     await page.getByRole("link", { name: label, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${path}$`));
@@ -23,6 +24,7 @@ test("keeps initial app page scroll inside the main content area", async ({ page
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
 
+  // 初期表示でbody側に少しだけ縦スクロールが出る退行を検知する。
   const documentScroll = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
     return {

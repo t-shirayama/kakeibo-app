@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("shows, updates, and preserves destructive settings controls", async ({ page }) => {
   await page.goto("/settings");
 
+  // 通貨など固定扱いの項目と、ユーザーが保存できる表示設定を同時に確認する。
   await expect(page.getByRole("heading", { name: "設定" })).toBeVisible();
   await expect(page.getByLabel("表示通貨")).toHaveValue("JPY");
   await expect(page.getByLabel("1ページあたりの件数")).toHaveValue("20");
@@ -15,6 +16,7 @@ test("shows, updates, and preserves destructive settings controls", async ({ pag
 
   await expect(page.getByText("保存しました。")).toBeVisible();
 
+  // 全データ削除は確認文字列なしでは押せないことを、通常設定保存後も確認する。
   await expect(page.getByRole("heading", { name: "全データ削除" })).toBeVisible();
   await expect(page.getByLabel("削除確認文字列")).toBeVisible();
   await expect(page.getByRole("button", { name: "全データを削除" })).toBeDisabled();

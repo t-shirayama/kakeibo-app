@@ -27,6 +27,7 @@ def test_health_and_csrf_endpoints() -> None:
 
 
 def test_settings_endpoint_with_overridden_user() -> None:
+    # APIテストでは認証依存を差し替え、画面が必要とするレスポンス形だけを確認する。
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -47,6 +48,7 @@ def test_settings_endpoint_with_overridden_user() -> None:
         session.commit()
 
     def override_session() -> Iterator[Session]:
+        # FastAPIの依存注入に合わせ、テスト用DBセッションをyieldで渡す。
         with SessionLocal() as session:
             yield session
 

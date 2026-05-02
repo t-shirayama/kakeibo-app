@@ -15,6 +15,7 @@ class PdfUploadError(ValueError):
 
 
 class PdfUploadUseCases:
+    # PDF保存、抽出、明細登録、履歴更新を一つの取込ユースケースとして扱う。
     def __init__(
         self,
         *,
@@ -33,6 +34,7 @@ class PdfUploadUseCases:
 
     def import_pdf(self, *, user_id: UUID, file_name: str, content: bytes) -> Upload:
         self._validate_pdf(file_name=file_name, content=content)
+        # 原本は解析前に保存し、失敗時もアップロード履歴から原因を追えるようにする。
         upload_id = self._upload_repository.next_id()
         stored_file_path = self._storage.save_original(user_id=user_id, upload_id=upload_id, content=content)
         upload = self._upload_repository.create_upload(
@@ -47,6 +49,7 @@ class PdfUploadUseCases:
             imported = self._parser.parse(content)
             imported_count = 0
             for item in imported:
+                # 同一PDF行の再取込はsource_hashで重複排除する。
                 if self._transaction_repository.source_hash_exists(user_id=user_id, source_hash=item.source_hash):
                     continue
                 self._transactions.create_transaction(
@@ -69,6 +72,7 @@ class PdfUploadUseCases:
                 imported_count += 1
             upload = self._upload_repository.mark_completed(upload_id=upload_id, imported_count=imported_count)
         except Exception as exc:
+            # 解析や登録に失敗しても例外を画面へ直接漏らさず、履歴と監査ログに残す。
             upload = self._upload_repository.mark_failed(upload_id=upload_id, error_message=str(exc))
             self._upload_repository.create_audit_log(
                 user_id=user_id,

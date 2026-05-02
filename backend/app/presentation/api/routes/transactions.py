@@ -66,6 +66,7 @@ def list_transactions(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> TransactionListResponse:
+    # API層ではHTTP入力をユースケース用のPage/Commandへ変換するだけに留める。
     result = _use_cases(session).list_transactions(
         user_id=current_user.id,
         page=Page(page=page, page_size=page_size),
@@ -152,6 +153,7 @@ def _use_cases(session: Session) -> TransactionCategoryUseCases:
 
 
 def _command(request: TransactionRequest) -> TransactionCommand:
+    # 画面から編集できない取込元情報は、作成・更新リクエストには含めない。
     return TransactionCommand(
         transaction_date=request.transaction_date,
         shop_name=request.shop_name,

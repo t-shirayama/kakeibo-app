@@ -21,6 +21,7 @@ CATEGORY_ID = UUID("22222222-2222-2222-2222-222222222222")
 
 
 def make_transaction(**overrides: object) -> Transaction:
+    # 各テストで差分だけ指定できるよう、正常な明細を標準形として用意する。
     values = {
         "id": uuid4(),
         "user_id": USER_ID,
@@ -50,6 +51,7 @@ def test_transaction_requires_supported_type() -> None:
 
 
 def test_transaction_accepts_income_and_zero_amount() -> None:
+    # 収入明細と0円明細は仕様上許可されるため、バリデーションで落とさない。
     transaction = make_transaction(amount=MoneyJPY(0), transaction_type=TransactionType.INCOME)
 
     assert transaction.amount.amount == 0
@@ -110,6 +112,7 @@ def test_failed_upload_requires_error_message() -> None:
 
 
 def test_audit_log_details_are_immutable_copy() -> None:
+    # 呼び出し元のdict変更やログ生成後の直接変更で、監査内容が変わらないことを守る。
     details = {"reason": "manual edit"}
     log = AuditLog(
         id=uuid4(),

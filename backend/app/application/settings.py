@@ -21,6 +21,7 @@ class UpdateSettingsCommand:
 
 
 class SettingsUseCases:
+    # 初期リリースでは通貨とタイムゾーンを固定し、画面設定だけを更新対象にする。
     allowed_page_sizes = {10, 20, 50}
     currency = "JPY"
     timezone = "Asia/Tokyo"
@@ -59,11 +60,13 @@ class SettingsUseCases:
         confirmation_text: str | None,
         password: str | None,
     ) -> None:
+        # 破壊的操作は確認文字列または現在パスワードのどちらかを必須にする。
         if confirmation_text != "DELETE" and not (
             password and self._password_hasher.verify(password, current_user.password_hash)
         ):
             raise SettingsError("Confirmation text must be DELETE or password must be valid.")
 
+        # DBの論理削除後、保存済みPDF原本もストレージから削除する。
         upload_paths = self._repository.list_active_upload_paths(user_id=current_user.id)
         self._repository.soft_delete_user_data(user_id=current_user.id)
         for path in upload_paths:

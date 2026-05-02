@@ -46,6 +46,7 @@ export default function TransactionsPage() {
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
   const categories = categoriesQuery.data ?? [];
+  // カテゴリ名や色を明細表示・検索で再利用するため、IDで引ける形にしておく。
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.category_id, category])),
     [categories],
@@ -57,6 +58,7 @@ export default function TransactionsPage() {
       return rows;
     }
     return rows.filter((transaction) =>
+      // APIのカテゴリ名が未設定でも、カテゴリ一覧から補完して検索対象に含める。
       [
         transaction.shop_name,
         transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類",
@@ -268,6 +270,7 @@ function getReadableTextColor(hexColor: string): "#17233c" | "#ffffff" {
     return "#17233c";
   }
 
+  // 背景色の明るさから、バッジ文字が読みやすい色を選ぶ。
   const red = parseInt(normalized.slice(0, 2), 16);
   const green = parseInt(normalized.slice(2, 4), 16);
   const blue = parseInt(normalized.slice(4, 6), 16);

@@ -22,6 +22,7 @@ const navItems = [
 ];
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
+  // 現在のパスからサイドバーの選択状態を決め、主要画面の導線を一箇所にまとめる。
   const pathname = usePathname();
 
   return (

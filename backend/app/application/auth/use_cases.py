@@ -25,6 +25,7 @@ class AuthTokens:
 
 
 class AuthUseCases:
+    # 認証まわりの判断を集約し、Cookie操作やHTTP詳細はAPI層へ分離する。
     def __init__(
         self,
         repository: AuthRepositoryPort,
@@ -59,6 +60,7 @@ class AuthUseCases:
         if payload.get("typ") != "refresh":
             raise AuthError("Invalid refresh token type.")
 
+        # JWTだけでなくDB上の有効なハッシュも確認し、失効済みトークンの再利用を防ぐ。
         token_record = self._repository.get_active_refresh_token(hash_token(refresh_token))
         if token_record is None:
             raise AuthError("Refresh token is invalid or revoked.")
@@ -71,6 +73,7 @@ class AuthUseCases:
         token_jti = str(payload["jti"])
         if token_record.id != token_jti or token_record.user_id != user_id:
             raise AuthError("Refresh token payload does not match persisted token.")
+        # ローテーションにより、使われたリフレッシュトークンは即座に失効させる。
         self._repository.revoke_refresh_token(token_record.id, revoked_at=now)
         return self._issue_tokens(user_id, replaced_token_id=token_jti)
 
@@ -84,6 +87,7 @@ class AuthUseCases:
     def start_password_reset(self, *, email: str) -> str | None:
         user = self._repository.get_active_user_by_email(email)
         if user is None:
+            # メールアドレスの存在有無を画面側で推測されないよう、呼び出し元では同じ応答にする。
             return None
 
         reset_token = self._jwt.issue_reset_token(str(user.id))

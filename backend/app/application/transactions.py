@@ -40,6 +40,7 @@ class CategoryCommand:
 
 
 class TransactionCategoryUseCases:
+    # 明細とカテゴリの業務判断を集約し、API層や画面側に分類ルールを散らさない。
     def __init__(self, repository: TransactionCategoryRepository) -> None:
         self._repository = repository
 
@@ -63,6 +64,7 @@ class TransactionCategoryUseCases:
         )
 
     def create_transaction(self, *, user_id: UUID, command: TransactionCommand) -> Transaction:
+        # カテゴリ未指定時は過去の同一店舗分類を優先し、見つからなければ未分類へ落とす。
         category_id = command.category_id or self._repository.find_category_id_for_shop(
             user_id=user_id,
             shop_name=command.shop_name,
@@ -71,6 +73,7 @@ class TransactionCategoryUseCases:
         )
         category_id = category_id or self._repository.get_uncategorized_category_id(user_id)
         if category_id is None:
+            # 初期カテゴリが欠けたデータでも、明細登録を止めずに最低限の分類先を用意する。
             category_id = self._repository.create_uncategorized_category(user_id)
 
         self._ensure_category_available(user_id=user_id, category_id=category_id)
@@ -104,6 +107,7 @@ class TransactionCategoryUseCases:
         existing = self.get_transaction(user_id=user_id, transaction_id=transaction_id)
         category_id = command.category_id or existing.category_id
         self._ensure_category_available(user_id=user_id, category_id=category_id)
+        # PDF由来の情報は編集画面で変更しないため、既存明細から引き継ぐ。
         updated = Transaction(
             id=existing.id,
             user_id=user_id,
@@ -192,6 +196,7 @@ class TransactionCategoryUseCases:
         self._repository.deactivate_category(user_id=user_id, category_id=category_id)
 
     def _ensure_category_available(self, *, user_id: UUID, category_id: UUID) -> None:
+        # 無効化カテゴリへ新規・更新明細を紐づけると、未分類扱いの表示ルールと衝突する。
         category = self._repository.get_category(user_id=user_id, category_id=category_id)
         if category is None or not category.is_active:
             raise TransactionCategoryError("Category not found or inactive.")

@@ -22,12 +22,14 @@ type DashboardSummary = {
 };
 
 export default function DashboardPage() {
+  // ダッシュボードは複数APIを並行取得し、片方が失敗しても取れる情報は表示する。
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: () => api_fetch<DashboardSummary>("/api/dashboard/summary"),
   });
   const recentQuery = useQuery({ queryKey: ["recent-transactions"], queryFn: () => api_fetch<Awaited<ReturnType<typeof api.list_transactions>>>("/api/dashboard/recent-transactions") });
   const summary = summaryQuery.data;
+  // ローディング中も画面骨格を保つため、未取得データは空配列・0で扱う。
   const categorySummary = summary?.category_summaries ?? [];
   const recentTransactions = recentQuery.data ?? [];
 

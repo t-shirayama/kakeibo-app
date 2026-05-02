@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("authentication", () => {
   test("redirects protected pages to login when unauthenticated", async ({ browser }) => {
+    // 認証済み状態を持たない新規コンテキストで、保護画面のガードを確認する。
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();
 
@@ -29,6 +30,7 @@ test.describe("authentication", () => {
   });
 
   test("returns to login when an authenticated API call receives 401", async ({ page }) => {
+    // アクセストークン期限切れとリフレッシュ失敗を同時に再現し、ログインへ戻る導線を守る。
     await page.route("**/api/dashboard/summary", async (route) => {
       await route.fulfill({
         status: 401,

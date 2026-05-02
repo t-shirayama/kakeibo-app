@@ -74,6 +74,7 @@ export type SettingsDto = SettingsRequest & {
 };
 
 export class ApiError extends Error {
+  // バックエンド共通エラー形式を画面で扱いやすいErrorへ包む。
   readonly code?: string;
   readonly details?: unknown;
   readonly request_id?: string;
@@ -90,6 +91,7 @@ export class ApiError extends Error {
 }
 
 export async function with_csrf_headers(init: RequestInit = {}): Promise<RequestInit> {
+  // 変更系APIはCookie認証に加えてCSRFトークンを必ず送る。
   const headers = new Headers(init.headers);
   headers.set("X-CSRF-Token", await get_csrf_token());
 
@@ -126,6 +128,7 @@ export async function retry_after_csrf_refresh<T>(
 ): Promise<T> {
   let response = await request();
   if (response.status === 403) {
+    // CSRF期限切れの可能性があるため、保持トークンを捨てて一度だけ再試行する。
     clear_csrf_token();
     response = await request();
   }
@@ -140,6 +143,7 @@ async function retry_after_auth_refresh(path: string, request: () => Promise<Res
 
   const refreshed = await refresh_auth_session();
   if (!refreshed) {
+    // リフレッシュできない場合は、現在URLを戻り先としてログインへ誘導する。
     redirect_to_login();
     return response;
   }
@@ -240,6 +244,7 @@ export const api: ApiClient = {
       await parse_json_response<never>(response);
     }
     const blob = await response.blob();
+    // fetchで受け取ったExcelをブラウザのダウンロード動作へ橋渡しする。
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

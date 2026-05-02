@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("searches, creates, edits, deletes, and exports transactions", async ({ page }) => {
   await page.goto("/transactions");
 
+  // 初期表示は今月の明細に絞られるため、今月・先月の切り替えをまず確認する。
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toHaveCount(0);
@@ -26,6 +27,7 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "未分類" });
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
+  // 未分類は検索語としても使えるため、カテゴリ名補完込みで検索対象に入ることを守る。
   await page.getByLabel("明細検索").fill("未分類");
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
@@ -53,6 +55,7 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toBeVisible();
 
+  // ブラウザの保存先に依存しないよう、Excel APIの成功レスポンスまでを検証する。
   const downloadResponse = page.waitForResponse((response) =>
     response.url().includes("/api/transactions/export") && response.status() === 200,
   );

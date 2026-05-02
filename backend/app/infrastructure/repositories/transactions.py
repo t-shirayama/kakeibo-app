@@ -16,6 +16,7 @@ from app.infrastructure.models.transaction import TransactionModel
 
 
 class TransactionCategoryRepository:
+    # SQLAlchemyモデルとドメインオブジェクトの変換をこの層に閉じ込める。
     def __init__(self, session: Session) -> None:
         self._session = session
 
@@ -33,6 +34,7 @@ class TransactionCategoryRepository:
         date_to: date | None = None,
     ) -> PageResult[Transaction]:
         filters = [TransactionModel.user_id == str(user_id), TransactionModel.deleted_at.is_(None)]
+        # 一覧系は必ずログインユーザー本人かつ未削除データに限定する。
         if keyword:
             pattern = f"%{keyword}%"
             filters.append(or_(TransactionModel.shop_name.like(pattern), TransactionModel.memo.like(pattern)))
@@ -265,6 +267,7 @@ class TransactionCategoryRepository:
         return UUID(model.id) if model else None
 
     def _category_filter(self, *, user_id: UUID, category_id: UUID):
+        # 未分類フィルターでは、無効化・論理削除されたカテゴリの明細も未分類として扱う。
         if not self._is_uncategorized_category(user_id=user_id, category_id=category_id):
             return TransactionModel.category_id == str(category_id)
 
@@ -311,6 +314,7 @@ class TransactionCategoryRepository:
         card_user_name: str | None,
         payment_method: str | None,
     ) -> UUID | None:
+        # 自動分類は直近の同一店舗・同一利用者・同一支払方法の分類を再利用する。
         filters = [
             TransactionModel.user_id == str(user_id),
             TransactionModel.shop_name == shop_name,

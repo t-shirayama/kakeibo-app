@@ -9,7 +9,7 @@ from app.domain.value_objects import MoneyJPY
 
 
 class RakutenCardPdfParser:
-    """Rule-based parser for Rakuten Card statement text."""
+    """楽天カード明細PDFのテキストを、固定的な表記ルールに沿って抽出する。"""
 
     source_format = "rakuten_card_pdf"
     _fallback_pattern = re.compile(
@@ -26,6 +26,7 @@ class RakutenCardPdfParser:
     def parse_text(self, text: str) -> list[ImportedCardTransaction]:
         transactions: list[ImportedCardTransaction] = []
 
+        # fixtureではページ境界を明示し、実PDF抽出時と同じページ番号を検証できるようにする。
         current_page = 1
         row_number = 0
         for raw_line in text.splitlines():
@@ -42,6 +43,7 @@ class RakutenCardPdfParser:
                 continue
             row_number += 1
             transaction_date, shop_name, card_user_name, payment_method, amount = parsed
+            # 重複判定に使うため、表示値だけでなくページ番号・行番号もハッシュへ含める。
             source_hash = self._source_hash(
                 transaction_date=transaction_date.isoformat(),
                 shop_name=shop_name,
@@ -68,6 +70,7 @@ class RakutenCardPdfParser:
         return transactions
 
     def _parse_line(self, line: str) -> tuple[object, str, str | None, str | None, int] | None:
+        # まずPDF抽出後の列区切りを優先し、崩れた行だけ正規表現のフォールバックで拾う。
         parts = [part.strip() for part in re.split(r"\s{2,}|\t+", line) if part.strip()]
         if len(parts) >= 5 and re.fullmatch(r"\d{4}/\d{1,2}/\d{1,2}", parts[0]):
             amount_text = parts[-1]

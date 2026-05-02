@@ -75,6 +75,7 @@ class ReportRepositoryProtocol(Protocol):
 
 
 class ReportUseCases:
+    # 集計ロジックをユースケースに寄せ、APIやExcel出力は同じ計算結果を利用する。
     def __init__(self, repository: ReportRepositoryProtocol) -> None:
         self._repository = repository
 
@@ -243,6 +244,7 @@ def _period_summary(period: str, rows: list[TransactionWithCategory]) -> PeriodS
 
 
 def _category_summaries(rows: list[TransactionWithCategory]) -> list[CategorySummary]:
+    # カテゴリ別集計は支出のみを対象にし、収入は残高計算側で扱う。
     totals: dict[UUID, tuple[str, str, int]] = {}
     for row in rows:
         amount = _expense_amount(row.transaction)
@@ -264,6 +266,7 @@ def _category_summaries(rows: list[TransactionWithCategory]) -> list[CategorySum
 
 
 def _monthly_summaries(rows: list[TransactionWithCategory], start_date: date, end_date: date) -> list[PeriodSummary]:
+    # 明細がない月も0件として返し、グラフの月並びが欠けないようにする。
     result: list[PeriodSummary] = []
     cursor = start_date.replace(day=1)
     while cursor <= end_date:

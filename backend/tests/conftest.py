@@ -12,6 +12,7 @@ from app.infrastructure.models import Base
 
 @pytest.fixture
 def db_session() -> Iterator[Session]:
+    # リポジトリテストはMySQLに依存させず、インメモリSQLiteで永続化境界だけを検証する。
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         connect_args={"check_same_thread": False},

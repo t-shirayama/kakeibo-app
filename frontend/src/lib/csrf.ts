@@ -11,6 +11,7 @@ export async function get_csrf_token(): Promise<string> {
     return csrfToken;
   }
 
+  // CSRFトークンはCookieへ保存せず、フロントのメモリにだけ保持する。
   const response = await fetch(`${API_BASE_URL}/api/auth/csrf`, {
     credentials: "include",
   });
@@ -25,5 +26,6 @@ export async function get_csrf_token(): Promise<string> {
 }
 
 export function clear_csrf_token(): void {
+  // 403時は期限切れの可能性があるため、次回リクエストで取り直せるようにする。
   csrfToken = null;
 }
