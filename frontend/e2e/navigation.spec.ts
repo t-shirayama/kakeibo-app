@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 const routes = [
   ["ダッシュボード", "/dashboard"],
   ["明細一覧", "/transactions"],
+  ["収入設定", "/income-settings"],
   ["アップロード", "/upload"],
   ["カテゴリ管理", "/categories"],
   ["レポート", "/reports"],

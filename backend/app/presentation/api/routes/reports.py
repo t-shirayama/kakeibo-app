@@ -10,6 +10,7 @@ from app.application.reports import ReportUseCases, month_range
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user
+from app.presentation.api.routes.income_settings import apply_due_income_transactions
 from app.presentation.api.routes.report_dtos import (
     CategorySummaryResponse,
     ReportResponse,
@@ -28,6 +29,7 @@ def get_category_summary(
     session: Session = Depends(get_db_session),
 ) -> list[CategorySummaryResponse]:
     today = date.today()
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     default_start, default_end = month_range(today.year, today.month)
     summaries = _use_cases(session).category_summary(
         user_id=current_user.id,
@@ -45,6 +47,7 @@ def get_monthly_report(
     session: Session = Depends(get_db_session),
 ) -> ReportResponse:
     today = date.today()
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     report = _use_cases(session).monthly_report(
         user_id=current_user.id,
         year=year or today.year,
@@ -61,6 +64,7 @@ def get_weekly_report(
     session: Session = Depends(get_db_session),
 ) -> ReportResponse:
     today = date.today()
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     iso = today.isocalendar()
     try:
         report = _use_cases(session).weekly_report(
@@ -79,6 +83,7 @@ def get_yearly_report(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> ReportResponse:
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     report = _use_cases(session).yearly_report(user_id=current_user.id, year=year or date.today().year)
     return report_response(report)
 

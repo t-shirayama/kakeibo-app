@@ -296,6 +296,10 @@ textarea {
   width: min(330px, 100%);
 }
 
+.input.wide {
+  width: 100%;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -408,6 +412,57 @@ textarea {
   padding: 14px;
   border: 1px solid #edf2f7;
   border-radius: 8px;
+}
+
+.income-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.income-setting-list {
+  display: grid;
+  gap: 14px;
+}
+
+.income-setting-row {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+}
+
+.income-setting-main,
+.income-override-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 0.7fr) minmax(88px, 0.45fr) minmax(140px, 0.8fr) auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.income-override-row {
+  grid-template-columns: auto minmax(132px, 0.6fr) minmax(120px, 0.6fr) minmax(88px, 0.35fr) auto;
+}
+
+.income-setting-summary,
+.income-override-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.inline-delete-button {
+  margin-left: 6px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-weight: 900;
 }
 
 .swatch {
@@ -852,6 +907,16 @@ textarea {
 
   .dialog-content {
     padding: 24px 20px;
+  }
+
+  .income-form-grid,
+  .income-setting-main,
+  .income-override-row {
+    grid-template-columns: 1fr;
+  }
+
+  .income-override-row {
+    align-items: stretch;
   }
 
   .dashboard-grid {

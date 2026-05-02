@@ -10,11 +10,13 @@ import {
   ListTree,
   NotebookText,
   Settings,
+  WalletCards,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
   { href: "/transactions", label: "明細一覧", icon: FileText },
+  { href: "/income-settings", label: "収入設定", icon: WalletCards },
   { href: "/upload", label: "アップロード", icon: FileUp },
   { href: "/categories", label: "カテゴリ管理", icon: ListTree },
   { href: "/reports", label: "レポート", icon: BarChart3 },

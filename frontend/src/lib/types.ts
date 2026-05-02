@@ -19,6 +19,22 @@ export type CategoryDto = {
   is_active: boolean;
 };
 
+export type IncomeOverrideDto = {
+  override_id: string;
+  target_month: string;
+  amount: number;
+  day: number;
+};
+
+export type IncomeSettingDto = {
+  income_setting_id: string;
+  member_name: string;
+  category_id: string;
+  base_amount: number;
+  base_day: number;
+  overrides: IncomeOverrideDto[];
+};
+
 export type CategorySummaryDto = {
   category_id: string;
   name: string;

@@ -18,6 +18,7 @@ APIクライアントはOpenAPIから自動生成する。
 
 - `/dashboard`
 - `/transactions`
+- `/income-settings`
 - `/categories`
 - `/upload`
 - `/reports`

@@ -6,6 +6,7 @@ const root = process.cwd();
 const checks = [
   ["app/(app)/dashboard/page.tsx", ["ダッシュボード", "カテゴリ別支出割合", "最近の明細"]],
   ["app/(app)/transactions/page.tsx", ["明細一覧", "TransactionEditModal", "EmptyState"]],
+  ["app/(app)/income-settings/page.tsx", ["収入設定", "登録済み収入", "月別変更"]],
   ["app/(app)/categories/page.tsx", ["カテゴリ管理", "分類ルール", "EmptyState"]],
   ["app/(app)/upload/page.tsx", ["アップロード", "アップロード履歴", "EmptyState"]],
   ["app/(app)/reports/page.tsx", ["レポート", "月別支出", "EmptyState"]],

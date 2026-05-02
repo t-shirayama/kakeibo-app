@@ -1,4 +1,4 @@
-import type { CategoryDto, CategorySummaryDto, MonthlyReportDto, TransactionDto, UploadJobDto } from "./types";
+import type { CategoryDto, CategorySummaryDto, IncomeSettingDto, MonthlyReportDto, TransactionDto, UploadJobDto } from "./types";
 import { clear_csrf_token, get_csrf_token } from "./csrf";
 import { getLoginPath } from "./auth";
 import type { ApiErrorShape } from "@/components/api-error-alert";
@@ -23,6 +23,12 @@ export type ApiClient = {
   update_category: (categoryId: string, request: CategoryRequest) => Promise<CategoryDto>;
   set_category_active: (categoryId: string, isActive: boolean) => Promise<CategoryDto>;
   delete_category: (categoryId: string) => Promise<{ status: string }>;
+  list_income_settings: () => Promise<IncomeSettingDto[]>;
+  create_income_setting: (request: IncomeSettingRequest) => Promise<IncomeSettingDto>;
+  update_income_setting: (incomeSettingId: string, request: IncomeSettingRequest) => Promise<IncomeSettingDto>;
+  delete_income_setting: (incomeSettingId: string) => Promise<{ status: string }>;
+  upsert_income_override: (incomeSettingId: string, targetMonth: string, request: IncomeOverrideRequest) => Promise<IncomeSettingDto>;
+  delete_income_override: (incomeSettingId: string, targetMonth: string) => Promise<IncomeSettingDto>;
 };
 
 export type LoginRequest = {
@@ -73,6 +79,18 @@ export type SettingsDto = SettingsRequest & {
   user_id: string;
   currency: string;
   timezone: string;
+};
+
+export type IncomeSettingRequest = {
+  member_name: string;
+  category_id: string;
+  base_amount: number;
+  base_day: number;
+};
+
+export type IncomeOverrideRequest = {
+  amount: number;
+  day: number;
 };
 
 export class ApiError extends Error {
@@ -325,5 +343,35 @@ export const api: ApiClient = {
   },
   async delete_category(categoryId) {
     return api_mutation<{ status: string }>(`/api/categories/${categoryId}`, { method: "DELETE" });
+  },
+  async list_income_settings() {
+    return api_fetch<IncomeSettingDto[]>("/api/income-settings");
+  },
+  async create_income_setting(request) {
+    return api_mutation<IncomeSettingDto>("/api/income-settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+  },
+  async update_income_setting(incomeSettingId, request) {
+    return api_mutation<IncomeSettingDto>(`/api/income-settings/${incomeSettingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+  },
+  async delete_income_setting(incomeSettingId) {
+    return api_mutation<{ status: string }>(`/api/income-settings/${incomeSettingId}`, { method: "DELETE" });
+  },
+  async upsert_income_override(incomeSettingId, targetMonth, request) {
+    return api_mutation<IncomeSettingDto>(`/api/income-settings/${incomeSettingId}/overrides/${targetMonth}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+  },
+  async delete_income_override(incomeSettingId, targetMonth) {
+    return api_mutation<IncomeSettingDto>(`/api/income-settings/${incomeSettingId}/overrides/${targetMonth}`, { method: "DELETE" });
   },
 };

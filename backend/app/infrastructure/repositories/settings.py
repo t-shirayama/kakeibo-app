@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.infrastructure.models.category import CategoryModel
+from app.infrastructure.models.income_setting import IncomeSettingModel, IncomeSettingOverrideModel
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.transaction import TransactionModel
@@ -75,7 +76,7 @@ class SettingsRepository:
 
     def soft_delete_user_data(self, *, user_id: UUID) -> None:
         now = datetime.now(UTC)
-        for model_class in (TransactionModel, CategoryModel, UploadModel):
+        for model_class in (TransactionModel, CategoryModel, UploadModel, IncomeSettingModel):
             rows = self._session.scalars(
                 select(model_class).where(model_class.user_id == str(user_id), model_class.deleted_at.is_(None))
             ).all()
@@ -83,6 +84,12 @@ class SettingsRepository:
                 row.deleted_at = now
                 if hasattr(row, "updated_at"):
                     row.updated_at = now
+
+        income_overrides = self._session.scalars(
+            select(IncomeSettingOverrideModel).where(IncomeSettingOverrideModel.user_id == str(user_id))
+        ).all()
+        for override in income_overrides:
+            self._session.delete(override)
 
         user = self._session.get(UserModel, str(user_id))
         if user is not None and user.deleted_at is None:

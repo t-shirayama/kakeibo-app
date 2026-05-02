@@ -15,6 +15,7 @@ from app.domain.entities import Transaction, TransactionType
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.routes.income_settings import apply_due_income_transactions
 
 router = APIRouter()
 
@@ -80,6 +81,7 @@ def list_transactions(
     session: Session = Depends(get_db_session),
 ) -> TransactionListResponse:
     # API層ではHTTP入力をユースケース用のPage/Commandへ変換するだけに留める。
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     result = _use_cases(session).list_transactions(
         user_id=current_user.id,
         page=Page(page=page, page_size=page_size),

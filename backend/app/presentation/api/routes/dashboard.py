@@ -11,6 +11,7 @@ from app.application.reports import DashboardSummary, ReportUseCases
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user
+from app.presentation.api.routes.income_settings import apply_due_income_transactions
 from app.presentation.api.routes.report_dtos import (
     CategorySummaryResponse,
     PeriodSummaryResponse,
@@ -45,6 +46,7 @@ def get_dashboard_summary(
     session: Session = Depends(get_db_session),
 ) -> DashboardSummaryResponse:
     today = date.today()
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     summary = _use_cases(session).dashboard_summary(
         user_id=current_user.id,
         year=year or today.year,
@@ -59,6 +61,7 @@ def get_recent_transactions(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> list[RecentTransactionResponse]:
+    apply_due_income_transactions(user_id=current_user.id, session=session)
     rows = _use_cases(session).recent_transactions(user_id=current_user.id, limit=limit)
     return [recent_transaction_response(row) for row in rows]
 
