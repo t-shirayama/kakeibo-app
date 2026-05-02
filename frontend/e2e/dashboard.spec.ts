@@ -13,7 +13,9 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   const foodLegend = page.locator(".category-pie-legend-row").filter({ hasText: "食費" });
   await expect(foodLegend).toBeVisible();
   await foodLegend.focus();
-  await expect(page.getByRole("tooltip").filter({ hasText: "食費" })).toBeVisible();
+  await expect(foodLegend).toHaveClass(/active/);
+  await expect(foodLegend).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".category-pie-highlight[data-active-category='cat_food']")).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近の明細" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
 });
