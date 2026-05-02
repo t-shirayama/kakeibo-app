@@ -12,6 +12,7 @@ export default function ReportsPage() {
   const reportQuery = useQuery({ queryKey: ["monthly-report"], queryFn: api.get_monthly_report });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
   const categorySummary = reportQuery.data?.category_summaries ?? [];
+  const periodSummary = reportQuery.data?.period_summaries ?? [];
 
   return (
     <>
@@ -34,8 +35,14 @@ export default function ReportsPage() {
       <section className="grid two-column-grid">
         {reportQuery.error || exportMutation.error ? <ApiErrorAlert error={reportQuery.error || exportMutation.error} /> : null}
         <div className="card panel">
-          <h2 className="panel-title">月別支出</h2>
-          {reportQuery.isLoading ? <LoadingState /> : <DashboardBars />}
+          <h2 className="panel-title">月別収入・支出</h2>
+          {reportQuery.isLoading ? (
+            <LoadingState />
+          ) : periodSummary.some((month) => month.total_expense > 0 || month.total_income > 0) ? (
+            <DashboardBars summaries={periodSummary} ariaLabel="月別収入支出グラフ" />
+          ) : (
+            <EmptyState title="推移データがありません" description="明細が登録されると月別の推移が表示されます。" />
+          )}
         </div>
         <div className="card panel">
           <h2 className="panel-title">カテゴリ別サマリー</h2>

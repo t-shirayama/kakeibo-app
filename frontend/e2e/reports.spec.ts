@@ -4,7 +4,8 @@ test("shows monthly report and exports Excel", async ({ page }) => {
   await page.goto("/reports");
 
   await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "月別支出" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "月別収入・支出" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "月別収入支出グラフ" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "カテゴリ別サマリー" })).toBeVisible();
   await expect(page.getByText("食費")).toBeVisible();
 

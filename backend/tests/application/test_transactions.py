@@ -339,6 +339,15 @@ def test_dashboard_summary_compares_previous_month() -> None:
     assert summary.total_expense == 1200
     assert summary.expense_change == 700
     assert summary.transaction_count == 1
+    assert [item.period for item in summary.monthly_summaries] == [
+        "2025-12",
+        "2026-01",
+        "2026-02",
+        "2026-03",
+        "2026-04",
+        "2026-05",
+    ]
+    assert summary.monthly_summaries[-1].total_expense == 1200
 
 
 def test_report_export_workbook_contains_required_sheets() -> None:

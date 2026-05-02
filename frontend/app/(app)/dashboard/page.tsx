@@ -20,6 +20,7 @@ type DashboardSummary = {
   balance_change: number;
   transaction_count_change: number;
   category_summaries: Array<{ category_id: string; name: string; color: string; amount: number; ratio: number }>;
+  monthly_summaries: Array<{ period: string; total_expense: number; total_income: number; balance: number; transaction_count: number }>;
 };
 
 export default function DashboardPage() {
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const summary = summaryQuery.data;
   // ローディング中も画面骨格を保つため、未取得データは空配列・0で扱う。
   const categorySummary = summary?.category_summaries ?? [];
+  const monthlySummary = summary?.monthly_summaries ?? [];
   const recentTransactions = recentQuery.data ?? [];
 
   return (
@@ -61,7 +63,13 @@ export default function DashboardPage() {
 
         <div className="card panel">
           <h2 className="panel-title">支出の推移</h2>
-          <DashboardBars />
+          {summaryQuery.isLoading ? (
+            <LoadingState />
+          ) : monthlySummary.some((month) => month.total_expense > 0 || month.total_income > 0) ? (
+            <DashboardBars summaries={monthlySummary} />
+          ) : (
+            <EmptyState title="推移データがありません" description="明細を取り込むと直近6ヶ月の収入と支出が表示されます。" />
+          )}
         </div>
       </section>
 

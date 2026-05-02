@@ -60,7 +60,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 ### ダッシュボード
 
 - `GET /api/dashboard/summary`
-  - 対象月の支出合計、収入合計、収支、取引件数、前月比を返す。
+  - 対象月の支出合計、収入合計、収支、取引件数、前月比、直近6ヶ月の月別収入・支出推移を返す。
 - `GET /api/dashboard/recent-transactions`
   - 最近の明細を日付降順で返す。
 

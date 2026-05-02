@@ -9,7 +9,7 @@ const checks = [
   ["app/(app)/income-settings/page.tsx", ["収入設定", "登録済み収入", "月別変更"]],
   ["app/(app)/categories/page.tsx", ["カテゴリ管理", "分類ルール", "EmptyState"]],
   ["app/(app)/upload/page.tsx", ["アップロード", "アップロード履歴", "EmptyState"]],
-  ["app/(app)/reports/page.tsx", ["レポート", "月別支出", "EmptyState"]],
+  ["app/(app)/reports/page.tsx", ["レポート", "月別収入・支出", "EmptyState"]],
   ["app/(app)/settings/page.tsx", ["設定", "1ページあたりの件数", "全データ削除"]],
   ["app/login/page.tsx", ["ログイン", "パスワードを忘れた場合"]],
   ["app/password-reset/page.tsx", ["パスワードリセット", "送信しました"]],
