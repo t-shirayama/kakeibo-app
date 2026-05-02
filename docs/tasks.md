@@ -239,3 +239,9 @@ rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*
 
 - [ ] GitHub ActionsでCI/CDを設定する。
 - [ ] テストに成功したらmainブランチへのマージを許可する。
+
+## 20. Docker Composeによる統一起動
+
+- [x] Docker Composeにバックエンドとフロントエンドの開発用コンテナを追加する。
+- [x] バックエンドコンテナ起動時にDBマイグレーションを自動実行する。
+- [x] DockerだけでMySQL、FastAPI、Next.jsをまとめて起動できる手順をREADMEに追記する。

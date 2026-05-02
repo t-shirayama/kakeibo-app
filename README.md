@@ -76,7 +76,38 @@ macOS / Linux:
 cp .env.example .env
 ```
 
-MySQL 8.4 は Docker Compose で起動します。
+### Docker Composeでアプリ全体を起動する
+
+Docker Desktop があれば、MySQL、バックエンド、フロントエンドをまとめて起動できます。バックエンド起動時に `alembic upgrade head` を自動実行するため、初回起動後にサンプルユーザーとサンプルデータをそのまま確認できます。
+
+起動:
+
+```powershell
+docker compose up --build
+```
+
+確認先:
+
+- フロントエンド: http://localhost:3000
+- Swagger UI: http://localhost:8000/docs
+- Health Check: http://localhost:8000/api/health
+- CSRF Token: http://localhost:8000/api/auth/csrf
+
+停止:
+
+```powershell
+docker compose down
+```
+
+MySQLデータも含めて初期化する場合:
+
+```powershell
+docker compose down -v
+```
+
+### ローカルランタイムで起動する
+
+PythonとNode.jsをホスト側に入れて開発する場合は、MySQL 8.4 だけを Docker Compose で起動します。
 
 Windows PowerShell / macOS:
 
@@ -106,7 +137,7 @@ DBマイグレーションだけを適用する場合:
 npm run migrate
 ```
 
-### アプリ起動
+### ローカルランタイムでのアプリ起動
 
 バックエンドとフロントエンドをまとめて起動します。
 
