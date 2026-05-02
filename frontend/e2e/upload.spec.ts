@@ -16,3 +16,24 @@ test("shows upload history including completed and failed imports", async ({ pag
   await expect(failedRow).toContainText("失敗");
   await expect(failedRow).toContainText("明細行を抽出できませんでした。");
 });
+
+test("uploads a PDF by dropping it onto the upload zone", async ({ page }) => {
+  await page.goto("/upload");
+  await expect(page.getByRole("heading", { name: "PDF明細をアップロード" })).toBeVisible();
+
+  const uploadResponse = page.waitForResponse((response) =>
+    response.url().includes("/api/uploads") && response.request().method() === "POST",
+  );
+
+  await page.getByLabel("PDFファイルのドロップゾーン").dispatchEvent("drop", {
+    dataTransfer: await page.evaluateHandle(() => {
+      const dataTransfer = new DataTransfer();
+      const content = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]);
+      dataTransfer.items.add(new File([content], "e2e-drop-test.pdf", { type: "application/pdf" }));
+      return dataTransfer;
+    }),
+  });
+
+  await uploadResponse;
+  await expect(page.getByRole("row").filter({ hasText: "e2e-drop-test.pdf" })).toBeVisible();
+});

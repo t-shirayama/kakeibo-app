@@ -2,7 +2,7 @@
 
 import { FileUp } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
@@ -17,6 +17,7 @@ const statusLabel = {
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const queryClient = useQueryClient();
   const uploadsQuery = useQuery({ queryKey: ["uploads"], queryFn: api.list_uploads });
   const uploadMutation = useMutation({
@@ -24,13 +25,44 @@ export default function UploadPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["uploads"] }),
   });
   const uploadJobs = uploadsQuery.data ?? [];
+  const uploadFile = (file: File | undefined) => {
+    if (!file || uploadMutation.isPending) {
+      return;
+    }
+    uploadMutation.mutate(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <>
       <PageHeader title="アップロード" subtitle="カードや銀行のPDF明細を取り込み、取引データに変換します。" />
 
       <section className="card panel">
-        <div className="upload-zone">
+        <div
+          className={`upload-zone${isDragging ? " dragging" : ""}`}
+          aria-label="PDFファイルのドロップゾーン"
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "copy";
+            setIsDragging(true);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setIsDragging(false);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragging(false);
+            uploadFile(event.dataTransfer.files[0]);
+          }}
+        >
           <div>
             <FileUp size={42} color="#2f7df6" aria-hidden="true" />
             <h2>PDF明細をアップロード</h2>
@@ -41,10 +73,7 @@ export default function UploadPage() {
               accept="application/pdf,.pdf"
               className="sr-only"
               onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  uploadMutation.mutate(file);
-                }
+                uploadFile(event.target.files?.[0]);
               }}
             />
             <button className="button" type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>

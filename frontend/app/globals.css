@@ -427,6 +427,11 @@ textarea {
   background: #fbfdff;
 }
 
+.upload-zone.dragging {
+  border-color: var(--primary);
+  background: #f2f7ff;
+}
+
 .upload-zone h2 {
   margin: 16px 0 8px;
   font-size: 18px;
