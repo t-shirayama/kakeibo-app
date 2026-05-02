@@ -173,7 +173,7 @@ textarea {
 }
 
 .metric-card {
-  min-height: 104px;
+  min-height: 118px;
   padding: 22px 24px;
 }
 
@@ -186,15 +186,43 @@ textarea {
 
 .metric-value {
   margin: 0;
-  font-size: 24px;
-  font-weight: 850;
+  font-size: 28px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
 .metric-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin: 12px 0 0;
-  color: var(--success);
+  color: var(--muted-strong);
   font-size: 12px;
   font-weight: 800;
+}
+
+.metric-delta.good {
+  color: var(--success);
+}
+
+.metric-delta.bad {
+  color: #dc2626;
+}
+
+.metric-delta.neutral {
+  color: var(--muted-strong);
+}
+
+.metric-delta-icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+}
+
+.metric-delta strong {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .panel {

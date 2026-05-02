@@ -23,6 +23,24 @@ type DashboardSummary = {
   monthly_summaries: Array<{ period: string; total_expense: number; total_income: number; balance: number; transaction_count: number }>;
 };
 
+function getDirection(value: number) {
+  if (value > 0) return "up";
+  if (value < 0) return "down";
+  return "flat";
+}
+
+function getExpenseTone(value: number) {
+  if (value < 0) return "good";
+  if (value > 0) return "bad";
+  return "neutral";
+}
+
+function getPositiveTone(value: number) {
+  if (value > 0) return "good";
+  if (value < 0) return "bad";
+  return "neutral";
+}
+
 export default function DashboardPage() {
   // ダッシュボードは複数APIを並行取得し、片方が失敗しても取れる情報は表示する。
   const summaryQuery = useQuery({
@@ -41,10 +59,42 @@ export default function DashboardPage() {
       <PageHeader title="ダッシュボード" subtitle="今月の支出、収入、カテゴリ別の傾向を確認できます。" />
 
       <section className="grid dashboard-grid" aria-label="今月の集計">
-        <MetricCard label="今月の支出合計" value={formatCurrency(summary?.total_expense ?? 0)} delta={`前月比 ${formatCurrency(summary?.expense_change ?? 0)}`} />
-        <MetricCard label="今月の収入合計" value={formatCurrency(summary?.total_income ?? 0)} delta={`前月比 ${formatCurrency(summary?.income_change ?? 0)}`} />
-        <MetricCard label="今月の残高" value={formatCurrency(summary?.balance ?? 0)} delta={`前月比 ${formatCurrency(summary?.balance_change ?? 0)}`} />
-        <MetricCard label="取引件数" value={`${summary?.transaction_count ?? 0}件`} delta={`前月比 ${summary?.transaction_count_change ?? 0}件`} />
+        <MetricCard
+          label="今月の支出合計"
+          value={formatCurrency(summary?.total_expense ?? 0)}
+          delta={{
+            value: formatCurrency(summary?.expense_change ?? 0),
+            direction: getDirection(summary?.expense_change ?? 0),
+            tone: getExpenseTone(summary?.expense_change ?? 0),
+          }}
+        />
+        <MetricCard
+          label="今月の収入合計"
+          value={formatCurrency(summary?.total_income ?? 0)}
+          delta={{
+            value: formatCurrency(summary?.income_change ?? 0),
+            direction: getDirection(summary?.income_change ?? 0),
+            tone: getPositiveTone(summary?.income_change ?? 0),
+          }}
+        />
+        <MetricCard
+          label="今月の残高"
+          value={formatCurrency(summary?.balance ?? 0)}
+          delta={{
+            value: formatCurrency(summary?.balance_change ?? 0),
+            direction: getDirection(summary?.balance_change ?? 0),
+            tone: getPositiveTone(summary?.balance_change ?? 0),
+          }}
+        />
+        <MetricCard
+          label="取引件数"
+          value={`${summary?.transaction_count ?? 0}件`}
+          delta={{
+            value: `${summary?.transaction_count_change ?? 0}件`,
+            direction: getDirection(summary?.transaction_count_change ?? 0),
+            tone: "neutral",
+          }}
+        />
       </section>
 
       {summaryQuery.error || recentQuery.error ? <ApiErrorAlert error={summaryQuery.error || recentQuery.error} /> : null}

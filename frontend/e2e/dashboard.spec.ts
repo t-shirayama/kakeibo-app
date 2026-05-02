@@ -8,6 +8,9 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   await expect(page.getByText("今月の収入合計")).toBeVisible();
   await expect(page.getByText("今月の残高")).toBeVisible();
   await expect(page.getByText("取引件数")).toBeVisible();
+  await expect(page.getByLabel(/前月比 (上昇|下降|変化なし)/).first()).toBeVisible();
+  await expect(page.locator(".metric-delta-icon").first()).toBeVisible();
+  await expect(page.locator(".metric-delta.good, .metric-delta.bad").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "カテゴリ別支出割合" })).toBeVisible();
   await expect(page.getByRole("img", { name: "カテゴリ別支出割合の円グラフ" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "支出の推移" })).toBeVisible();
