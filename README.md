@@ -102,7 +102,7 @@ docker compose up --build
 
 - `Dockerfile` を変更した
 - `docker-compose.yml` を変更した
-- `backend/requirements.txt` などバックエンド依存を変更した
+- `backend/pyproject.toml` などバックエンド依存を変更した
 - `frontend/package.json` や `frontend/package-lock.json` などフロントエンド依存を変更した
 - コンテナ内で使う起動スクリプトや環境設定を変更した
 
@@ -127,59 +127,16 @@ MySQLデータも含めて初期化する場合:
 docker compose down -v
 ```
 
-### ローカルランタイムで起動する
+### npmエイリアス
 
-PythonとNode.jsをホスト側に入れて開発する場合は、MySQL 8.4 だけを Docker Compose で起動します。
-
-Windows PowerShell / macOS:
-
-```powershell
-docker compose up -d mysql
-```
-
-バックエンド依存、フロントエンド依存、DBマイグレーションをまとめて準備します。
-
-Windows PowerShell:
-
-```powershell
-npm run setup
-```
-
-macOS / Linux:
-
-```bash
-npm run setup
-```
-
-依存関係が更新された場合も `npm run setup` を再実行してください。MySQL 8.4 の認証方式に対応するため、バックエンド依存には `cryptography` を含めています。
-
-DBマイグレーションだけを適用する場合:
-
-```powershell
-npm run migrate
-```
-
-### ローカルランタイムでのアプリ起動
-
-バックエンドとフロントエンドをまとめて起動します。
+ホスト側にNode.jsがある場合は、ルートのnpm scriptsをDocker Composeコマンドの短縮形として使えます。Pythonやフロントエンド依存はコンテナ内で扱います。
 
 ```powershell
 npm run dev
+npm run test:backend
+npm run test:frontend
+npm run test:e2e
 ```
-
-個別に起動する場合:
-
-```powershell
-npm run dev:backend
-npm run dev:frontend
-```
-
-確認先:
-
-- Swagger UI: http://localhost:8000/docs
-- Health Check: http://localhost:8000/api/health
-- CSRF Token: http://localhost:8000/api/auth/csrf
-- フロントエンド: http://localhost:3000
 
 ### 動作確認用ログイン
 
