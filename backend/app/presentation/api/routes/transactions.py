@@ -55,6 +55,19 @@ class TransactionRequest(BaseModel):
     memo: str | None = Field(default=None, max_length=1000)
 
 
+class SameShopCountResponse(BaseModel):
+    count: int
+
+
+class SameShopCategoryRequest(BaseModel):
+    shop_name: str = Field(min_length=1, max_length=255)
+    category_id: UUID
+
+
+class SameShopCategoryResponse(BaseModel):
+    updated_count: int
+
+
 @router.get("", response_model=TransactionListResponse)
 def list_transactions(
     page: int = Query(default=1, ge=1),
@@ -133,6 +146,38 @@ def update_transaction(
     except TransactionCategoryError as exc:
         raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
     return _transaction_response(transaction)
+
+
+@router.get("/{transaction_id}/same-shop-count", response_model=SameShopCountResponse)
+def count_same_shop_transactions(
+    transaction_id: UUID,
+    current_user: UserRecord = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+) -> SameShopCountResponse:
+    try:
+        count = _use_cases(session).count_same_shop_candidates(user_id=current_user.id, transaction_id=transaction_id)
+    except TransactionCategoryError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return SameShopCountResponse(count=count)
+
+
+@router.patch("/{transaction_id}/same-shop-category", response_model=SameShopCategoryResponse, dependencies=[Depends(validate_csrf_token)])
+def update_same_shop_category(
+    transaction_id: UUID,
+    request: SameShopCategoryRequest,
+    current_user: UserRecord = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+) -> SameShopCategoryResponse:
+    try:
+        updated_count = _use_cases(session).update_same_shop_category(
+            user_id=current_user.id,
+            transaction_id=transaction_id,
+            shop_name=request.shop_name,
+            category_id=request.category_id,
+        )
+    except TransactionCategoryError as exc:
+        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+    return SameShopCategoryResponse(updated_count=updated_count)
 
 
 @router.delete("/{transaction_id}", dependencies=[Depends(validate_csrf_token)])

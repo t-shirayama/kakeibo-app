@@ -15,6 +15,7 @@ from app.domain.value_objects import MoneyJPY
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
 UNCATEGORIZED_ID = UUID("22222222-2222-2222-2222-222222222222")
 FOOD_ID = UUID("33333333-3333-3333-3333-333333333333")
+DAILY_ID = UUID("44444444-4444-4444-4444-444444444444")
 
 
 class FakeTransactionCategoryRepository:
@@ -32,6 +33,12 @@ class FakeTransactionCategoryRepository:
                 user_id=USER_ID,
                 name="食費",
                 color="#EF4444",
+            ),
+            DAILY_ID: Category(
+                id=DAILY_ID,
+                user_id=USER_ID,
+                name="日用品",
+                color="#8B5CF6",
             ),
         }
         self.transactions: dict[UUID, Transaction] = {}
@@ -88,6 +95,46 @@ class FakeTransactionCategoryRepository:
     def update_transaction(self, transaction: Transaction) -> Transaction:
         self.transactions[transaction.id] = transaction
         return transaction
+
+    def count_other_transactions_by_shop(self, *, user_id: UUID, transaction_id: UUID, shop_name: str) -> int:
+        return sum(
+            1
+            for transaction in self.transactions.values()
+            if transaction.user_id == user_id and transaction.id != transaction_id and transaction.shop_name == shop_name
+        )
+
+    def update_category_for_shop(
+        self,
+        *,
+        user_id: UUID,
+        shop_name: str,
+        category_id: UUID,
+        excluding_transaction_id: UUID,
+    ) -> int:
+        updated_count = 0
+        for transaction in list(self.transactions.values()):
+            if transaction.user_id != user_id or transaction.id == excluding_transaction_id or transaction.shop_name != shop_name:
+                continue
+            self.transactions[transaction.id] = Transaction(
+                id=transaction.id,
+                user_id=transaction.user_id,
+                category_id=category_id,
+                transaction_date=transaction.transaction_date,
+                shop_name=transaction.shop_name,
+                amount=transaction.amount,
+                transaction_type=transaction.transaction_type,
+                payment_method=transaction.payment_method,
+                card_user_name=transaction.card_user_name,
+                memo=transaction.memo,
+                source_upload_id=transaction.source_upload_id,
+                source_file_name=transaction.source_file_name,
+                source_row_number=transaction.source_row_number,
+                source_page_number=transaction.source_page_number,
+                source_format=transaction.source_format,
+                source_hash=transaction.source_hash,
+            )
+            updated_count += 1
+        return updated_count
 
     def soft_delete_transaction(self, *, user_id: UUID, transaction_id: UUID) -> None:
         self.transactions.pop(transaction_id, None)
@@ -224,6 +271,29 @@ def test_update_category_changes_name_color_and_description() -> None:
     assert category.color == "#123456"
     assert category.description == "外食費"
     assert category.is_active is True
+
+
+def test_update_same_shop_category_updates_other_matching_shop_transactions_only() -> None:
+    repository = FakeTransactionCategoryRepository()
+    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    target = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
+    same_shop = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
+    other_shop = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Market", category_id=FOOD_ID))
+
+    candidate_count = use_cases.count_same_shop_candidates(user_id=USER_ID, transaction_id=target.id)
+    updated_count = use_cases.update_same_shop_category(
+        user_id=USER_ID,
+        transaction_id=target.id,
+        shop_name=target.shop_name,
+        category_id=DAILY_ID,
+    )
+
+    assert candidate_count == 1
+    assert updated_count == 1
+    assert repository.transactions[target.id].category_id == FOOD_ID
+    assert repository.transactions[same_shop.id].category_id == DAILY_ID
+    assert repository.transactions[other_shop.id].category_id == FOOD_ID
+    assert ("transaction.same_shop_category_updated", target.id) in repository.audit_logs
 
 
 def test_monthly_report_summarizes_expenses_by_category() -> None:

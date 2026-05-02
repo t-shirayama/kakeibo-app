@@ -29,10 +29,19 @@ export default function TransactionsPage() {
   });
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
   const saveMutation = useMutation({
-    mutationFn: (request: TransactionRequest) =>
-      editingTransaction
-        ? api.update_transaction(editingTransaction.transaction_id, request)
-        : api.create_transaction(request),
+    mutationFn: async (request: TransactionRequest) => {
+      if (!editingTransaction) {
+        return api.create_transaction(request);
+      }
+
+      const categoryChanged = request.category_id !== editingTransaction.category_id;
+      const shouldUpdateSameShop = categoryChanged && request.category_id ? await confirmSameShopCategoryUpdate(editingTransaction) : false;
+      const transaction = await api.update_transaction(editingTransaction.transaction_id, request);
+      if (shouldUpdateSameShop && request.category_id) {
+        await api.update_same_shop_category(editingTransaction.transaction_id, editingTransaction.shop_name, request.category_id);
+      }
+      return transaction;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setIsEditorOpen(false);
@@ -70,6 +79,16 @@ export default function TransactionsPage() {
     );
   }, [categoryById, query, transactionsQuery.data]);
   const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
+
+  async function confirmSameShopCategoryUpdate(transaction: TransactionDto): Promise<boolean> {
+    const { count } = await api.count_same_shop_transactions(transaction.transaction_id);
+    if (count === 0) {
+      return false;
+    }
+    return window.confirm(
+      `同じ店名「${transaction.shop_name}」の明細が他に${count}件あります。カテゴリをまとめて更新しますか？\n\nOK: 同じ店名の明細も更新\nキャンセル: この明細だけ更新`,
+    );
+  }
 
   return (
     <>

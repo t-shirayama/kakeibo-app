@@ -71,3 +71,47 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toHaveCount(0);
 });
+
+test("asks whether to update categories for the same shop name", async ({ page }) => {
+  await page.goto("/transactions");
+  await page.getByLabel("期間").selectOption({ label: "今年" });
+  await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
+
+  await createTransaction(page, { shopName: "E2E一括店舗", amount: "1111", category: "食費" });
+  await createTransaction(page, { shopName: "E2E一括店舗", amount: "2222", category: "食費" });
+
+  const bulkRows = page.getByRole("row").filter({ hasText: "E2E一括店舗" });
+  await expect(bulkRows).toHaveCount(2);
+  await bulkRows.first().getByRole("button", { name: "明細を編集" }).click();
+  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "日用品" });
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(page.getByRole("row").filter({ hasText: "E2E一括店舗" }).filter({ hasText: "日用品" })).toHaveCount(2);
+
+  await createTransaction(page, { shopName: "E2E単独店舗", amount: "3333", category: "食費" });
+  await createTransaction(page, { shopName: "E2E単独店舗", amount: "4444", category: "食費" });
+
+  const singleRows = page.getByRole("row").filter({ hasText: "E2E単独店舗" });
+  await expect(singleRows).toHaveCount(2);
+  await singleRows.first().getByRole("button", { name: "明細を編集" }).click();
+  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "日用品" });
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "保存" }).click();
+  await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "日用品" })).toHaveCount(1);
+  await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "食費" })).toHaveCount(1);
+});
+
+async function createTransaction(
+  page: import("@playwright/test").Page,
+  values: { shopName: string; amount: string; category: string },
+) {
+  await page.getByRole("button", { name: "手動で追加" }).click();
+  await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
+  await page.getByLabel("日付").fill("2026-05-02");
+  await page.getByLabel("店名").fill(values.shopName);
+  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: values.category });
+  await page.getByLabel("金額").fill(values.amount);
+  await page.getByLabel("支払い方法").fill("現金");
+  await page.getByRole("button", { name: "追加" }).click();
+  await expect(page.getByRole("cell", { name: values.shopName }).first()).toBeVisible();
+}

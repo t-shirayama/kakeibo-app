@@ -102,6 +102,64 @@ def test_transaction_repository_filters_by_transaction_date(db_session: Session)
     assert result.items[0].shop_name == "May Cafe"
 
 
+def test_transaction_repository_updates_category_for_same_shop(db_session: Session) -> None:
+    add_user(db_session)
+    repository = TransactionCategoryRepository(db_session)
+    food = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    daily = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+    target = repository.create_transaction(
+        Transaction(
+            id=uuid4(),
+            user_id=USER_ID,
+            category_id=food.id,
+            transaction_date=date(2026, 5, 1),
+            shop_name="Cafe",
+            amount=MoneyJPY(1200),
+            transaction_type=TransactionType.EXPENSE,
+        )
+    )
+    same_shop = repository.create_transaction(
+        Transaction(
+            id=uuid4(),
+            user_id=USER_ID,
+            category_id=food.id,
+            transaction_date=date(2026, 5, 2),
+            shop_name="Cafe",
+            amount=MoneyJPY(800),
+            transaction_type=TransactionType.EXPENSE,
+        )
+    )
+    other_shop = repository.create_transaction(
+        Transaction(
+            id=uuid4(),
+            user_id=USER_ID,
+            category_id=food.id,
+            transaction_date=date(2026, 5, 3),
+            shop_name="Market",
+            amount=MoneyJPY(500),
+            transaction_type=TransactionType.EXPENSE,
+        )
+    )
+
+    candidate_count = repository.count_other_transactions_by_shop(
+        user_id=USER_ID,
+        transaction_id=target.id,
+        shop_name=target.shop_name,
+    )
+    updated_count = repository.update_category_for_shop(
+        user_id=USER_ID,
+        shop_name=target.shop_name,
+        category_id=daily.id,
+        excluding_transaction_id=target.id,
+    )
+
+    assert candidate_count == 1
+    assert updated_count == 1
+    assert repository.get_transaction(user_id=USER_ID, transaction_id=target.id).category_id == food.id
+    assert repository.get_transaction(user_id=USER_ID, transaction_id=same_shop.id).category_id == daily.id
+    assert repository.get_transaction(user_id=USER_ID, transaction_id=other_shop.id).category_id == food.id
+
+
 def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_session: Session) -> None:
     add_user(db_session)
     repository = TransactionCategoryRepository(db_session)

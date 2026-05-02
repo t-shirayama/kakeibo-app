@@ -136,6 +136,32 @@ class TransactionCategoryUseCases:
         )
         return transaction
 
+    def count_same_shop_candidates(self, *, user_id: UUID, transaction_id: UUID) -> int:
+        transaction = self.get_transaction(user_id=user_id, transaction_id=transaction_id)
+        return self._repository.count_other_transactions_by_shop(
+            user_id=user_id,
+            transaction_id=transaction_id,
+            shop_name=transaction.shop_name,
+        )
+
+    def update_same_shop_category(self, *, user_id: UUID, transaction_id: UUID, shop_name: str, category_id: UUID) -> int:
+        self.get_transaction(user_id=user_id, transaction_id=transaction_id)
+        self._ensure_category_available(user_id=user_id, category_id=category_id)
+        updated_count = self._repository.update_category_for_shop(
+            user_id=user_id,
+            shop_name=shop_name,
+            category_id=category_id,
+            excluding_transaction_id=transaction_id,
+        )
+        self._repository.create_audit_log(
+            user_id=user_id,
+            action="transaction.same_shop_category_updated",
+            resource_type="transaction",
+            resource_id=transaction_id,
+            details={"shop_name": shop_name, "category_id": str(category_id), "updated_count": updated_count},
+        )
+        return updated_count
+
     def delete_transaction(self, *, user_id: UUID, transaction_id: UUID) -> None:
         self.get_transaction(user_id=user_id, transaction_id=transaction_id)
         self._repository.soft_delete_transaction(user_id=user_id, transaction_id=transaction_id)

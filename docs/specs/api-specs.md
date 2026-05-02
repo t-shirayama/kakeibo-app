@@ -74,8 +74,13 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - 明細を手動登録する。
 - `GET /api/transactions/{transaction_id}`
   - 明細詳細を取得する。
+- `GET /api/transactions/{transaction_id}/same-shop-count`
+  - 編集対象と同じ店名を持つ他の明細件数を取得する。
 - `PUT /api/transactions/{transaction_id}`
   - 明細を更新する。
+- `PATCH /api/transactions/{transaction_id}/same-shop-category`
+  - 指定した店名を持つ他の明細カテゴリを一括更新する。
+  - リクエストは `shop_name` と `category_id` を指定する。
 - `DELETE /api/transactions/{transaction_id}`
   - 明細を削除する。
 - `GET /api/transactions/export`

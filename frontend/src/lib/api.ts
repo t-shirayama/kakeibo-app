@@ -8,6 +8,8 @@ export type ApiClient = {
   list_categories: (params?: CategoryListParams) => Promise<CategoryDto[]>;
   create_transaction: (request: TransactionRequest) => Promise<TransactionDto>;
   update_transaction: (transactionId: string, request: TransactionRequest) => Promise<TransactionDto>;
+  count_same_shop_transactions: (transactionId: string) => Promise<{ count: number }>;
+  update_same_shop_category: (transactionId: string, shopName: string, categoryId: string) => Promise<{ updated_count: number }>;
   delete_transaction: (transactionId: string) => Promise<{ status: string }>;
   export_transactions: () => Promise<void>;
   list_uploads: () => Promise<UploadJobDto[]>;
@@ -231,6 +233,16 @@ export const api: ApiClient = {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
+    });
+  },
+  async count_same_shop_transactions(transactionId) {
+    return api_fetch<{ count: number }>(`/api/transactions/${transactionId}/same-shop-count`);
+  },
+  async update_same_shop_category(transactionId, shopName, categoryId) {
+    return api_mutation<{ updated_count: number }>(`/api/transactions/${transactionId}/same-shop-category`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shop_name: shopName, category_id: categoryId }),
     });
   },
   async delete_transaction(transactionId) {

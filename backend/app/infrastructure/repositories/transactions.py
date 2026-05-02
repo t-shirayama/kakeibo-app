@@ -155,6 +155,42 @@ class TransactionCategoryRepository:
         self._session.refresh(model)
         return self._to_transaction(model)
 
+    def count_other_transactions_by_shop(self, *, user_id: UUID, transaction_id: UUID, shop_name: str) -> int:
+        count = self._session.scalar(
+            select(func.count())
+            .select_from(TransactionModel)
+            .where(
+                TransactionModel.user_id == str(user_id),
+                TransactionModel.id != str(transaction_id),
+                TransactionModel.shop_name == shop_name,
+                TransactionModel.deleted_at.is_(None),
+            )
+        )
+        return count or 0
+
+    def update_category_for_shop(
+        self,
+        *,
+        user_id: UUID,
+        shop_name: str,
+        category_id: UUID,
+        excluding_transaction_id: UUID,
+    ) -> int:
+        rows = self._session.scalars(
+            select(TransactionModel).where(
+                TransactionModel.user_id == str(user_id),
+                TransactionModel.id != str(excluding_transaction_id),
+                TransactionModel.shop_name == shop_name,
+                TransactionModel.deleted_at.is_(None),
+            )
+        ).all()
+        now = datetime.now(UTC)
+        for row in rows:
+            row.category_id = str(category_id)
+            row.updated_at = now
+        self._session.commit()
+        return len(rows)
+
     def soft_delete_transaction(self, *, user_id: UUID, transaction_id: UUID) -> None:
         model = self._session.scalar(
             select(TransactionModel).where(
