@@ -57,6 +57,25 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   await expect(page.getByText(`${pickerMonth.label}の支出合計`)).toBeVisible();
 });
 
+test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {
+  await page.goto("/dashboard");
+
+  const selectedMonth = await page.getByLabel("表示月").inputValue();
+  const expectedRange = getMonthDateRange(selectedMonth);
+  const foodLegend = page.locator(".category-pie-legend-row").filter({ hasText: "食費" });
+  await expect(foodLegend).toBeVisible();
+
+  await foodLegend.click();
+
+  await expect(page).toHaveURL(/\/transactions/);
+  const url = new URL(page.url());
+  expect(url.searchParams.get("date_from")).toBe(expectedRange.date_from);
+  expect(url.searchParams.get("date_to")).toBe(expectedRange.date_to);
+  expect(url.searchParams.get("category_id")).toBeTruthy();
+  await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
+});
+
 function matchesDashboardSummaryRequest(url: string, target: { year: number; month: number }) {
   const parsedUrl = new URL(url);
 
@@ -79,4 +98,15 @@ function parseYearMonth(value: string) {
   const [year, month] = value.split("-").map(Number);
 
   return { year, month };
+}
+
+function getMonthDateRange(value: string) {
+  const { year, month } = parseYearMonth(value);
+  const lastDay = new Date(year, month, 0).getDate();
+  const paddedMonth = String(month).padStart(2, "0");
+
+  return {
+    date_from: `${year}-${paddedMonth}-01`,
+    date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
+  };
 }

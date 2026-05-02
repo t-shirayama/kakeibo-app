@@ -13,7 +13,8 @@ import { api, type TransactionRequest } from "@/lib/api";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
-type PeriodKey = "current_month" | "previous_month" | "current_year" | "all";
+type PeriodKey = "current_month" | "previous_month" | "current_year" | "custom" | "all";
+type DateRange = { date_from?: string; date_to?: string };
 type SaveTransactionInput = {
   request: TransactionRequest;
   updateSameShop: boolean;
@@ -33,10 +34,11 @@ export default function TransactionsPage() {
   const [isPreparingSave, setIsPreparingSave] = useState(false);
   const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const [query, setQuery] = useState("");
-  const [period, setPeriod] = useState<PeriodKey>(() => parsePeriod(searchParams.get("period")));
+  const initialDateRange = useMemo(() => parseDateRange(searchParams), [searchParams]);
+  const [period, setPeriod] = useState<PeriodKey>(() => parsePeriod(searchParams.get("period"), initialDateRange));
   const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category_id") ?? "");
   const queryClient = useQueryClient();
-  const periodRange = useMemo(() => getPeriodRange(period), [period]);
+  const periodRange = useMemo(() => getPeriodRange(period, initialDateRange), [initialDateRange, period]);
   const transactionsQuery = useQuery({
     queryKey: ["transactions", periodRange, categoryFilter],
     queryFn: () => api.list_transactions({ ...periodRange, category_id: categoryFilter || undefined }),
@@ -186,6 +188,7 @@ export default function TransactionsPage() {
               <option value="current_month">今月</option>
               <option value="previous_month">先月</option>
               <option value="current_year">今年</option>
+              {period === "custom" ? <option value="custom">指定期間</option> : null}
               <option value="all">全期間</option>
             </select>
             <select
@@ -315,11 +318,18 @@ export default function TransactionsPage() {
   );
 }
 
-function parsePeriod(value: string | null): PeriodKey {
+function parsePeriod(value: string | null, dateRange: DateRange): PeriodKey {
+  if (dateRange.date_from && dateRange.date_to) {
+    return "custom";
+  }
   return value === "previous_month" || value === "current_year" || value === "all" ? value : "current_month";
 }
 
-function getPeriodRange(period: PeriodKey): { date_from?: string; date_to?: string } {
+function getPeriodRange(period: PeriodKey, customRange: DateRange): DateRange {
+  if (period === "custom") {
+    return customRange;
+  }
+
   if (period === "all") {
     return {};
   }
@@ -347,6 +357,21 @@ function getPeriodRange(period: PeriodKey): { date_from?: string; date_to?: stri
     date_from: formatDateParam(new Date(year, month, 1)),
     date_to: formatDateParam(new Date(year, month + 1, 0)),
   };
+}
+
+function parseDateRange(searchParams: ReturnType<typeof useSearchParams>): DateRange {
+  const date_from = searchParams.get("date_from") ?? undefined;
+  const date_to = searchParams.get("date_to") ?? undefined;
+
+  if (!isDateParam(date_from) || !isDateParam(date_to)) {
+    return {};
+  }
+
+  return { date_from, date_to };
+}
+
+function isDateParam(value: string | undefined): value is string {
+  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
 }
 
 function formatDateParam(date: Date): string {

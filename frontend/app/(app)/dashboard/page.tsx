@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { DashboardBars } from "@/components/dashboard-bars";
-import { CategoryPieChart } from "@/components/category-pie-chart";
+import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { MetricCard } from "@/components/metric-card";
@@ -44,6 +45,7 @@ function getPositiveTone(value: number) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth);
   const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
   const metricPeriodLabel = selectedYearMonth === getCurrentYearMonth() ? "今月" : formatYearMonthLabel(selectedYearMonth);
@@ -59,6 +61,17 @@ export default function DashboardPage() {
   const categorySummary = summary?.category_summaries ?? [];
   const monthlySummary = summary?.monthly_summaries ?? [];
   const recentTransactions = recentQuery.data ?? [];
+
+  function handleCategoryClick(item: CategoryPieChartItem) {
+    const range = getMonthDateRange(selectedYearMonth);
+    const params = new URLSearchParams({
+      date_from: range.date_from,
+      date_to: range.date_to,
+      category_id: item.category_id,
+    });
+
+    router.push(`/transactions?${params.toString()}`);
+  }
 
   return (
     <>
@@ -130,7 +143,7 @@ export default function DashboardPage() {
           ) : categorySummary.length === 0 ? (
             <EmptyState title="カテゴリ集計がありません" description="明細を取り込むとカテゴリ別の支出が表示されます。" />
           ) : (
-            <CategoryPieChart items={categorySummary} />
+            <CategoryPieChart items={categorySummary} onCategoryClick={handleCategoryClick} />
           )}
         </div>
 
@@ -215,4 +228,15 @@ function formatYearMonthLabel(value: string) {
   const { year, month } = parseYearMonth(value);
 
   return `${year}年${month}月`;
+}
+
+function getMonthDateRange(value: string) {
+  const { year, month } = parseYearMonth(value);
+  const lastDay = new Date(year, month, 0).getDate();
+  const paddedMonth = String(month).padStart(2, "0");
+
+  return {
+    date_from: `${year}-${paddedMonth}-01`,
+    date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
+  };
 }

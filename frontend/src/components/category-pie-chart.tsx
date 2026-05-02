@@ -13,9 +13,10 @@ export type CategoryPieChartItem = {
 
 type CategoryPieChartProps = {
   items: CategoryPieChartItem[];
+  onCategoryClick?: (item: CategoryPieChartItem) => void;
 };
 
-export function CategoryPieChart({ items }: CategoryPieChartProps) {
+export function CategoryPieChart({ items, onCategoryClick }: CategoryPieChartProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const total = items.reduce((sum, item) => sum + item.amount, 0);
   const segments = buildSegments(items, total);
@@ -58,6 +59,7 @@ export function CategoryPieChart({ items }: CategoryPieChartProps) {
             onFocus={() => setActiveCategoryId(item.category_id)}
             onMouseEnter={() => setActiveCategoryId(item.category_id)}
             onMouseLeave={() => setActiveCategoryId(null)}
+            onClick={() => onCategoryClick?.(item)}
           >
             <span className="swatch" style={{ background: item.color }} />
             <strong>{item.name}</strong>
