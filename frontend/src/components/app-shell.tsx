@@ -51,13 +51,6 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
               );
             })}
           </nav>
-
-          <div className="sidebar-upload">
-            <p>PDFをアップロードして明細を自動で取り込みます。</p>
-            <Link className="button" href="/upload">
-              PDFアップロード
-            </Link>
-          </div>
         </aside>
         <main className="main">{children}</main>
       </div>

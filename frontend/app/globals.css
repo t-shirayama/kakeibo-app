@@ -118,23 +118,6 @@ textarea {
   background: var(--primary-soft);
 }
 
-.sidebar-upload {
-  margin-top: auto;
-  padding: 18px 16px;
-  text-align: center;
-  background: #f7faff;
-  border: 1px solid #edf2fb;
-  border-radius: var(--radius);
-}
-
-.sidebar-upload p {
-  margin: 0 0 14px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.55;
-}
-
 .main {
   min-width: 0;
   min-height: 0;
@@ -932,10 +915,6 @@ textarea {
     grid-auto-columns: max-content;
     overflow-x: auto;
     padding-bottom: 2px;
-  }
-
-  .sidebar-upload {
-    display: none;
   }
 
   .main {
