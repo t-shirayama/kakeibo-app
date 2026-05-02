@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardBars } from "@/components/dashboard-bars";
+import { CategoryPieChart } from "@/components/category-pie-chart";
 import { useQuery } from "@tanstack/react-query";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { EmptyState, LoadingState } from "@/components/state-block";
@@ -18,7 +19,7 @@ type DashboardSummary = {
   income_change: number;
   balance_change: number;
   transaction_count_change: number;
-  category_summaries: Array<{ category_id: string; name: string; color: string; amount: number }>;
+  category_summaries: Array<{ category_id: string; name: string; color: string; amount: number; ratio: number }>;
 };
 
 export default function DashboardPage() {
@@ -54,15 +55,7 @@ export default function DashboardPage() {
           ) : categorySummary.length === 0 ? (
             <EmptyState title="カテゴリ集計がありません" description="明細を取り込むとカテゴリ別の支出が表示されます。" />
           ) : (
-            <div className="category-list">
-              {categorySummary.map((category) => (
-                <div className="category-row" key={category.category_id}>
-                  <span className="swatch" style={{ background: category.color }} />
-                  <strong>{category.name}</strong>
-                  <span className="amount">{formatCurrency(category.amount)}</span>
-                </div>
-              ))}
-            </div>
+            <CategoryPieChart items={categorySummary} />
           )}
         </div>
 

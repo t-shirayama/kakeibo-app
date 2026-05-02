@@ -414,6 +414,63 @@ textarea {
   border-radius: 8px;
 }
 
+.category-pie-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.76fr) minmax(220px, 1fr);
+  align-items: center;
+  gap: 22px;
+}
+
+.category-pie-chart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  justify-self: center;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(15 23 42 / 8%);
+}
+
+.category-pie-chart::after {
+  position: absolute;
+  inset: 24%;
+  content: "";
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 50%;
+}
+
+.category-pie-center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.category-pie-center span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.category-pie-center strong {
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.category-pie-legend {
+  display: grid;
+  gap: 10px;
+}
+
+.category-pie-legend-row {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  padding: 10px 12px;
+}
+
 .income-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -911,7 +968,8 @@ textarea {
 
   .income-form-grid,
   .income-setting-main,
-  .income-override-row {
+  .income-override-row,
+  .category-pie-layout {
     grid-template-columns: 1fr;
   }
 
