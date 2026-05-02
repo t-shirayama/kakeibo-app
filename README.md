@@ -80,11 +80,33 @@ cp .env.example .env
 
 Docker Desktop があれば、MySQL、バックエンド、フロントエンドをまとめて起動できます。バックエンド起動時に `alembic upgrade head` を自動実行するため、初回起動後にサンプルユーザーとサンプルデータをそのまま確認できます。
 
-起動:
+普段の起動:
+
+```powershell
+docker compose up
+```
+
+バックグラウンドで起動する場合:
+
+```powershell
+docker compose up -d
+```
+
+初回起動時、またはDockerイメージの再作成が必要な変更を入れた場合:
 
 ```powershell
 docker compose up --build
 ```
+
+`--build` が必要になる主な変更は以下です。
+
+- `Dockerfile` を変更した
+- `docker-compose.yml` を変更した
+- `backend/requirements.txt` などバックエンド依存を変更した
+- `frontend/package.json` や `frontend/package-lock.json` などフロントエンド依存を変更した
+- コンテナ内で使う起動スクリプトや環境設定を変更した
+
+アプリのコードだけを変更した場合は、開発用コンテナのホットリロードで反映されるため、通常は `--build` なしの `docker compose up` で十分です。
 
 確認先:
 
