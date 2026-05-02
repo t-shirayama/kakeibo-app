@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit3, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Edit3, Plus, Search, Trash2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
@@ -13,8 +13,9 @@ import { api, type TransactionRequest } from "@/lib/api";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
-type PeriodKey = "current_month" | "previous_month" | "current_year" | "custom" | "all";
 type DateRange = { date_from?: string; date_to?: string };
+type SortField = "date" | "amount";
+type SortDirection = "asc" | "desc";
 type SaveTransactionInput = {
   request: TransactionRequest;
   updateSameShop: boolean;
@@ -34,11 +35,20 @@ export default function TransactionsPage() {
   const [isPreparingSave, setIsPreparingSave] = useState(false);
   const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const [query, setQuery] = useState("");
-  const initialDateRange = useMemo(() => parseDateRange(searchParams), [searchParams]);
-  const [period, setPeriod] = useState<PeriodKey>(() => parsePeriod(searchParams.get("period"), initialDateRange));
+  const initialDateRange = useMemo(() => parseInitialDateRange(searchParams), [searchParams]);
+  const [dateFrom, setDateFrom] = useState(initialDateRange.date_from ?? "");
+  const [dateTo, setDateTo] = useState(initialDateRange.date_to ?? "");
   const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category_id") ?? "");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const queryClient = useQueryClient();
-  const periodRange = useMemo(() => getPeriodRange(period, initialDateRange), [initialDateRange, period]);
+  const periodRange = useMemo(
+    () => ({
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
+    }),
+    [dateFrom, dateTo],
+  );
   const transactionsQuery = useQuery({
     queryKey: ["transactions", periodRange, categoryFilter],
     queryFn: () => api.list_transactions({ ...periodRange, category_id: categoryFilter || undefined }),
@@ -77,23 +87,61 @@ export default function TransactionsPage() {
   const transactions = useMemo(() => {
     const rows = transactionsQuery.data ?? [];
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return rows;
+    const searchedRows = normalizedQuery
+      ? rows.filter((transaction) =>
+          // APIのカテゴリ名が未設定でも、カテゴリ一覧から補完して検索対象に含める。
+          [
+            transaction.shop_name,
+            transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類",
+            transaction.memo ?? "",
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery),
+        )
+      : rows;
+
+    return [...searchedRows].sort((a, b) => compareTransactions(a, b, sortField, sortDirection));
+  }, [categoryById, query, sortDirection, sortField, transactionsQuery.data]);
+  const searchSuggestions = useMemo(() => {
+    const suggestions = new Set<string>();
+    for (const transaction of transactionsQuery.data ?? []) {
+      suggestions.add(transaction.shop_name);
+      suggestions.add(transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類");
+      if (transaction.memo) {
+        suggestions.add(transaction.memo);
+      }
     }
-    return rows.filter((transaction) =>
-      // APIのカテゴリ名が未設定でも、カテゴリ一覧から補完して検索対象に含める。
-      [
-        transaction.shop_name,
-        transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類",
-        transaction.memo ?? "",
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery),
-    );
-  }, [categoryById, query, transactionsQuery.data]);
+    return Array.from(suggestions).filter(Boolean).sort((a, b) => a.localeCompare(b, "ja")).slice(0, 12);
+  }, [categoryById, transactionsQuery.data]);
+  const activeFilterChips = useMemo(
+    () => buildFilterChips({
+      dateFrom,
+      dateTo,
+      categoryName: categoryFilter ? categoryById.get(categoryFilter)?.name : undefined,
+      query,
+    }),
+    [categoryById, categoryFilter, dateFrom, dateTo, query],
+  );
   const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
   const isSaving = saveMutation.isPending || isPreparingSave;
+  const hasActiveFilters = Boolean(query.trim() || categoryFilter || dateFrom || dateTo);
+
+  function handleSort(nextField: SortField) {
+    if (sortField === nextField) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortField(nextField);
+    setSortDirection(nextField === "date" ? "desc" : "asc");
+  }
+
+  function clearFilters() {
+    setQuery("");
+    setDateFrom("");
+    setDateTo("");
+    setCategoryFilter("");
+  }
 
   function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
     return new Promise((resolve) => {
@@ -172,38 +220,6 @@ export default function TransactionsPage() {
         subtitle="取り込んだ明細を検索、絞り込み、手動追加できます。"
         actions={
           <div className="toolbar">
-            <input
-              className="input"
-              aria-label="明細検索"
-              placeholder="店名、メモ、カテゴリで検索"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            <select
-              className="select"
-              aria-label="期間"
-              value={period}
-              onChange={(event) => setPeriod(event.target.value as PeriodKey)}
-            >
-              <option value="current_month">今月</option>
-              <option value="previous_month">先月</option>
-              <option value="current_year">今年</option>
-              {period === "custom" ? <option value="custom">指定期間</option> : null}
-              <option value="all">全期間</option>
-            </select>
-            <select
-              className="select"
-              aria-label="カテゴリ絞り込み"
-              value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value)}
-            >
-              <option value="">すべてのカテゴリ</option>
-              {categories.map((category) => (
-                <option key={category.category_id} value={category.category_id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
             <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
               {exportMutation.isPending ? "出力中" : "エクスポート"}
             </button>
@@ -224,6 +240,65 @@ export default function TransactionsPage() {
 
       {apiError ? <ApiErrorAlert error={apiError} /> : null}
 
+      <section className="filter-panel" aria-label="明細フィルタ">
+        <div className="filter-grid">
+          <div className="filter-field filter-field-search">
+            <label htmlFor="transaction-search">検索</label>
+            <div className="input-with-icon">
+              <Search size={15} aria-hidden="true" />
+              <input
+                id="transaction-search"
+                className="input wide"
+                aria-label="明細検索"
+                list="transaction-search-suggestions"
+                placeholder="店名、メモ、カテゴリで検索"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            <datalist id="transaction-search-suggestions">
+              {searchSuggestions.map((suggestion) => (
+                <option key={suggestion} value={suggestion} />
+              ))}
+            </datalist>
+            <p>検索対象: 店名 / メモ / カテゴリ</p>
+          </div>
+          <div className="filter-field">
+            <label htmlFor="date-from">開始日</label>
+            <input id="date-from" className="input wide" aria-label="開始日" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+          </div>
+          <div className="filter-field">
+            <label htmlFor="date-to">終了日</label>
+            <input id="date-to" className="input wide" aria-label="終了日" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+          </div>
+          <div className="filter-field">
+            <label htmlFor="category-filter">カテゴリ</label>
+            <select id="category-filter" className="select wide" aria-label="カテゴリ絞り込み" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <option value="">すべてのカテゴリ</option>
+              {categories.map((category) => (
+                <option key={category.category_id} value={category.category_id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="filter-summary-row">
+          <div className="filter-chips" aria-label="適用中のフィルタ">
+            {activeFilterChips.length > 0 ? activeFilterChips.map((chip) => <span className="filter-chip" key={chip}>{chip}</span>) : <span className="filter-chip muted-chip">条件なし</span>}
+          </div>
+          <button className="button secondary compact" type="button" onClick={clearFilters} disabled={!hasActiveFilters}>
+            <X size={14} aria-hidden="true" />
+            フィルタ解除
+          </button>
+        </div>
+      </section>
+
+      <div className="result-summary" aria-live="polite">
+        {transactions.length}件ヒット
+        <span>ソート: {sortLabel(sortField, sortDirection)}</span>
+      </div>
+
       <section className="card table-wrap">
         {transactionsQuery.isLoading || categoriesQuery.isLoading ? (
           <LoadingState />
@@ -233,10 +308,20 @@ export default function TransactionsPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>日付</th>
+                <th>
+                  <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${sortField === "date" ? sortDirectionLabel(sortDirection) : ""}`.trim()}>
+                    日付
+                    <SortIcon active={sortField === "date"} direction={sortDirection} />
+                  </button>
+                </th>
                 <th>店名</th>
                 <th>カテゴリ</th>
-                <th>金額</th>
+                <th className="amount-column">
+                  <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${sortField === "amount" ? sortDirectionLabel(sortDirection) : ""}`.trim()}>
+                    金額
+                    <SortIcon active={sortField === "amount"} direction={sortDirection} />
+                  </button>
+                </th>
                 <th>支払い方法</th>
                 <th>メモ</th>
                 <th>操作</th>
@@ -252,7 +337,7 @@ export default function TransactionsPage() {
                       {transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類"}
                     </span>
                   </td>
-                  <td className="amount">{formatCurrency(transaction.amount)}</td>
+                  <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
                   <td>{transaction.payment_method ?? "-"}</td>
                   <td>{transaction.memo ?? "-"}</td>
                   <td>
@@ -318,26 +403,19 @@ export default function TransactionsPage() {
   );
 }
 
-function parsePeriod(value: string | null, dateRange: DateRange): PeriodKey {
-  if (dateRange.date_from && dateRange.date_to) {
-    return "custom";
+function parseInitialDateRange(searchParams: ReturnType<typeof useSearchParams>): DateRange {
+  const dateRange = parseDateRange(searchParams);
+  if (dateRange.date_from || dateRange.date_to) {
+    return dateRange;
   }
-  return value === "previous_month" || value === "current_year" || value === "all" ? value : "current_month";
-}
-
-function getPeriodRange(period: PeriodKey, customRange: DateRange): DateRange {
-  if (period === "custom") {
-    return customRange;
-  }
-
-  if (period === "all") {
-    return {};
-  }
-
+  const period = searchParams.get("period");
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
 
+  if (period === "all") {
+    return {};
+  }
   if (period === "previous_month") {
     const previousMonth = new Date(year, month - 1, 1);
     return {
@@ -379,6 +457,70 @@ function formatDateParam(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function compareTransactions(a: TransactionDto, b: TransactionDto, sortField: SortField, sortDirection: SortDirection): number {
+  const direction = sortDirection === "asc" ? 1 : -1;
+  if (sortField === "amount") {
+    const diff = a.amount - b.amount;
+    if (diff !== 0) {
+      return diff * direction;
+    }
+  } else {
+    const diff = a.transaction_date.localeCompare(b.transaction_date);
+    if (diff !== 0) {
+      return diff * direction;
+    }
+  }
+
+  return b.transaction_id.localeCompare(a.transaction_id);
+}
+
+function SortIcon({ active, direction }: { active: boolean; direction: SortDirection }) {
+  const Icon = active && direction === "asc" ? ArrowUp : ArrowDown;
+
+  return <Icon className={`sort-icon${active ? " active" : ""}`} size={13} aria-hidden="true" />;
+}
+
+function sortDirectionLabel(direction: SortDirection) {
+  return direction === "asc" ? "昇順" : "降順";
+}
+
+function sortLabel(field: SortField, direction: SortDirection) {
+  return `${field === "date" ? "日付" : "金額"} ${sortDirectionLabel(direction)}`;
+}
+
+function buildFilterChips({ dateFrom, dateTo, categoryName, query }: { dateFrom: string; dateTo: string; categoryName?: string; query: string }) {
+  const chips: string[] = [];
+  if (dateFrom || dateTo) {
+    chips.push(formatDateRangeChip(dateFrom, dateTo));
+  }
+  if (categoryName) {
+    chips.push(categoryName);
+  }
+  if (query.trim()) {
+    chips.push(`検索: ${query.trim()}`);
+  }
+  return chips;
+}
+
+function formatDateRangeChip(dateFrom: string, dateTo: string) {
+  const currentMonth = getCurrentMonthRange();
+  if (dateFrom === currentMonth.date_from && dateTo === currentMonth.date_to) {
+    return "今月";
+  }
+  if (dateFrom && dateTo) {
+    return `${dateFrom} - ${dateTo}`;
+  }
+  return dateFrom ? `${dateFrom}以降` : `${dateTo}まで`;
+}
+
+function getCurrentMonthRange() {
+  const today = new Date();
+  return {
+    date_from: formatDateParam(new Date(today.getFullYear(), today.getMonth(), 1)),
+    date_to: formatDateParam(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+  };
 }
 
 function getCategoryBadgeStyle(category: CategoryDto | undefined): React.CSSProperties {

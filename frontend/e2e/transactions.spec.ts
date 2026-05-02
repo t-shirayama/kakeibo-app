@@ -5,25 +5,41 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   // 初期表示は今月の明細に絞られるため、今月・先月の切り替えをまず確認する。
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
+  await expect(page.getByLabel("適用中のフィルタ").getByText("今月")).toBeVisible();
+  await expect(page.getByText(/件ヒット/)).toBeVisible();
+  await expect(page.getByText("検索対象: 店名 / メモ / カテゴリ")).toBeVisible();
+  await expect(page.getByText("ソート: 日付 降順")).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toHaveCount(0);
+  await expect(page.locator(".transaction-amount.expense").first()).toBeVisible();
 
-  await page.getByLabel("期間").selectOption({ label: "先月" });
+  await page.getByLabel("開始日").fill("2026-04-01");
+  await page.getByLabel("終了日").fill("2026-04-30");
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
+  await expect(page.getByLabel("適用中のフィルタ").getByText("2026-04-01 - 2026-04-30")).toBeVisible();
 
-  await page.getByLabel("期間").selectOption({ label: "今年" });
+  await page.getByLabel("開始日").fill("2026-01-01");
+  await page.getByLabel("終了日").fill("2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "日用品" });
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
+  await expect(page.getByLabel("適用中のフィルタ").getByText("日用品")).toBeVisible();
 
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
   await page.getByLabel("明細検索").fill("Amazon");
+  await expect(page.locator('datalist#transaction-search-suggestions option[value="Amazon.co.jp"]')).toHaveCount(1);
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
+  await expect(page.getByLabel("適用中のフィルタ").getByText("検索: Amazon")).toBeVisible();
+
+  await page.getByRole("button", { name: /取引額でソート/ }).click();
+  await expect(page.getByText("ソート: 金額 昇順")).toBeVisible();
+  await page.getByRole("button", { name: /取引額でソート/ }).click();
+  await expect(page.getByText("ソート: 金額 降順")).toBeVisible();
 
   await page.getByLabel("明細検索").fill("");
-  await page.getByLabel("期間").selectOption({ label: "全期間" });
+  await page.getByRole("button", { name: "フィルタ解除" }).click();
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "未分類" });
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
@@ -32,8 +48,10 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
   await page.getByLabel("明細検索").fill("");
-  await page.getByLabel("期間").selectOption({ label: "今年" });
+  await page.getByLabel("開始日").fill("2026-01-01");
+  await page.getByLabel("終了日").fill("2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
+  await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();
   await page.getByRole("button", { name: "手動で追加" }).click();
   await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
   await page.getByLabel("日付").fill("2026-05-02");
@@ -75,7 +93,8 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
 test("asks whether to update categories for the same shop name", async ({ page }) => {
   await page.goto("/transactions");
-  await page.getByLabel("期間").selectOption({ label: "今年" });
+  await page.getByLabel("開始日").fill("2026-01-01");
+  await page.getByLabel("終了日").fill("2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
 
   await createTransaction(page, { shopName: "E2E一括店舗", amount: "1111", category: "食費" });
