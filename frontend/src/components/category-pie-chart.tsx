@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { formatCurrency } from "@/lib/format";
 
 export type CategoryPieChartItem = {
@@ -15,17 +16,28 @@ type CategoryPieChartProps = {
 };
 
 export function CategoryPieChart({ items }: CategoryPieChartProps) {
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const total = items.reduce((sum, item) => sum + item.amount, 0);
   const segments = buildSegments(items, total);
+  const activeItem = segments.rows.find((item) => item.category_id === activeCategoryId) ?? null;
 
   return (
     <div className="category-pie-layout">
-      <div
-        className="category-pie-chart"
-        aria-label="カテゴリ別支出割合の円グラフ"
-        role="img"
-        style={{ background: segments.gradient }}
-      >
+      <div className="category-pie-chart-wrap">
+        <div
+          className="category-pie-chart"
+          aria-label="カテゴリ別支出割合の円グラフ"
+          role="img"
+          style={{ background: segments.gradient }}
+        >
+          {activeItem ? (
+            <div className="category-pie-tooltip" id={`category-pie-tooltip-${activeItem.category_id}`} role="tooltip">
+              <strong>{activeItem.name}</strong>
+              <span>{formatCurrency(activeItem.amount)}</span>
+              <span>{activeItem.percentText}</span>
+            </div>
+          ) : null}
+        </div>
         <div className="category-pie-center">
           <span>合計</span>
           <strong>{formatCurrency(total)}</strong>
@@ -33,12 +45,21 @@ export function CategoryPieChart({ items }: CategoryPieChartProps) {
       </div>
       <div className="category-pie-legend">
         {segments.rows.map((item) => (
-          <div className="category-pie-legend-row category-row" key={item.category_id}>
+          <button
+            className={`category-pie-legend-row category-row${item.category_id === activeCategoryId ? " active" : ""}`}
+            key={item.category_id}
+            type="button"
+            aria-describedby={item.category_id === activeCategoryId ? `category-pie-tooltip-${item.category_id}` : undefined}
+            onBlur={() => setActiveCategoryId(null)}
+            onFocus={() => setActiveCategoryId(item.category_id)}
+            onMouseEnter={() => setActiveCategoryId(item.category_id)}
+            onMouseLeave={() => setActiveCategoryId(null)}
+          >
             <span className="swatch" style={{ background: item.color }} />
             <strong>{item.name}</strong>
             <span className="amount">{formatCurrency(item.amount)}</span>
             <span className="badge inactive">{item.percentText}</span>
-          </div>
+          </button>
         ))}
       </div>
     </div>

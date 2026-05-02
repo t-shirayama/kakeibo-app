@@ -10,7 +10,10 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   await expect(page.getByText("取引件数")).toBeVisible();
   await expect(page.getByRole("heading", { name: "カテゴリ別支出割合" })).toBeVisible();
   await expect(page.getByRole("img", { name: "カテゴリ別支出割合の円グラフ" })).toBeVisible();
-  await expect(page.locator(".category-pie-legend-row").filter({ hasText: "食費" })).toBeVisible();
+  const foodLegend = page.locator(".category-pie-legend-row").filter({ hasText: "食費" });
+  await expect(foodLegend).toBeVisible();
+  await foodLegend.focus();
+  await expect(page.getByRole("tooltip").filter({ hasText: "食費" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "最近の明細" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
 });
