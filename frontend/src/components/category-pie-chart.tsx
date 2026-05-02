@@ -77,12 +77,23 @@ function buildSegments(items: CategoryPieChartItem[], total: number) {
     return { gradient: "#eef2f7", rows: [] };
   }
 
+  const sortedItems = [...items].sort((a, b) => {
+    const ratioDiff = getRatioForSort(b, total) - getRatioForSort(a, total);
+    if (ratioDiff !== 0) {
+      return ratioDiff;
+    }
+    const amountDiff = b.amount - a.amount;
+    if (amountDiff !== 0) {
+      return amountDiff;
+    }
+    return a.name.localeCompare(b.name, "ja");
+  });
   let cursor = 0;
   const gradientStops: string[] = [];
-  const rows = items.map((item, index) => {
+  const rows = sortedItems.map((item, index) => {
     const percent = (item.amount / total) * 100;
     const startPercent = cursor;
-    const next = index === items.length - 1 ? 100 : cursor + percent;
+    const next = index === sortedItems.length - 1 ? 100 : cursor + percent;
     gradientStops.push(`${item.color} ${cursor}% ${next}%`);
     cursor = next;
     return {
@@ -97,6 +108,10 @@ function buildSegments(items: CategoryPieChartItem[], total: number) {
     gradient: `conic-gradient(${gradientStops.join(", ")})`,
     rows,
   };
+}
+
+function getRatioForSort(item: CategoryPieChartItem, total: number): number {
+  return item.ratio ?? item.amount / total;
 }
 
 function formatPercent(percent: number): string {

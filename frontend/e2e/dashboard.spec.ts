@@ -16,8 +16,11 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   await expect(page.getByRole("img", { name: "カテゴリ別支出割合の円グラフ" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "支出の推移" })).toBeVisible();
   await expect(page.getByRole("img", { name: "直近6ヶ月の月別収入支出グラフ" })).toBeVisible();
-  await expect(page.getByLabel("グラフ凡例").getByText("収入")).toBeVisible();
-  await expect(page.getByLabel("グラフ凡例").getByText("支出")).toBeVisible();
+  await expect(page.getByLabel("グラフ凡例").getByText("収入", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("グラフ凡例").getByText("支出", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("グラフ凡例").getByText("平均支出", { exact: true })).toBeVisible();
+  await expect(page.locator(".chart-average-line")).toBeVisible();
+  await expectCategoryAmountsToBeDescending(page);
   const foodLegend = page.locator(".category-pie-legend-row").filter({ hasText: "食費" });
   await expect(foodLegend).toBeVisible();
   await foodLegend.focus();
@@ -109,4 +112,15 @@ function getMonthDateRange(value: string) {
     date_from: `${year}-${paddedMonth}-01`,
     date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
   };
+}
+
+async function expectCategoryAmountsToBeDescending(page: import("@playwright/test").Page) {
+  const amounts = await page.locator(".category-pie-legend-row .amount").evaluateAll((nodes) =>
+    nodes.map((node) => Number((node.textContent ?? "").replace(/[^\d.-]/g, ""))),
+  );
+
+  expect(amounts.length).toBeGreaterThan(1);
+  for (let index = 1; index < amounts.length; index += 1) {
+    expect(amounts[index - 1]).toBeGreaterThanOrEqual(amounts[index]);
+  }
 }
