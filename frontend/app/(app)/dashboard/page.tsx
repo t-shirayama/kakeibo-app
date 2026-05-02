@@ -84,8 +84,8 @@ export default function DashboardPage() {
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
             <label className="month-input-label">
-              <span>表示月</span>
-              <input className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => setSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
+              <span className="sr-only">表示月</span>
+              <input aria-label="表示月" className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => setSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
             </label>
             <button className="icon-button" type="button" aria-label="翌月" onClick={() => setSelectedYearMonth((value) => addMonths(value, 1))}>
               <ChevronRight size={16} aria-hidden="true" />

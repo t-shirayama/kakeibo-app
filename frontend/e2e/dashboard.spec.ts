@@ -5,6 +5,7 @@ test("shows dashboard metrics, category summary, and recent transactions", async
 
   await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
+  await expect(page.locator(".month-input-label span", { hasText: "表示月" })).toHaveClass(/sr-only/);
   await expect(page.getByText("今月の支出合計")).toBeVisible();
   await expect(page.getByText("今月の収入合計")).toBeVisible();
   await expect(page.getByText("今月の残高")).toBeVisible();

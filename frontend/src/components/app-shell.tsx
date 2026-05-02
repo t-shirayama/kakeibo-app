@@ -8,6 +8,7 @@ import {
   FileUp,
   LayoutDashboard,
   ListTree,
+  type LucideIcon,
   NotebookText,
   Settings,
   WalletCards,
@@ -20,6 +21,9 @@ const navItems = [
   { href: "/upload", label: "アップロード", icon: FileUp },
   { href: "/categories", label: "カテゴリ管理", icon: ListTree },
   { href: "/reports", label: "レポート", icon: BarChart3 },
+];
+
+const utilityNavItems = [
   { href: "/settings", label: "設定", icon: Settings },
 ];
 
@@ -38,22 +42,30 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             <span>かけいぼノート</span>
           </Link>
 
-          <nav className="nav-list">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-
-              return (
-                <Link className={`nav-link${isActive ? " active" : ""}`} href={item.href} key={item.href}>
-                  <Icon size={15} aria-hidden="true" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <nav className="sidebar-nav">
+            <div className="nav-list">
+              {navItems.map((item) => (
+                <NavLinkItem href={item.href} icon={item.icon} isActive={pathname === item.href} key={item.href} label={item.label} />
+              ))}
+            </div>
+            <div className="nav-list nav-list-utility">
+              {utilityNavItems.map((item) => (
+                <NavLinkItem href={item.href} icon={item.icon} isActive={pathname === item.href} key={item.href} label={item.label} />
+              ))}
+            </div>
           </nav>
         </aside>
         <main className="main">{children}</main>
       </div>
     </div>
+  );
+}
+
+function NavLinkItem({ href, icon: Icon, isActive, label }: { href: string; icon: LucideIcon; isActive: boolean; label: string }) {
+  return (
+    <Link aria-current={isActive ? "page" : undefined} className={`nav-link${isActive ? " active" : ""}`} href={href}>
+      <Icon size={15} aria-hidden="true" />
+      <span>{label}</span>
+    </Link>
   );
 }
