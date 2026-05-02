@@ -50,7 +50,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: kakeibo-frontend
     working_dir: /app/frontend
     environment:
@@ -62,11 +63,34 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app/frontend
+      - ./backend:/app/backend
       - frontend-node-modules:/app/frontend/node_modules
       - frontend-next:/app/frontend/.next
     depends_on:
       - backend
     command: npm run dev -- --hostname 0.0.0.0 --port 3000
+
+  e2e:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    profiles:
+      - test
+    working_dir: /app/frontend
+    environment:
+      E2E_DATABASE_URL: mysql+pymysql://${MYSQL_USER:-kakeibo}:${MYSQL_PASSWORD:-kakeibo_password}@mysql:3306/kakeibo_e2e
+      E2E_ADMIN_DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root_password}@mysql:3306/mysql
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - ./frontend:/app/frontend
+      - ./backend:/app/backend
+      - ./storage:/app/storage
+      - frontend-node-modules:/app/frontend/node_modules
+      - frontend-next:/app/frontend/.next
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: npm run test:e2e
 
 volumes:
   mysql-data:

@@ -165,3 +165,5 @@ backend/
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
 - 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。E2Eの詳細は `docs/e2e.md` を参照する。
 - コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
+- 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
+- バックエンドテストは `docker compose run --rm backend python -m pytest`、フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` / `docker compose run --rm --no-deps frontend npm run build`、E2Eは `docker compose run --rm e2e` を基本コマンドとする。
