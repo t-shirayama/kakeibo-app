@@ -2,7 +2,8 @@
 
 PDF明細を取り込み、支出・収入明細、カテゴリ、レポートを管理する家計簿アプリです。
 
-このリポジトリでは、仕様書の正本を `docs/specs/` に集約しています。実装前にまず [docs/README.md](docs/README.md) と [docs/specs/project-rules.md](docs/specs/project-rules.md) を確認してください。
+このリポジトリでは、仕様書の正本を `docs/specs/` に集約しています。  
+実装前にまず [docs/README.md](docs/README.md) と [docs/specs/project-rules.md](docs/specs/project-rules.md) を確認してください。
 
 ## 概要
 
