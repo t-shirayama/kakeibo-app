@@ -4,6 +4,21 @@
 
 ## 最近の完了タスク
 
+- [x] calendar-pageをfeatures/calendarへ移す
+  - 対応: カレンダー画面の実体を `frontend/src/features/calendar/calendar-page.tsx` へ移し、`frontend/app/(app)/calendar/page.tsx` の参照先とフロントエンド設計文書を更新した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- calendar.spec.ts navigation.spec.ts settings.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-repository-re-review.md` の優先度A-1。
+
+- [x] settings.pyのProtocolをportsへ分離する
+  - 対応: `backend/app/application/settings/` を新設し、`commands.py`、`ports.py`、`use_cases.py`、`__init__.py` へ分割した。`SettingsRepositoryProtocol`、`UploadStorageProtocol`、`UserSettingsRecord`、`UpdateSettingsCommand`、`SettingsUseCases` の import を新構成へ更新した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 54 件すべて通過した。
+  - 根拠: `kakeibo-app-repository-re-review.md` の優先度A-2。
+
+- [x] AGENTS.mdへタスク分割ルールを追加する
+  - 対応: `.codex/AGENTS.md` に、アーキテクチャ変更、features 移行、application 分割、生成物更新の粒度ルールを追記した。
+  - 確認: ドキュメント更新後の未確定事項チェックを実行し、意図しない未確定事項が増えていないことを確認した。
+  - 根拠: `kakeibo-app-repository-re-review.md` の優先度A-3。
+
 - [x] E2Eのデータ準備と共通操作を整理する
   - 対応: `frontend/e2e/helpers/` を追加し、ログイン、ページ遷移、年月操作、明細追加、アップロード用PDF生成の共通処理を helper 化した。あわせて `frontend/scripts/e2e-runtime.mjs` を追加し、`reset-e2e-db.mjs` と `start-backend-e2e.mjs` の Python 解決、環境変数組み立て、コマンド実行を共通化した。既存 spec は helper 利用へ更新し、`docs/e2e/index.md` に運用方針を追記した。
   - 確認: `docker compose run --rm e2e` が 20 件すべて通過した。

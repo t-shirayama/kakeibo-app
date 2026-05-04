@@ -42,6 +42,7 @@ backend/
 infrastructure層のRepository実装、Storage実装、PDFパーサ実装などの具象クラスへ直接依存しない。
 
 機能ごとの責務が大きくなった場合は、`app/application/<feature>/` のようにディレクトリで分割し、`commands`、`ports`、`policies`、`use_cases` を見つけやすく保つ。
+`settings` のように Repository Protocol や保存先 Protocol を持つ機能も、可能なら feature ディレクトリ配下の `ports.py` へ寄せて配置をそろえる。
 
 - 明細操作ユースケースとカテゴリ管理ユースケースは分離する。
 - レポート集計ユースケースは集計結果の生成に集中し、Excelなどの出力形式組み立ては別コンポーネントへ委譲する。

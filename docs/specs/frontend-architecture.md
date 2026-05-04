@@ -45,9 +45,11 @@ APIクライアントはOpenAPIから自動生成する。
 
 - `frontend/app/(app)/*/page.tsx` はルーティング入口に限定し、主要な業務画面の実体は `frontend/src/features/*` 配下に置く。
 - `frontend/src/features/reports` はダッシュボード・レポート系の画面実装と、その画面専用コンポーネントを持つ。
+- `frontend/src/features/calendar` はカレンダー画面の実装と、その画面専用の query key や補助ロジックを持つ。
 - `frontend/src/features/transactions` は明細一覧画面の実装を持つ。
 - `frontend/src/features/uploads` はPDFアップロード画面の実装を持つ。
 - `frontend/src/features/income-settings` は収入設定画面の実装を持つ。
+- `frontend/src/features/settings` は設定画面で使う server state の key 定義など、設定画面に閉じた要素を持つ。
 - TanStack Query の query key 定義は、原則として各 feature 配下の `queryKeys.ts` へ置き、画面側で配列を直書きしない。
 - `frontend/src/components` には複数画面で再利用する共通UIだけを置く。
 
