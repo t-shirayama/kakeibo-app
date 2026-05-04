@@ -41,6 +41,15 @@
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
 
+## 本番向けCookie運用
+
+- 本番環境では `COOKIE_SECURE=true` を必須とし、HTTP配信ではなくHTTPS配信を前提にする。
+- Cookieの `SameSite` は現行実装では `Lax` 固定とし、`kakeibo_access`、`kakeibo_refresh`、`kakeibo_csrf_session` の3種類すべてに同じ属性を付与する。
+- ローカル開発では `COOKIE_SECURE=false` を使い、`http://localhost` 上の動作確認を優先する。
+- 本番デプロイ前には、ログイン後の `Set-Cookie` をブラウザ開発者ツールまたはプロキシで確認し、少なくとも `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/` が付いていることを確認する。
+- `GET /api/auth/csrf` 実行時に `kakeibo_csrf_session` が `HttpOnly`、`Secure`、`SameSite=Lax` 付きで再利用または発行されることを確認する。
+- フロントエンドとバックエンドを別サイトとして運用する場合、`SameSite=Lax` のままではCookie認証とCSRFフローが成立しない可能性があるため、本番投入前にCookie方針を見直す。
+
 ## ファイルアップロード
 
 - PDFファイルのみを受け付ける。

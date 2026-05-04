@@ -12,13 +12,6 @@
 
 ## 優先度C
 
-- [ ] 本番向けCookie設定の確認手順を文書化する
-  - 目的: 本番デプロイ時に `COOKIE_SECURE=true` と適切な `SameSite` 設定を取りこぼさないようにする。
-  - 対象: `README.md`、`docs/specs/security.md`、必要に応じて運用手順書
-  - 対応: 本番環境でのCookie設定値、確認ポイント、ローカルとの差分を明記し、必要なら起動時またはCIでの確認方針も追記する。
-  - 完了条件: 本番時のCookie設定要件が文書から一読で分かり、ローカル設定との差分が明確になる。
-  - 根拠: `kakeibo-app-review.md` のセキュリティ観点メモ。
-
 - [ ] レポート画面の年月入力UIを `type="month"` ベースへ改善する
   - 目的: 年月入力のバリデーション負荷を減らし、入力ミスを起こしにくくする。
   - 対象: `frontend/src/features/reports/report-dashboard-page.tsx`、関連画面要件とE2E

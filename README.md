@@ -113,6 +113,17 @@ npm run test:e2e
 - `frontend/Dockerfile.e2e`: `docker compose run --rm e2e` で使う Playwright + E2E用バックエンド実行環境付き
 - `frontend/Dockerfile.prod`: 本番相当の `next build` / `next start` を確認するためのビルド用
 
+### 本番デプロイ前のCookie確認
+
+本番環境では Cookie 設定の見落としを避けるため、次を確認します。
+
+- `COOKIE_SECURE=true` で起動していること
+- 認証Cookie `kakeibo_access` / `kakeibo_refresh` と CSRF セッションCookie `kakeibo_csrf_session` に `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/` が付いていること
+- `GET /api/auth/csrf` でCSRFセッションCookieが発行または再利用されること
+- 本番はHTTPS配信であること
+
+フロントエンドとバックエンドを別サイトとして運用する場合、現行の `SameSite=Lax` 前提では成立しない可能性があるため、公開前にCookie方針を見直してください。詳細は [docs/specs/security.md](docs/specs/security.md) を参照してください。
+
 ### 動作確認用ログイン
 
 `alembic upgrade head` を実行すると、全画面確認用のサンプルユーザーとサンプルデータが投入されます。

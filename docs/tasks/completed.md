@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] 本番向けCookie設定の確認手順を文書化する
+  - 対応: `README.md` と `docs/specs/security.md` に、本番では `COOKIE_SECURE=true` を必須とすること、`kakeibo_access` / `kakeibo_refresh` / `kakeibo_csrf_session` に `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/` が付いていることを確認する手順、ローカルとの差分、`SameSite=Lax` が成立する前提を追記した。
+  - 確認: 文書内容を見直し、未確定事項チェックを実行して意図しないメモが増えていないことを確認した。
+  - 根拠: `kakeibo-app-review.md` のセキュリティ観点メモ。
+
 - [x] フロントエンドDockerfileを用途別に分離する
   - 対応: `frontend/Dockerfile` を廃止し、`frontend/Dockerfile.dev`、`frontend/Dockerfile.e2e`、`frontend/Dockerfile.prod` へ分割した。`docker-compose.yml` の `frontend` は開発用、`e2e` は Playwright とE2E用バックエンド実行環境込みのイメージを参照する形へ更新し、`README.md` と `docs/specs/development-workflow.md` に各Dockerfileの役割を追記した。
   - 確認: `docker compose build frontend e2e`、`docker build -f frontend/Dockerfile.prod . -t kakeibo-frontend-prod-test`、`docker compose run --rm --no-deps frontend npm run build`、`docker compose run --rm e2e npm run test:e2e -- navigation.spec.ts` が通過した。
