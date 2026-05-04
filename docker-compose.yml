@@ -99,6 +99,25 @@ services:
     volumes:
       - .:/repo:ro
 
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles:
+      - security
+    working_dir: /zap/wrk
+    environment:
+      ZAP_BACKEND_BASE_URL: http://backend:8000
+      ZAP_TARGET_OPENAPI_URL: http://backend:8000/openapi.json
+      ZAP_REPORT_DIR: /zap/wrk
+      ZAP_CSRF_HEADER_NAME: X-CSRF-Token
+      ZAP_LOGIN_EMAIL: sample@example.com
+      ZAP_LOGIN_PASSWORD: SamplePassw0rd!
+    volumes:
+      - ./scripts/security:/zap/scripts/security:ro
+      - ./zap-reports:/zap/wrk
+    depends_on:
+      - backend
+    command: /bin/sh /zap/scripts/security/zap-api-scan.sh
+
 volumes:
   mysql-data:
   frontend-node-modules:

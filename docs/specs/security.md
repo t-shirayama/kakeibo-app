@@ -54,3 +54,14 @@
 - 全データ削除時はユーザー、明細、カテゴリ、アップロード履歴、収入設定を論理削除し、収入設定の月別変更を削除する。
 - 全データ削除時はリフレッシュトークンを失効し、パスワードリセットトークンを使用済みにする。
 - 全データ削除時は保存済みPDF原本をストレージから削除し、認証Cookieも削除する。
+
+## セキュリティスキャン
+
+- OWASP ZAPのローカルAPIスキャンはDocker Composeの `zap` サービスで実行する。
+- `zap` サービスは `security` profile に属し、通常の `docker compose up` では起動しない。
+- ZAPは公式イメージ `ghcr.io/zaproxy/zaproxy:stable` を使う。
+- 対象OpenAPI定義は `http://backend:8000/openapi.json` とする。
+- ZAP実行前に `http://backend:8000/api/health` の成功を待つ。
+- ZAP実行時は `GET /api/auth/csrf` でCSRFトークンを取得し、サンプルユーザーで `POST /api/auth/login` して認証Cookieを取得する。
+- ZAPにはBearerトークンではなく、ログイン時にSet-CookieされたHttpOnly認証Cookieと `X-CSRF-Token` ヘッダーを渡す。
+- ZAPレポートは `zap-reports/` にHTML、JSON、Markdownで出力し、Git管理対象外とする。

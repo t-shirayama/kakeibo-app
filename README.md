@@ -130,6 +130,34 @@ docker compose run --rm e2e
 
 E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/e2e/index.md](docs/e2e/index.md) を参照してください。
 
+### OWASP ZAPスキャン
+
+OWASP ZAPの公式Dockerイメージ `ghcr.io/zaproxy/zaproxy:stable` を使い、FastAPIが生成するOpenAPI定義に対してAPIスキャンを実行できます。`zap` サービスは `security` profile に入れているため、通常の `docker compose up` では起動しません。
+
+事前にDBマイグレーションとサンプルデータを適用します。
+
+```powershell
+docker compose run --rm backend python -m alembic upgrade head
+```
+
+スキャンを実行します。
+
+```powershell
+docker compose run --rm zap
+```
+
+実行スクリプトは `http://backend:8000/api/health` を待ち、`GET /api/auth/csrf` で取得したCSRFトークンを使って `sample@example.com` / `SamplePassw0rd!` でログインします。ZAPにはBearerトークンではなく、ログイン時にSet-Cookieされた `HttpOnly` 認証Cookieと `X-CSRF-Token` ヘッダーをReplacerルールで渡します。
+
+レポートは `zap-reports/` に出力します。
+
+- `zap-api-report.html`
+- `zap-api-report.json`
+- `zap-api-report.md`
+
+注意: ZAP API ScanはOpenAPI定義に含まれるAPIへリクエストを送ります。ローカル開発環境とサンプルデータで実行してください。認証Cookieはスクリプト開始時に取得した値を固定で使うため、アクセストークンの有効期限を超える長時間スキャンでは認証済みAPIの一部が401になる可能性があります。
+
+ローカルでレポートを確認しやすいよう、ZAPの警告だけでは終了コードを失敗にしない `-I` を付けています。検出内容は出力されたレポートで確認してください。
+
 ### GitHub Actionsで実行する標準コマンド
 
 GitHub Actions のCIは `quality` と `test` の2系統に分けます。
