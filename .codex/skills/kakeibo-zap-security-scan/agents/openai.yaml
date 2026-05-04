@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kakeibo ZAP Scan"
+  short_description: "ZAP API scan setup and report review"
+  default_prompt: "Use $kakeibo-zap-security-scan to review the latest ZAP report and suggest next fixes."
+policy:
+  allow_implicit_invocation: true
