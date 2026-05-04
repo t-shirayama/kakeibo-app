@@ -14,6 +14,44 @@
 4. E2Eテスト方針: `docs/e2e/index.md`
 5. 個別仕様: `docs/specs/` 配下の該当文書
 
+## 変更パターン別の参照順
+
+- APIを変更する場合
+  1. 仕様: `docs/specs/api-specs.md`、必要に応じて `docs/specs/domain-model.md` と `docs/specs/security.md`
+  2. 実装: `backend/app/presentation/api/routes/` → `backend/app/application/` → `backend/app/infrastructure/repositories/`
+  3. テスト: `backend/tests/` のAPI/ユースケース系テスト、必要に応じて `frontend/e2e/`
+  4. 生成物: `frontend/src/lib/generated/openapi-client.ts`。API契約を変えたら `backend/scripts/generate_openapi_client.py` で再生成する
+
+- DBを変更する場合
+  1. 仕様: `docs/specs/db-schema.md`、必要に応じて `docs/specs/domain-model.md`
+  2. 実装: `backend/app/infrastructure/models/`、`backend/app/infrastructure/repositories/`、`backend/alembic/versions/`
+  3. テスト: `docker compose run --rm backend python -m pytest`
+  4. 生成物: Alembicマイグレーション。スキーマ変更時は差分を同じ作業で追加する
+
+- UIや画面要件を変更する場合
+  1. 仕様: `docs/requirements.md`、該当する `docs/requirements/*.md`、必要に応じて `docs/designs/`
+  2. 実装: `frontend/app/` のルーティング入口 → `frontend/src/features/` → `frontend/src/components/` / `frontend/src/lib/`
+  3. テスト: `docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build`、必要に応じて `frontend/e2e/`
+  4. 生成物: APIの入出力型が変わる場合だけ `frontend/src/lib/generated/openapi-client.ts` を更新する
+
+- E2Eを追加・変更する場合
+  1. 仕様: `docs/e2e/index.md`、該当する `docs/e2e/*.md`
+  2. 実装: `frontend/e2e/*.spec.ts`、必要に応じて `frontend/e2e/auth.setup.ts`、`frontend/scripts/reset-e2e-db.mjs`
+  3. テスト: `docker compose run --rm e2e`
+  4. 生成物: なし。シナリオ文書とテストコードを同じ作業でそろえる
+
+- PDF取込を変更する場合
+  1. 仕様: `docs/specs/pdf-import.md`、必要に応じて `docs/specs/api-specs.md` と `docs/specs/security.md`
+  2. 実装: `backend/app/application/importing/` → `backend/app/infrastructure/parsers/` → `backend/app/infrastructure/repositories/uploads.py` / `backend/app/infrastructure/storage.py`
+  3. テスト: PDF抽出fixtureを使うバックエンドテスト、必要に応じて `frontend/e2e/upload.spec.ts`
+  4. 生成物: 抽出fixtureや期待値JSONを更新し、取込結果との差分がない状態にする
+
+- 認証・セキュリティを変更する場合
+  1. 仕様: `docs/specs/security.md`、必要に応じて `docs/specs/api-specs.md` と `docs/specs/project-rules.md`
+  2. 実装: `backend/app/application/auth/`、`backend/app/presentation/api/routes/auth.py`、`frontend/src/lib/auth.ts`、`frontend/src/lib/csrf.ts`
+  3. テスト: 認証/CSRFのバックエンドテスト、必要に応じて `frontend/e2e/auth.spec.ts`
+  4. 生成物: 認証APIのDTOを変えた場合だけ `frontend/src/lib/generated/openapi-client.ts` を再生成する
+
 ## 作業ルール
 
 - タスクが大きい場合は、まず作業を小さな単位に分割し、依存関係と並列実行できる範囲を整理してください。
