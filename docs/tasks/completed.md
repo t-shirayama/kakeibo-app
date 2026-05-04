@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] バックエンド依存のlock運用を導入する
+  - 対応: `backend/scripts/generate_requirements_lock.py` と `backend/requirements.lock` を追加し、`.[dev]` を一時venvへ解決して `pip freeze --exclude-editable` から再現可能なlockファイルを生成できるようにした。あわせて `backend/Dockerfile` と `frontend/Dockerfile` を lock ファイル前提のインストールへ切り替え、`README.md`、`docs/specs/development-workflow.md`、`.github/workflows/quality.yml` に更新手順と `--check` によるCI確認を追記した。
+  - 確認: `docker compose build backend frontend`、`docker compose run --rm backend python scripts/generate_requirements_lock.py --check`、`docker compose run --rm backend python -m pytest` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度B「依存バージョンの固定が弱い」。
+
 - [x] CSRFトークンをセッションまたはユーザーに紐づけて強化する
   - 対応: `GET /api/auth/csrf` でトークン本体とは別に HttpOnly のCSRFセッションCookieを発行し、CSRFトークンにはそのセッション識別子のダイジェストを埋め込むようにした。変更系APIではヘッダートークンと同じセッションCookieの組み合わせだけを受け付けるようにし、関連するセキュリティ仕様、API仕様、フロント/バックエンド設計文書、CSRFテストを更新した。
   - 確認: `docker compose run --rm backend python -m pytest` が 57 件すべて通過した。

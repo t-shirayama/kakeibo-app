@@ -10,13 +10,6 @@
 
 ## 優先度B
 
-- [ ] バックエンド依存のlock運用を導入する
-  - 目的: 将来の依存解決差分で開発環境やCIが不安定になるリスクを下げる。
-  - 対象: `backend/pyproject.toml`、新規lockファイル、CI/README/運用文書
-  - 対応: `uv.lock`、`pip-tools`、または同等の方法でバックエンド依存のlock運用を導入し、CIでlock差分や再現性を確認できるようにする。
-  - 完了条件: バックエンド依存の再現可能なlockファイルが追加され、更新手順とCI上の確認方法が文書化される。
-  - 根拠: `kakeibo-app-review.md` の優先度B「依存バージョンの固定が弱い」。
-
 - [ ] `frontend/src/lib/api.ts` の責務を分割する
   - 目的: 生成クライアントのアダプタ層を保ちつつ、認証再試行、アップロード、ダウンロード、feature別APIを追いやすくする。
   - 対象: `frontend/src/lib/api.ts`、`frontend/src/lib/api/`、必要に応じて `frontend/src/features/*`、`docs/specs/frontend-architecture.md`

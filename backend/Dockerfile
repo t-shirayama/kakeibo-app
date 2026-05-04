@@ -9,8 +9,9 @@ WORKDIR /app/backend
 RUN python -m pip install --upgrade pip
 
 COPY pyproject.toml ./
+COPY requirements.lock ./
 COPY app ./app
-RUN python -m pip install -e ".[dev]"
+RUN python -m pip install -r requirements.lock && python -m pip install -e . --no-deps
 
 COPY alembic.ini ./
 COPY alembic ./alembic

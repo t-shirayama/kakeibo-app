@@ -17,12 +17,14 @@ RUN npx playwright install --with-deps chromium
 
 WORKDIR /app/backend
 COPY backend/pyproject.toml ./
+COPY backend/requirements.lock ./
 COPY backend/app ./app
 COPY backend/alembic.ini ./
 COPY backend/alembic ./alembic
 RUN python -m venv /opt/kakeibo-backend-venv \
   && /opt/kakeibo-backend-venv/bin/pip install --upgrade pip \
-  && /opt/kakeibo-backend-venv/bin/pip install -e ".[dev]"
+  && /opt/kakeibo-backend-venv/bin/pip install -r requirements.lock \
+  && /opt/kakeibo-backend-venv/bin/pip install -e . --no-deps
 
 ENV E2E_PYTHON=/opt/kakeibo-backend-venv/bin/python
 

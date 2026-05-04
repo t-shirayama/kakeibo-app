@@ -41,8 +41,10 @@
 
 - GitHub ActionsのCIは `quality` と `test` に分ける。
 - `quality` では `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、未確定事項チェック、シークレットスキャン、OpenAPI生成物チェックを実行する。
+- `quality` ではあわせて `backend/requirements.lock` の再生成差分も検証する。
 - `test` では Alembic 適用確認、`pytest`、E2Eを実行する。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
+- バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
 - 依存更新は Dependabot で管理し、少なくとも `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile の更新PRを週次で自動作成する。
 
 ## ドキュメント品質チェック
