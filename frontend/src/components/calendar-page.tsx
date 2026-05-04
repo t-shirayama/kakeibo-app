@@ -16,9 +16,11 @@ const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as cons
 type DailyCalendarSummary = {
   date: string;
   day: number;
+  weekday: number;
   expense_total: number;
   income_total: number;
   transaction_count: number;
+  holiday_name: string | null;
 };
 
 type CategoryMonthlySummary = {
@@ -110,8 +112,10 @@ export function CalendarPage() {
             </div>
 
             <div className="calendar-weekdays" aria-hidden="true">
-              {WEEKDAY_LABELS.map((label) => (
-                <span key={label}>{label}</span>
+              {WEEKDAY_LABELS.map((label, index) => (
+                <span key={label} className={getCalendarWeekdayClassName(index)}>
+                  {label}
+                </span>
               ))}
             </div>
 
@@ -120,10 +124,10 @@ export function CalendarPage() {
                 day.date.startsWith(selectedYearMonth) ? (
                   <button
                     key={day.date}
-                    className={`calendar-day${day.date === selectedDaySummary?.date ? " selected" : ""}${day.expense_total > 0 ? " has-expense" : ""}${day.income_total > 0 ? " has-income" : ""}`}
+                    className={`calendar-day${day.date === selectedDaySummary?.date ? " selected" : ""}${day.expense_total > 0 ? " has-expense" : ""}${day.income_total > 0 ? " has-income" : ""}${getCalendarDayToneClassName(day)}`}
                     type="button"
                     role="gridcell"
-                    aria-label={`${day.date} 支出${formatCurrency(day.expense_total)} 収入${formatCurrency(day.income_total)}`}
+                    aria-label={buildCalendarDayAriaLabel(day)}
                     onClick={() => setSelectedDate(day.date)}
                   >
                     <span className="calendar-day-number">{day.day}</span>
@@ -132,7 +136,7 @@ export function CalendarPage() {
                     <span className="calendar-day-meta">{formatCalendarDayMeta(day)}</span>
                   </button>
                 ) : (
-                  <div key={day.date} className="calendar-day placeholder" aria-hidden="true" />
+                  <div key={day.date} className={`calendar-day placeholder${getCalendarDayToneClassName(day)}`} aria-hidden="true" />
                 ),
               )}
             </div>
@@ -255,16 +259,11 @@ function buildCalendarDays(selectedYearMonth: string, transactions: TransactionD
   const { year, month } = parseYearMonth(selectedYearMonth);
   const firstDay = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
+  const holidays = getJapaneseHolidayMap(year);
   const dailySummaryMap = new Map<string, DailyCalendarSummary>();
 
   for (const transaction of transactions) {
-    const existing = dailySummaryMap.get(transaction.transaction_date) ?? {
-      date: transaction.transaction_date,
-      day: Number(transaction.transaction_date.slice(-2)),
-      expense_total: 0,
-      income_total: 0,
-      transaction_count: 0,
-    };
+    const existing = dailySummaryMap.get(transaction.transaction_date) ?? createCalendarDaySummary(transaction.transaction_date, holidays);
 
     if (transaction.transaction_type === "expense") {
       existing.expense_total += transaction.amount;
@@ -279,26 +278,18 @@ function buildCalendarDays(selectedYearMonth: string, transactions: TransactionD
   const cells: DailyCalendarSummary[] = [];
   for (let index = leadingDays; index > 0; index -= 1) {
     const date = new Date(year, month - 1, 1 - index);
-    cells.push({ date: formatDateParam(date), day: date.getDate(), expense_total: 0, income_total: 0, transaction_count: 0 });
+    cells.push(createCalendarDaySummary(formatDateParam(date), holidays));
   }
 
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = `${selectedYearMonth}-${String(day).padStart(2, "0")}`;
-    cells.push(
-      dailySummaryMap.get(date) ?? {
-        date,
-        day,
-        expense_total: 0,
-        income_total: 0,
-        transaction_count: 0,
-      },
-    );
+    cells.push(dailySummaryMap.get(date) ?? createCalendarDaySummary(date, holidays));
   }
 
   while (cells.length % 7 !== 0) {
     const trailingDay = cells.length - (leadingDays + daysInMonth) + 1;
     const date = new Date(year, month, trailingDay);
-    cells.push({ date: formatDateParam(date), day: date.getDate(), expense_total: 0, income_total: 0, transaction_count: 0 });
+    cells.push(createCalendarDaySummary(formatDateParam(date), holidays));
   }
 
   return cells;
@@ -447,4 +438,210 @@ function formatCalendarDayMeta(day: DailyCalendarSummary) {
   }
 
   return `${day.transaction_count}件${day.income_total > 0 ? " / 収入あり" : ""}`;
+}
+
+function buildCalendarDayAriaLabel(day: DailyCalendarSummary) {
+  const holiday = day.holiday_name ? ` 祝日${day.holiday_name}` : "";
+  return `${day.date}${holiday} 支出${formatCurrency(day.expense_total)} 収入${formatCurrency(day.income_total)}`;
+}
+
+function getCalendarWeekdayClassName(weekday: number) {
+  if (weekday === 0) {
+    return "holiday";
+  }
+  if (weekday === 6) {
+    return "saturday";
+  }
+  return "";
+}
+
+function getCalendarDayToneClassName(day: DailyCalendarSummary) {
+  if (day.holiday_name || day.weekday === 0) {
+    return " holiday";
+  }
+  if (day.weekday === 6) {
+    return " saturday";
+  }
+  return "";
+}
+
+function createCalendarDaySummary(date: string, holidays: Map<string, string>): DailyCalendarSummary {
+  const weekday = new Date(`${date}T00:00:00`).getDay();
+  return {
+    date,
+    day: Number(date.slice(-2)),
+    weekday,
+    expense_total: 0,
+    income_total: 0,
+    transaction_count: 0,
+    holiday_name: holidays.get(date) ?? null,
+  };
+}
+
+function getJapaneseHolidayMap(year: number) {
+  const holidays = new Map<string, string>();
+
+  addHoliday(holidays, year, 1, 1, "元日");
+  addHoliday(holidays, year, 1, getComingOfAgeDay(year), "成人の日");
+  addHoliday(holidays, year, 2, 11, "建国記念の日");
+  addHoliday(holidays, year, 2, getEmperorsBirthday(year), "天皇誕生日");
+  addHoliday(holidays, year, 3, getSpringEquinoxDay(year), "春分の日");
+  addHoliday(holidays, year, 4, 29, getAprilHolidayName(year));
+  addHoliday(holidays, year, 5, 3, "憲法記念日");
+  addHoliday(holidays, year, 5, 4, getGreeneryDayName(year));
+  addHoliday(holidays, year, 5, 5, "こどもの日");
+  addHoliday(holidays, year, 7, getMarineDay(year), "海の日");
+  addHoliday(holidays, year, 8, getMountainDay(year), "山の日");
+  addHoliday(holidays, year, 9, getRespectForAgedDay(year), "敬老の日");
+  addHoliday(holidays, year, 9, getAutumnEquinoxDay(year), "秋分の日");
+  addHoliday(holidays, year, 10, getSportsDay(year), getSportsDayName(year));
+  addHoliday(holidays, year, 11, 3, "文化の日");
+  addHoliday(holidays, year, 11, 23, "勤労感謝の日");
+  addHoliday(holidays, year, 12, getFormerEmperorsBirthday(year), "天皇誕生日");
+
+  if (year === 2019) {
+    addHoliday(holidays, year, 5, 1, "天皇の即位の日");
+    addHoliday(holidays, year, 10, 22, "即位礼正殿の儀");
+  }
+
+  applyCitizensHoliday(holidays, year);
+  applySubstituteHolidays(holidays, year);
+
+  return holidays;
+}
+
+function addHoliday(holidays: Map<string, string>, year: number, month: number, day: number | null, name: string) {
+  if (!day) {
+    return;
+  }
+  holidays.set(`${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`, name);
+}
+
+function getComingOfAgeDay(year: number) {
+  if (year >= 2000) {
+    return getNthWeekdayOfMonth(year, 1, 1, 2);
+  }
+  return year >= 1949 ? 15 : null;
+}
+
+function getEmperorsBirthday(year: number) {
+  if (year >= 2020) {
+    return 23;
+  }
+  return null;
+}
+
+function getFormerEmperorsBirthday(year: number) {
+  return year >= 1989 && year <= 2018 ? 23 : null;
+}
+
+function getAprilHolidayName(year: number) {
+  return year >= 2007 ? "昭和の日" : "みどりの日";
+}
+
+function getGreeneryDayName(year: number) {
+  return year >= 2007 ? "みどりの日" : "国民の休日";
+}
+
+function getMarineDay(year: number) {
+  if (year === 2020) {
+    return 23;
+  }
+  if (year === 2021) {
+    return 22;
+  }
+  if (year >= 2003) {
+    return getNthWeekdayOfMonth(year, 7, 1, 3);
+  }
+  return year >= 1996 ? 20 : null;
+}
+
+function getMountainDay(year: number) {
+  if (year === 2020) {
+    return 10;
+  }
+  if (year === 2021) {
+    return 8;
+  }
+  return year >= 2016 ? 11 : null;
+}
+
+function getRespectForAgedDay(year: number) {
+  if (year >= 2003) {
+    return getNthWeekdayOfMonth(year, 9, 1, 3);
+  }
+  return year >= 1966 ? 15 : null;
+}
+
+function getSportsDay(year: number) {
+  if (year === 2020) {
+    return 24;
+  }
+  if (year === 2021) {
+    return 23;
+  }
+  if (year >= 2000) {
+    return getNthWeekdayOfMonth(year, 10, 1, 2);
+  }
+  return year >= 1966 ? 10 : null;
+}
+
+function getSportsDayName(year: number) {
+  return year >= 2020 ? "スポーツの日" : "体育の日";
+}
+
+function getSpringEquinoxDay(year: number) {
+  return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+
+function getAutumnEquinoxDay(year: number) {
+  return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+
+function getNthWeekdayOfMonth(year: number, month: number, weekday: number, occurrence: number) {
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const offset = (weekday - firstDay + 7) % 7;
+  return 1 + offset + (occurrence - 1) * 7;
+}
+
+function applyCitizensHoliday(holidays: Map<string, string>, year: number) {
+  for (let month = 1; month <= 12; month += 1) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    for (let day = 2; day < daysInMonth; day += 1) {
+      const current = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      if (holidays.has(current)) {
+        continue;
+      }
+      const previous = `${year}-${String(month).padStart(2, "0")}-${String(day - 1).padStart(2, "0")}`;
+      const next = `${year}-${String(month).padStart(2, "0")}-${String(day + 1).padStart(2, "0")}`;
+      const weekday = new Date(`${current}T00:00:00`).getDay();
+      if (weekday !== 0 && weekday !== 6 && holidays.has(previous) && holidays.has(next)) {
+        holidays.set(current, "国民の休日");
+      }
+    }
+  }
+}
+
+function applySubstituteHolidays(holidays: Map<string, string>, year: number) {
+  const sortedDates = [...holidays.keys()].sort();
+  for (const date of sortedDates) {
+    const weekday = new Date(`${date}T00:00:00`).getDay();
+    if (weekday !== 0 || date < "1973-04-12") {
+      continue;
+    }
+
+    let substituteDate = addDays(date, 1);
+    while (holidays.has(substituteDate)) {
+      substituteDate = addDays(substituteDate, 1);
+    }
+    if (substituteDate.startsWith(`${year}-`)) {
+      holidays.set(substituteDate, "振替休日");
+    }
+  }
+}
+
+function addDays(date: string, days: number) {
+  const base = new Date(`${date}T00:00:00`);
+  base.setDate(base.getDate() + days);
+  return formatDateParam(base);
 }

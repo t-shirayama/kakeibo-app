@@ -1105,6 +1105,14 @@ textarea {
   text-align: right;
 }
 
+.calendar-weekdays span.holiday {
+  color: #dc2626;
+}
+
+.calendar-weekdays span.saturday {
+  color: #2563eb;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1134,6 +1142,14 @@ textarea {
   opacity: 0.58;
 }
 
+.calendar-day.holiday {
+  border-color: #f5c2c7;
+}
+
+.calendar-day.saturday {
+  border-color: #bfdbfe;
+}
+
 .calendar-day.selected {
   border-color: #93c5fd;
   box-shadow: 0 0 0 3px rgb(47 125 246 / 12%);
@@ -1151,8 +1167,16 @@ textarea {
   display: inline-flex;
   justify-content: flex-end;
   color: var(--muted-strong);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 850;
+}
+
+.calendar-day.holiday .calendar-day-number {
+  color: #dc2626;
+}
+
+.calendar-day.saturday .calendar-day-number {
+  color: #2563eb;
 }
 
 .calendar-day-expense-label {
