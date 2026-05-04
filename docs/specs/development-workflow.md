@@ -35,8 +35,9 @@
 
 - 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
 - `frontend/Dockerfile.dev` は通常開発用、`frontend/Dockerfile.e2e` は Playwright とE2E用バックエンド実行環境を含む検証用、`frontend/Dockerfile.prod` は本番ビルド確認用として分ける。
-- バックエンドテストは `docker compose run --rm backend python -m pytest` を基本コマンドとする。
-- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。通常の `pytest` にも含め、CI の `test` workflow では Alembic 適用確認後に実行する。
+- バックエンドテスト全体は `docker compose run --rm backend python -m pytest` を基本コマンドとする。
+- バックエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps backend python -m pytest tests/unit` を使う。単体テストはMySQL起動に依存させない。
+- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。CI の `test` workflow では Alembic 適用確認後に単体テスト、Integration Test、E2Eを別ステップで実行する。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。
 - フロントエンドの Integration Test は `docker compose run --rm --no-deps frontend npm run test:it` を基本コマンドとする。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。

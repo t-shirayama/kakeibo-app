@@ -18,8 +18,11 @@ jobs:
       - name: Alembic適用確認
         run: docker compose run --rm backend python -m alembic upgrade head
 
-      - name: Backend pytest
-        run: docker compose run --rm backend python -m pytest
+      - name: Backend unit
+        run: docker compose run --rm --no-deps backend python -m pytest tests/unit
+
+      - name: Backend integration
+        run: docker compose run --rm backend python -m pytest -m integration
 
       - name: E2E
         run: docker compose run --rm e2e
