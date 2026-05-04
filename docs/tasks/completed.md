@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Frontend Integration Test の基盤と主要画面テストを導入する
+  - 対応: `frontend/vitest.config.ts`、`frontend/src/test/`、MSW fixture / server、Next navigation mock、React Query 用 render helper を追加し、`frontend/package.json` に `test:it` を追加した。ログイン画面、明細一覧、ダッシュボードの Integration Test を `frontend/src/features/**/__tests__/*.it.test.tsx` に実装し、主要表示、APIエラー、条件変更や表示月変更による再取得を検証できるようにした。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:it`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` が通過した。ビルドでは既存の React Hooks 警告のみ出力された。
+  - 根拠: `docs/tasks/open.md` の優先度B「Frontend Integration Test の基盤と主要画面テストを導入する」。
+
 - [x] 初期デザイン案をアーカイブへ移し、現行画面スクリーンショットを正本へ置き換える
   - 対応: `docs/designs/README.md` を新設し、ダッシュボード、カレンダー、明細一覧、収入設定、アップロード、カテゴリ管理、設定、明細編集モーダルの現行スクリーンショットを配置した。初期構想の SVG 群と `ToBe/` は `docs/designs/archive/` へ移し、旧レポート画面の `reports.png` も `archive/legacy-screens/` へ退避した。あわせて `README.md` に画面イメージの埋め込み、`docs/README.md` と各画面要件の `対応デザイン`、`docs/specs/project-rules.md` の参照先を新構成へ同期した。
   - 確認: `docker compose run --rm -e DOC_SCREENSHOT_CAPTURE=1 e2e npx playwright test docs-screenshots.spec.ts` で現行スクリーンショットを再生成し、未確定事項チェックを実行して意図しないメモがないことを確認した。

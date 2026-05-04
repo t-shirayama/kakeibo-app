@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:it": "vitest run",
     "test:pages": "node scripts/smoke-pages.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -31,13 +32,20 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9.20.1",
     "eslint-config-next": "^15.1.7",
+    "jsdom": "^29.1.1",
+    "msw": "^2.14.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.5"
   }
 }

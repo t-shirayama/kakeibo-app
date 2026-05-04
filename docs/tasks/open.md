@@ -24,13 +24,6 @@
   - 完了条件: `backend/tests/integration/` に最小セットのITが追加され、Docker Compose 上で再現可能に実行できる。認証・CSRF・明細・月次集計の主要な結合経路を既存E2Eに依存せず検証できる。
   - 根拠: `integration-test-plan.md` の優先度A「認証・Cookie・CSRF」「明細登録・取得・更新・削除」「月次レポート・集計」を一段階下げて導入する方針。
 
-- [ ] Frontend Integration Test の基盤と主要画面テストを導入する
-  - 目的: API mock を使った軽量な画面結合テストで、ログイン、明細一覧、月次レポートの表示と再取得の退行を防ぐ。
-  - 対象: `frontend/src/test/`、`frontend/src/features/**/__tests__/`、`frontend/package.json`、必要に応じて `docs/specs/development-workflow.md`、`docs/e2e/index.md`
-  - 対応: Vitest、React Testing Library、MSW、user-event、jsdom の実行基盤を追加し、少なくともログイン画面、明細一覧、ダッシュボード/月次集計相当画面の主要表示・エラー表示・再取得を検証するテストを実装する。
-  - 完了条件: Frontend Integration Test をコンテナ内で実行でき、主要画面の API クライアント連携を E2E より軽量に検証できる。セットアップ手順とテストの住み分けも文書化されている。
-  - 根拠: `integration-test-plan.md` の優先度A「ログイン画面」「明細一覧」「月次レポート」を一段階下げて導入する方針。
-
 ## 優先度C
 
 - [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する

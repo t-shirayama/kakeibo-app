@@ -9,7 +9,7 @@
     "reset": "docker compose down -v",
     "migrate": "docker compose run --rm backend python -m alembic upgrade head",
     "test:backend": "docker compose run --rm backend python -m pytest",
-    "test:frontend": "docker compose run --rm --no-deps frontend npm run typecheck && docker compose run --rm --no-deps frontend npm run test:pages",
+    "test:frontend": "docker compose run --rm --no-deps frontend npm run typecheck && docker compose run --rm --no-deps frontend npm run test:it && docker compose run --rm --no-deps frontend npm run test:pages",
     "build:frontend": "docker compose run --rm --no-deps frontend npm run build",
     "test:e2e": "docker compose run --rm e2e",
     "test:e2e:headed": "docker compose run --rm e2e npm run test:e2e:headed",
