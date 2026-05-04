@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Backend Integration Test の基盤と最重要シナリオを導入する
+  - 対応: `backend/tests/integration/` を追加し、`integration` pytest marker、MySQL schema 確認、テストユーザー作成・後片付けfixtureを整備した。認証/CSRF/refresh、明細作成〜一覧取得〜更新〜削除、月次レポートとダッシュボード集計を FastAPI と MySQL を通して検証するITを追加した。あわせて `docs/specs/development-workflow.md` と `docs/e2e/index.md` に住み分けと実行手順を追記した。
+  - 確認: `docker compose run --rm backend python -m pytest -m integration` が 3 件通過し、`docker compose run --rm backend python -m pytest` が 60 件すべて通過した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Backend Integration Test の基盤と最重要シナリオを導入する」。
+
 - [x] Frontend Integration Test の基盤と主要画面テストを導入する
   - 対応: `frontend/vitest.config.ts`、`frontend/src/test/`、MSW fixture / server、Next navigation mock、React Query 用 render helper を追加し、`frontend/package.json` に `test:it` を追加した。ログイン画面、明細一覧、ダッシュボードの Integration Test を `frontend/src/features/**/__tests__/*.it.test.tsx` に実装し、主要表示、APIエラー、条件変更や表示月変更による再取得を検証できるようにした。
   - 確認: `docker compose run --rm --no-deps frontend npm run test:it`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` が通過した。ビルドでは既存の React Hooks 警告のみ出力された。

@@ -33,3 +33,6 @@ packages = ["app"]
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "integration: API と MySQL を通す Backend Integration Test",
+]

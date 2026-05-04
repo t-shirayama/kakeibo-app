@@ -17,13 +17,6 @@
 
 ## 優先度B
 
-- [ ] Backend Integration Test の基盤と最重要シナリオを導入する
-  - 目的: Unit Test と E2E の間を埋め、認証・CSRF・明細操作・月次集計の結合不具合を早期に検出できるようにする。
-  - 対象: `backend/tests/integration/`、`backend/pyproject.toml` または pytest 設定、必要に応じて `docker-compose.yml`、`docs/specs/development-workflow.md`、`docs/e2e/index.md`
-  - 対応: pytest marker と Integration Test 用ディレクトリ構成を追加し、少なくとも認証/CSRF、明細登録〜一覧取得、月次レポート集計を API と MySQL を通して検証するテストを導入する。Docker Compose 前提の実行手順と CI での位置づけも文書化する。
-  - 完了条件: `backend/tests/integration/` に最小セットのITが追加され、Docker Compose 上で再現可能に実行できる。認証・CSRF・明細・月次集計の主要な結合経路を既存E2Eに依存せず検証できる。
-  - 根拠: `integration-test-plan.md` の優先度A「認証・Cookie・CSRF」「明細登録・取得・更新・削除」「月次レポート・集計」を一段階下げて導入する方針。
-
 ## 優先度C
 
 - [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する

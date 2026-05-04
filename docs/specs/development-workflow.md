@@ -27,6 +27,7 @@
 - ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
+- バックエンドの Integration Test は `backend/tests/integration/` に置き、`integration` pytest marker を付与する。FastAPI の依存注入、Cookie認証、CSRF、MySQL永続化を通し、認証、明細操作、月次集計のような Unit Test と E2E の間で壊れやすい境界を検証する。
 - フロントエンドの Integration Test は Vitest、React Testing Library、MSW、user-event、jsdom を使い、API mock と TanStack Query を通した画面結合を検証する。対象は `frontend/src/features/**/__tests__/*.it.test.tsx` とし、ログイン、明細一覧、ダッシュボードのような主要画面の表示、APIエラー、URLや条件変更による再取得を E2E より軽量に確認する。
 - 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。
 
@@ -35,6 +36,7 @@
 - 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
 - `frontend/Dockerfile.dev` は通常開発用、`frontend/Dockerfile.e2e` は Playwright とE2E用バックエンド実行環境を含む検証用、`frontend/Dockerfile.prod` は本番ビルド確認用として分ける。
 - バックエンドテストは `docker compose run --rm backend python -m pytest` を基本コマンドとする。
+- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。通常の `pytest` にも含め、CI の `test` workflow では Alembic 適用確認後に実行する。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。
 - フロントエンドの Integration Test は `docker compose run --rm --no-deps frontend npm run test:it` を基本コマンドとする。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。
