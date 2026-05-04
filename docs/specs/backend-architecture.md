@@ -35,12 +35,14 @@ backend/
 - ユースケース
 - トランザクション境界
 - 入力DTOと出力DTO
-- リポジトリインターフェースの呼び出し
+- リポジトリやストレージなどのProtocolの定義と呼び出し
 
 画面表示の都合は持ち込まない。
+infrastructure層のRepository実装、Storage実装、PDFパーサ実装などの具象クラスへ直接依存しない。
 
 - 明細操作ユースケースとカテゴリ管理ユースケースは分離する。
 - レポート集計ユースケースは集計結果の生成に集中し、Excelなどの出力形式組み立ては別コンポーネントへ委譲する。
+- PDF取込ユースケースは、アップロード履歴RepositoryとPDF原本Storageをapplication層のProtocolとして受け取り、具象実装は外側の層で注入する。
 
 ### infrastructure
 

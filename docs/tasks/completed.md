@@ -417,3 +417,9 @@
 - [x] 不正なPDFアップロード入力で `POST /api/uploads` が500を返さないようにする。
 - [x] APIレスポンスへ `X-Content-Type-Options` と `Cross-Origin-Resource-Policy` を付与する。
 - [x] 修正後に `docker compose run --rm zap` を再実行し、対象アラートが解消されたことを確認する。
+
+## 48. PDF取込ユースケースのレイヤ依存を整理する
+
+- [x] `UploadRepositoryProtocol` と `UploadStorageProtocol` をapplication層へ追加する。
+- [x] `PdfUploadUseCases` をinfrastructure層の具象Repository/StorageではなくProtocolへ依存させる。
+- [x] PDF取込周辺のapplication層から `app.infrastructure` import が消えたことをテストで確認する。

@@ -8,13 +8,6 @@
 
 ## 優先度A
 
-- [ ] application層からinfrastructure層へのPDF取込依存をなくす
-  - 目的: DDD / レイヤードアーキテクチャの依存方向を守り、ユースケースを具象実装から切り離す。
-  - 対象: `backend/app/application/importing/upload_import.py`, `backend/app/application/importing/ports.py`, `backend/app/presentation/api/service_factories.py`
-  - 対応: `UploadRepositoryProtocol` と `UploadStorageProtocol` をapplication層へ定義し、`PdfUploadUseCases` はProtocolへ依存させる。
-  - 完了条件: `application -> infrastructure` のimportがPDF取込周辺から消え、関連バックエンドテストが通る。
-  - 根拠: `docs/tasks/kakeibo-app-repository-review.md` の優先度A-1。
-
 - [ ] フロントエンドをfeatures構成へ段階的に移行する
   - 目的: 画面・業務機能ごとの変更範囲を明確にし、Codexが対象ファイルを絞りやすくする。
   - 対象: `frontend/src/components/`, `frontend/app/(app)/transactions`, `frontend/app/(app)/dashboard`, `frontend/app/(app)/upload`, `frontend/app/(app)/income-settings`

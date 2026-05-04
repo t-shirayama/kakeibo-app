@@ -3,10 +3,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.application.importing.pdf_importer import CardStatementParser
+from app.application.importing.ports import UploadRepositoryProtocol, UploadStorageProtocol
 from app.application.transactions import TransactionCommand, TransactionRepositoryProtocol, TransactionUseCases
 from app.domain.entities import TransactionType, Upload, UploadStatus
-from app.infrastructure.repositories.uploads import UploadRepository
-from app.infrastructure.storage import LocalUploadStorage
 
 
 class PdfUploadError(ValueError):
@@ -18,11 +17,11 @@ class PdfUploadUseCases:
     def __init__(
         self,
         *,
-        upload_repository: UploadRepository,
+        upload_repository: UploadRepositoryProtocol,
         transaction_repository: TransactionRepositoryProtocol,
         transactions: TransactionUseCases,
         parser: CardStatementParser,
-        storage: LocalUploadStorage,
+        storage: UploadStorageProtocol,
         max_upload_size_mb: int,
     ) -> None:
         self._upload_repository = upload_repository
