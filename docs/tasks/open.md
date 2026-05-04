@@ -17,6 +17,34 @@
 
 ## 優先度B
 
+- [ ] Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する
+  - 目的: テスト層ごとの責務、重複、抜け漏れを整理し、今後の追加・リファクタリングを迷わず進められる状態にする。
+  - 対象: `backend/tests/unit/`、`backend/tests/integration/`、`frontend/src/test/unit/`、`frontend/src/test/integration/`、`frontend/e2e/`、`docs/specs/development-workflow.md`、`docs/e2e/index.md`
+  - 対応: unit / integration / e2e の既存ケースを棚卸しし、どのリスクをどの層で守るかを整理する。重複している検証、未カバーの重要導線、helper化できる準備処理を洗い出し、テスト追加順とドキュメント更新範囲を決める。
+  - 完了条件: テスト層ごとの責務と拡充順が文書化され、以降のテスト追加タスクが `docs/tasks/open.md` 上で実行可能な粒度に整理されている。
+  - 根拠: ユーザー依頼「unit、integration、e2eのテスト拡充と整備とリファクタリングを追加」「共通化やhelperの検討」「ドキュメントの更新」。
+
+- [ ] Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する
+  - 目的: ドメインルール、純粋関数、表示用ヘルパーの退行を軽量な単体テストで早期に検出できるようにする。
+  - 対象: `backend/tests/unit/`、`frontend/src/test/unit/`、`frontend/src/lib/`、`backend/tests/unit/conftest.py`、必要に応じて `docs/specs/development-workflow.md`
+  - 対応: 金額、日付、カテゴリ表示、ユーザー分離に関わる純粋ロジックの未カバー箇所を追加する。重複fixtureやテストデータ生成処理は、可読性を落とさない範囲で共通helperへ寄せる。
+  - 完了条件: backend / frontend の unit test が独立して実行でき、重複したテストデータ作成が減り、共通helperの利用方針がドキュメントまたはテスト内の構造で分かる。
+  - 根拠: テスト層分割後、unit test のカバレッジと保守性を継続的に高めるため。
+
+- [ ] Integration Test の共通fixtureとAPI/画面helperを整備する
+  - 目的: 結合テスト追加時の準備処理を共通化し、シナリオごとの差分だけを読みやすくする。
+  - 対象: `backend/tests/integration/`、`frontend/src/test/integration/`、`frontend/src/test/msw/`、必要に応じて `docs/specs/development-workflow.md`
+  - 対応: バックエンドは認証、CSRF、テストユーザー、DB後片付け、API呼び出しhelperを整理する。フロントエンドは MSW handler、React Query render helper、画面操作helper、エラー応答fixtureを整理し、既存ITへ適用する。
+  - 完了条件: 既存の Backend / Frontend Integration Test が共通helper経由で読みやすくなり、新規ITを追加する際の標準パターンが明確になっている。
+  - 根拠: Integration Test の拡充前に、重複した準備処理とfixtureを減らして保守しやすくするため。
+
+- [ ] E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる
+  - 目的: E2Eを実ブラウザ・実バックエンド・MySQLを含む代表導線に集中させ、実行時間と保守コストを抑える。
+  - 対象: `frontend/e2e/`、`frontend/e2e/helpers/`、`frontend/scripts/reset-e2e-db.mjs`、`docs/e2e/index.md`、該当する `docs/e2e/*.md`
+  - 対応: ログイン、年月操作、明細作成、削除確認、アップロード用データ準備などの重複操作をhelper化する。E2Eで細かく見すぎている表示分岐やAPI異常系は、Frontend Integration Test へ移せるか判断し、必要なタスクまたは実装へ反映する。
+  - 完了条件: E2E spec が代表導線中心に読みやすくなり、共通操作は helper に集約され、移管した検証観点が Integration Test またはタスクとして追跡できる。
+  - 根拠: E2Eの安定性と実行時間を守りながら、unit / integration / e2e の役割分担を明確にするため。
+
 ## 優先度C
 
 - [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
