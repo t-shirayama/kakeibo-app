@@ -15,7 +15,6 @@
   - 対象: `backend/app/application/transactions.py`
   - 対応: 機能単位のディレクトリ構成へ分割し、既存importを更新する。
   - 完了条件: 分割後もAPI・ユースケース・リポジトリテストが通る。
-
 - [ ] import依存ルールをCIでチェックする
   - 目的: domain/application層が外側の層へ依存する退行を早期検出する。
   - 対象: `backend/app/`, `.github/workflows/`

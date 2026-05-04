@@ -1,191 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date
-from typing import Protocol
 from uuid import UUID
 
 from app.application.common import Page, PageResult
 from app.application.transaction_views import TransactionWithCategory
-from app.domain.entities import Category, Transaction, TransactionType
+from app.application.transactions.commands import CategoryCommand, TransactionCommand
+from app.application.transactions.policies import TransactionCategoryError, TransactionCategoryPolicy
+from app.application.transactions.ports import (
+    AuditLogRepositoryProtocol,
+    CategoryRepositoryProtocol,
+    TransactionQueryRepositoryProtocol,
+    TransactionRepositoryProtocol,
+)
+from app.domain.entities import Category, Transaction
 from app.domain.value_objects import MoneyJPY
-
-
-class TransactionCategoryError(ValueError):
-    pass
-
-
-@dataclass(frozen=True, slots=True)
-class TransactionCommand:
-    transaction_date: date
-    shop_name: str
-    amount: int
-    transaction_type: TransactionType
-    category_id: UUID | None = None
-    payment_method: str | None = None
-    card_user_name: str | None = None
-    memo: str | None = None
-    source_upload_id: UUID | None = None
-    source_file_name: str | None = None
-    source_row_number: int | None = None
-    source_page_number: int | None = None
-    source_format: str | None = None
-    source_hash: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class CategoryCommand:
-    name: str
-    color: str
-    description: str | None = None
-
-
-class TransactionRepositoryProtocol(Protocol):
-    def next_id(self) -> UUID:
-        raise NotImplementedError
-
-    def create_transaction(self, transaction: Transaction) -> Transaction:
-        raise NotImplementedError
-
-    def source_hash_exists(self, *, user_id: UUID, source_hash: str) -> bool:
-        raise NotImplementedError
-
-    def get_transaction(self, *, user_id: UUID, transaction_id: UUID) -> Transaction | None:
-        raise NotImplementedError
-
-    def update_transaction(self, transaction: Transaction) -> Transaction:
-        raise NotImplementedError
-
-    def count_other_transactions_by_shop(self, *, user_id: UUID, transaction_id: UUID, shop_name: str) -> int:
-        raise NotImplementedError
-
-    def update_category_for_shop(
-        self,
-        *,
-        user_id: UUID,
-        shop_name: str,
-        category_id: UUID,
-        excluding_transaction_id: UUID,
-    ) -> int:
-        raise NotImplementedError
-
-    def soft_delete_transaction(self, *, user_id: UUID, transaction_id: UUID) -> None:
-        raise NotImplementedError
-
-
-class TransactionQueryRepositoryProtocol(Protocol):
-    def list_transactions(
-        self,
-        *,
-        user_id: UUID,
-        page: Page,
-        keyword: str | None = None,
-        category_id: UUID | None = None,
-        date_from: date | None = None,
-        date_to: date | None = None,
-        sort_field: str = "date",
-        sort_direction: str = "desc",
-    ) -> PageResult[TransactionWithCategory]:
-        raise NotImplementedError
-
-    def list_transactions_with_categories(
-        self,
-        *,
-        user_id: UUID,
-        keyword: str | None = None,
-        category_id: UUID | None = None,
-        date_from: date | None = None,
-        date_to: date | None = None,
-        limit: int | None = None,
-    ) -> list[TransactionWithCategory]:
-        raise NotImplementedError
-
-    def find_category_id_for_shop(
-        self,
-        *,
-        user_id: UUID,
-        shop_name: str,
-        card_user_name: str | None,
-        payment_method: str | None,
-    ) -> UUID | None:
-        raise NotImplementedError
-
-
-class CategoryRepositoryProtocol(Protocol):
-    def next_id(self) -> UUID:
-        raise NotImplementedError
-
-    def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
-        raise NotImplementedError
-
-    def get_category(self, *, user_id: UUID, category_id: UUID) -> Category | None:
-        raise NotImplementedError
-
-    def category_name_exists(self, *, user_id: UUID, name: str) -> bool:
-        raise NotImplementedError
-
-    def create_category(self, category: Category) -> Category:
-        raise NotImplementedError
-
-    def update_category(self, category: Category) -> Category:
-        raise NotImplementedError
-
-    def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
-        raise NotImplementedError
-
-    def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
-        raise NotImplementedError
-
-    def get_uncategorized_category_id(self, user_id: UUID) -> UUID | None:
-        raise NotImplementedError
-
-    def create_uncategorized_category(self, user_id: UUID) -> UUID:
-        raise NotImplementedError
-
-
-class AuditLogRepositoryProtocol(Protocol):
-    def create_audit_log(
-        self,
-        *,
-        user_id: UUID,
-        action: str,
-        resource_type: str,
-        resource_id: UUID,
-        details: dict[str, object],
-    ) -> None:
-        raise NotImplementedError
-
-
-class TransactionCategoryPolicy:
-    # 分類候補の補完と有効カテゴリ検証だけを担当し、CRUD本体から業務判断を切り離す。
-    def __init__(
-        self,
-        *,
-        transaction_query_repository: TransactionQueryRepositoryProtocol,
-        category_repository: CategoryRepositoryProtocol,
-    ) -> None:
-        self._transaction_query_repository = transaction_query_repository
-        self._category_repository = category_repository
-
-    def resolve_category_id_for_new_transaction(self, *, user_id: UUID, command: TransactionCommand) -> UUID:
-        category_id = command.category_id or self._transaction_query_repository.find_category_id_for_shop(
-            user_id=user_id,
-            shop_name=command.shop_name,
-            card_user_name=command.card_user_name,
-            payment_method=command.payment_method,
-        )
-        category_id = category_id or self._category_repository.get_uncategorized_category_id(user_id)
-        if category_id is None:
-            # 初期カテゴリが欠けたデータでも、明細登録を止めずに最低限の分類先を用意する。
-            category_id = self._category_repository.create_uncategorized_category(user_id)
-        self.ensure_category_available(user_id=user_id, category_id=category_id)
-        return category_id
-
-    def ensure_category_available(self, *, user_id: UUID, category_id: UUID) -> None:
-        # 無効化カテゴリへ新規・更新明細を紐づけると、未分類扱いの表示ルールと衝突する。
-        category = self._category_repository.get_category(user_id=user_id, category_id=category_id)
-        if category is None or not category.is_active:
-            raise TransactionCategoryError("Category not found or inactive.")
 
 
 class TransactionUseCases:
@@ -214,8 +42,8 @@ class TransactionUseCases:
         page: Page,
         keyword: str | None = None,
         category_id: UUID | None = None,
-        date_from: date | None = None,
-        date_to: date | None = None,
+        date_from=None,
+        date_to=None,
         sort_field: str = "date",
         sort_direction: str = "desc",
     ) -> PageResult[TransactionWithCategory]:

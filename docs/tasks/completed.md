@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] applicationファイルを機能別ディレクトリへ分割する
+  - 対応: `backend/app/application/transactions.py` を `backend/app/application/transactions/` 配下の `commands`、`ports`、`policies`、`use_cases` へ分割し、`__init__.py` から再公開する構成へ整理した。関連する application 設計文書も更新した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 53 件すべて通過した。
+  - 根拠: `transactions.py` への責務集中を避け、機能単位で参照しやすくするため。
+
 - [x] service_factories.pyをbootstrap/container.pyへ移す
   - 対応: `backend/app/bootstrap/container.py` を新設し、ユースケース、Repository、Parser、Storage、Settingsの組み立てを bootstrap 層へ移した。`auth` と `settings` を含むAPIルートの依存配線も container 経由へ統一した。
   - 確認: `docker compose run --rm backend python -m pytest` が 53 件すべて通過した。
