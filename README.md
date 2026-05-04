@@ -107,6 +107,12 @@ npm run test:frontend
 npm run test:e2e
 ```
 
+フロントエンド用のDockerfileは用途ごとに分けています。
+
+- `frontend/Dockerfile.dev`: `docker compose up` や `docker compose run --rm --no-deps frontend ...` で使う通常開発用
+- `frontend/Dockerfile.e2e`: `docker compose run --rm e2e` で使う Playwright + E2E用バックエンド実行環境付き
+- `frontend/Dockerfile.prod`: 本番相当の `next build` / `next start` を確認するためのビルド用
+
 ### 動作確認用ログイン
 
 `alembic upgrade head` を実行すると、全画面確認用のサンプルユーザーとサンプルデータが投入されます。

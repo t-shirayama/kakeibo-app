@@ -32,6 +32,7 @@
 ## Docker Compose での確認ルール
 
 - 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
+- `frontend/Dockerfile.dev` は通常開発用、`frontend/Dockerfile.e2e` は Playwright とE2E用バックエンド実行環境を含む検証用、`frontend/Dockerfile.prod` は本番ビルド確認用として分ける。
 - バックエンドテストは `docker compose run --rm backend python -m pytest` を基本コマンドとする。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。

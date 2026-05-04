@@ -29,6 +29,6 @@ RUN python -m venv /opt/kakeibo-backend-venv \
 ENV E2E_PYTHON=/opt/kakeibo-backend-venv/bin/python
 
 WORKDIR /app/frontend
-COPY frontend/ .
+COPY frontend/ ./
 
 EXPOSE 3000

@@ -52,7 +52,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: frontend/Dockerfile
+      dockerfile: frontend/Dockerfile.dev
     container_name: kakeibo-frontend
     working_dir: /app/frontend
     environment:
@@ -74,7 +74,7 @@ services:
   e2e:
     build:
       context: .
-      dockerfile: frontend/Dockerfile
+      dockerfile: frontend/Dockerfile.e2e
     profiles:
       - test
     working_dir: /app/frontend

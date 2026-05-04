@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] フロントエンドDockerfileを用途別に分離する
+  - 対応: `frontend/Dockerfile` を廃止し、`frontend/Dockerfile.dev`、`frontend/Dockerfile.e2e`、`frontend/Dockerfile.prod` へ分割した。`docker-compose.yml` の `frontend` は開発用、`e2e` は Playwright とE2E用バックエンド実行環境込みのイメージを参照する形へ更新し、`README.md` と `docs/specs/development-workflow.md` に各Dockerfileの役割を追記した。
+  - 確認: `docker compose build frontend e2e`、`docker build -f frontend/Dockerfile.prod . -t kakeibo-frontend-prod-test`、`docker compose run --rm --no-deps frontend npm run build`、`docker compose run --rm e2e npm run test:e2e -- navigation.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度B「フロントエンドDockerfileが開発/E2E寄りで重い」。
+
 - [x] `frontend/src/lib/api.ts` の責務を分割する
   - 対応: `frontend/src/lib/api.ts` は薄い公開口に縮小し、実装を `frontend/src/lib/api/` 配下へ移した。transport、認証再試行、download、upload、transactions / reports / settings / categories / income-settings / audit-logs の feature別呼び出し口へ分割し、生成クライアントの利用点を追いやすくした。あわせて `docs/specs/frontend-architecture.md` を新構成に同期した。
   - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts categories.spec.ts settings.spec.ts` が通過した。

@@ -10,13 +10,6 @@
 
 ## 優先度B
 
-- [ ] フロントエンドDockerfileを用途別に分離する
-  - 目的: 通常開発・E2E・本番ビルドで必要な依存を分け、イメージの責務と見通しを良くする。
-  - 対象: `frontend/Dockerfile`、`docker-compose.yml`、必要に応じてCIやREADME
-  - 対応: dev / e2e / prod 相当のDockerfile分割、または同等の責務分離を行い、E2E用のPythonやPlaywright依存を通常フロント用途から切り離す。
-  - 完了条件: Dockerfileの用途が明確に分離され、既存の開発起動・E2E・ビルド導線が維持される。関連手順が文書化される。
-  - 根拠: `kakeibo-app-review.md` の優先度B「フロントエンドDockerfileが開発/E2E寄りで重い」。
-
 ## 優先度C
 
 - [ ] 本番向けCookie設定の確認手順を文書化する
