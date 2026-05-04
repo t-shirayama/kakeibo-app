@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  CalendarDays,
   FileText,
   FileUp,
   ListTree,
@@ -15,6 +16,7 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "レポート", icon: BarChart3 },
+  { href: "/calendar", label: "カレンダー", icon: CalendarDays },
   { href: "/transactions", label: "明細一覧", icon: FileText },
   { href: "/income-settings", label: "収入設定", icon: WalletCards },
   { href: "/upload", label: "アップロード", icon: FileUp },

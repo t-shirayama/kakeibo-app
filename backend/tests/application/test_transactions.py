@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from zipfile import ZipFile
 
 from app.application.common import Page, PageResult
-from app.application.reports import ReportUseCases, TransactionWithCategory
+from app.application.reports import ReportUseCases, TransactionExportFilters, TransactionWithCategory
 from app.application.transactions import CategoryCommand, TransactionCategoryUseCases, TransactionCommand
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
@@ -58,22 +58,44 @@ class FakeTransactionCategoryRepository:
         date_to=None,
     ):
         items = [transaction for transaction in self.transactions.values() if transaction.user_id == user_id]
+        if keyword:
+            normalized_keyword = keyword.casefold()
+            items = [
+                transaction
+                for transaction in items
+                if normalized_keyword in transaction.shop_name.casefold()
+                or normalized_keyword in (transaction.memo or "").casefold()
+                or normalized_keyword in self.categories[transaction.category_id].name.casefold()
+                or (normalized_keyword == "未分類" and self.categories[transaction.category_id].name == "未分類")
+            ]
+        if category_id:
+            items = [transaction for transaction in items if transaction.category_id == category_id]
         if date_from:
             items = [transaction for transaction in items if transaction.transaction_date >= date_from]
         if date_to:
             items = [transaction for transaction in items if transaction.transaction_date <= date_to]
         return PageResult(items=items, total=len(items), page=page.page, page_size=page.page_size)
 
-    def list_transactions_with_categories(self, *, user_id: UUID, start_date=None, end_date=None, limit=None):
+    def list_transactions_with_categories(self, *, user_id: UUID, keyword=None, category_id=None, date_from=None, date_to=None, limit=None):
         rows = []
         for transaction in self.transactions.values():
             if transaction.user_id != user_id:
                 continue
-            if start_date and transaction.transaction_date < start_date:
-                continue
-            if end_date and transaction.transaction_date > end_date:
-                continue
             category = self.categories[transaction.category_id]
+            if keyword:
+                normalized_keyword = keyword.casefold()
+                if (
+                    normalized_keyword not in transaction.shop_name.casefold()
+                    and normalized_keyword not in (transaction.memo or "").casefold()
+                    and normalized_keyword not in category.name.casefold()
+                ):
+                    continue
+            if category_id and transaction.category_id != category_id:
+                continue
+            if date_from and transaction.transaction_date < date_from:
+                continue
+            if date_to and transaction.transaction_date > date_to:
+                continue
             rows.append(
                 TransactionWithCategory(
                     transaction=transaction,
@@ -365,3 +387,49 @@ def test_report_export_workbook_contains_required_sheets() -> None:
     assert "明細一覧" in workbook_xml
     assert "カテゴリ集計" in workbook_xml
     assert "月別集計" in workbook_xml
+
+
+def test_report_export_workbook_filters_transactions_by_search_conditions() -> None:
+    repository = FakeTransactionCategoryRepository()
+    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 4, 10),
+            shop_name="Amazon.co.jp",
+            amount=4600,
+            transaction_type=TransactionType.EXPENSE,
+            category_id=DAILY_ID,
+        ),
+    )
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 5, 10),
+            shop_name="成城石井",
+            amount=3200,
+            transaction_type=TransactionType.EXPENSE,
+            category_id=FOOD_ID,
+        ),
+    )
+
+    workbook = report_use_cases.export_workbook(
+        user_id=USER_ID,
+        filters=TransactionExportFilters(
+            keyword="Amazon",
+            category_id=DAILY_ID,
+            date_from=date(2026, 4, 1),
+            date_to=date(2026, 4, 30),
+        ),
+    )
+
+    with ZipFile(BytesIO(workbook)) as archive:
+        workbook_text = "\n".join(
+            archive.read(name).decode("utf-8")
+            for name in archive.namelist()
+            if name.endswith(".xml")
+        )
+
+    assert "Amazon.co.jp" in workbook_text
+    assert "成城石井" not in workbook_text

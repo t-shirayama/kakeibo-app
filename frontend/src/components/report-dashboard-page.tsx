@@ -93,7 +93,7 @@ export function ReportDashboardPage() {
             <button className="button secondary" type="button" onClick={openCustomizedPeriod}>
               期間をカスタマイズ
             </button>
-            <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
+            <button className="button secondary" type="button" onClick={() => exportMutation.mutate(undefined)} disabled={exportMutation.isPending}>
               <Download size={14} aria-hidden="true" />
               {exportMutation.isPending ? "出力中" : "Excel"}
             </button>

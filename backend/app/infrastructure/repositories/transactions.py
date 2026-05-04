@@ -33,17 +33,13 @@ class TransactionCategoryRepository:
         date_from: date | None = None,
         date_to: date | None = None,
     ) -> PageResult[Transaction]:
-        filters = [TransactionModel.user_id == str(user_id), TransactionModel.deleted_at.is_(None)]
-        # 一覧系は必ずログインユーザー本人かつ未削除データに限定する。
-        if keyword:
-            pattern = f"%{keyword}%"
-            filters.append(or_(TransactionModel.shop_name.like(pattern), TransactionModel.memo.like(pattern)))
-        if category_id:
-            filters.append(self._category_filter(user_id=user_id, category_id=category_id))
-        if date_from:
-            filters.append(TransactionModel.transaction_date >= date_from)
-        if date_to:
-            filters.append(TransactionModel.transaction_date <= date_to)
+        filters = self._build_transaction_filters(
+            user_id=user_id,
+            keyword=keyword,
+            category_id=category_id,
+            date_from=date_from,
+            date_to=date_to,
+        )
 
         total = self._session.scalar(select(func.count()).select_from(TransactionModel).where(*filters)) or 0
         rows = self._session.scalars(
@@ -64,15 +60,19 @@ class TransactionCategoryRepository:
         self,
         *,
         user_id: UUID,
-        start_date: date | None = None,
-        end_date: date | None = None,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
         limit: int | None = None,
     ) -> list[TransactionWithCategory]:
-        filters = [TransactionModel.user_id == str(user_id), TransactionModel.deleted_at.is_(None)]
-        if start_date:
-            filters.append(TransactionModel.transaction_date >= start_date)
-        if end_date:
-            filters.append(TransactionModel.transaction_date <= end_date)
+        filters = self._build_transaction_filters(
+            user_id=user_id,
+            keyword=keyword,
+            category_id=category_id,
+            date_from=date_from,
+            date_to=date_to,
+        )
 
         statement = (
             select(TransactionModel, CategoryModel.name, CategoryModel.color)
@@ -316,6 +316,58 @@ class TransactionCategoryRepository:
             TransactionModel.category_id == str(category_id),
             TransactionModel.category_id.in_(unavailable_category_ids),
         )
+
+    def _build_transaction_filters(
+        self,
+        *,
+        user_id: UUID,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[object]:
+        filters: list[object] = [TransactionModel.user_id == str(user_id), TransactionModel.deleted_at.is_(None)]
+        # 一覧系は必ずログインユーザー本人かつ未削除データに限定する。
+        if keyword:
+            filters.append(self._keyword_filter(user_id=user_id, keyword=keyword))
+        if category_id:
+            filters.append(self._category_filter(user_id=user_id, category_id=category_id))
+        if date_from:
+            filters.append(TransactionModel.transaction_date >= date_from)
+        if date_to:
+            filters.append(TransactionModel.transaction_date <= date_to)
+        return filters
+
+    def _keyword_filter(self, *, user_id: UUID, keyword: str):
+        pattern = f"%{keyword}%"
+        matching_category_ids = select(CategoryModel.id).where(
+            CategoryModel.user_id == str(user_id),
+            CategoryModel.deleted_at.is_(None),
+            CategoryModel.name.like(pattern),
+        )
+        conditions = [
+            TransactionModel.shop_name.like(pattern),
+            TransactionModel.memo.like(pattern),
+            TransactionModel.category_id.in_(matching_category_ids),
+        ]
+        if "未分類" in keyword:
+            uncategorized_ids = select(CategoryModel.id).where(
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.name == "未分類",
+                CategoryModel.deleted_at.is_(None),
+            )
+            unavailable_category_ids = select(CategoryModel.id).where(
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.name != "未分類",
+                or_(CategoryModel.is_active.is_(False), CategoryModel.deleted_at.is_not(None)),
+            )
+            conditions.extend(
+                [
+                    TransactionModel.category_id.in_(uncategorized_ids),
+                    TransactionModel.category_id.in_(unavailable_category_ids),
+                ]
+            )
+        return or_(*conditions)
 
     def _is_uncategorized_category(self, *, user_id: UUID, category_id: UUID) -> bool:
         count = self._session.scalar(

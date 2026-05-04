@@ -22,6 +22,7 @@ npm run dev
 
 - `/` redirects to `/dashboard`
 - `/dashboard`
+- `/calendar`
 - `/transactions`
 - `/categories`
 - `/upload`

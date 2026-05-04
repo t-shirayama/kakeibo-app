@@ -49,7 +49,7 @@ export function CategoryPieChart({ items, onCategoryClick, centerLabel = "合計
           <strong>{formatCurrency(total)}</strong>
         </div>
       </div>
-      <div className="category-pie-legend">
+      <div className="category-pie-legend" aria-label="カテゴリ別支出割合のカテゴリ一覧">
         {segments.rows.map((item) => (
           <button
             className={`category-pie-legend-row category-row${item.category_id === activeCategoryId ? " active" : ""}`}

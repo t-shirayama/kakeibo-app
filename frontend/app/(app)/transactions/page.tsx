@@ -44,10 +44,11 @@ export default function TransactionsPage() {
   const queryClient = useQueryClient();
   const periodRange = useMemo(
     () => ({
+      keyword: query.trim() || undefined,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
     }),
-    [dateFrom, dateTo],
+    [dateFrom, dateTo, query],
   );
   const transactionsQuery = useQuery({
     queryKey: ["transactions", periodRange, categoryFilter],
@@ -86,23 +87,8 @@ export default function TransactionsPage() {
   );
   const transactions = useMemo(() => {
     const rows = transactionsQuery.data ?? [];
-    const normalizedQuery = query.trim().toLowerCase();
-    const searchedRows = normalizedQuery
-      ? rows.filter((transaction) =>
-          // APIのカテゴリ名が未設定でも、カテゴリ一覧から補完して検索対象に含める。
-          [
-            transaction.shop_name,
-            transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類",
-            transaction.memo ?? "",
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery),
-        )
-      : rows;
-
-    return [...searchedRows].sort((a, b) => compareTransactions(a, b, sortField, sortDirection));
-  }, [categoryById, query, sortDirection, sortField, transactionsQuery.data]);
+    return [...rows].sort((a, b) => compareTransactions(a, b, sortField, sortDirection));
+  }, [sortDirection, sortField, transactionsQuery.data]);
   const searchSuggestions = useMemo(() => {
     const suggestions = new Set<string>();
     for (const transaction of transactionsQuery.data ?? []) {
@@ -220,7 +206,19 @@ export default function TransactionsPage() {
         subtitle="取り込んだ明細を検索、絞り込み、手動追加できます。"
         actions={
           <div className="toolbar">
-            <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
+            <button
+              className="button secondary"
+              type="button"
+              onClick={() =>
+                exportMutation.mutate({
+                  keyword: query.trim() || undefined,
+                  date_from: dateFrom || undefined,
+                  date_to: dateTo || undefined,
+                  category_id: categoryFilter || undefined,
+                })
+              }
+              disabled={exportMutation.isPending}
+            >
               {exportMutation.isPending ? "出力中" : "エクスポート"}
             </button>
             <button
@@ -329,7 +327,7 @@ export default function TransactionsPage() {
             </thead>
             <tbody>
               {transactions.map((transaction) => (
-                <tr key={transaction.transaction_id}>
+                <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
                   <td>{transaction.transaction_date}</td>
                   <td>{transaction.shop_name}</td>
                   <td>
