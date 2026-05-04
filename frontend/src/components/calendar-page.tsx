@@ -129,10 +129,7 @@ export function CalendarPage() {
                     <span className="calendar-day-number">{day.day}</span>
                     <span className="calendar-day-expense-label">支出</span>
                     <strong className="calendar-day-expense">{day.expense_total === 0 ? "¥0" : formatCurrency(day.expense_total)}</strong>
-                    <span className="calendar-day-meta">
-                      {day.transaction_count > 0 ? `${day.transaction_count}件` : "明細なし"}
-                      {day.income_total > 0 ? " / 収入あり" : ""}
-                    </span>
+                    <span className="calendar-day-meta">{formatCalendarDayMeta(day)}</span>
                   </button>
                 ) : (
                   <div key={day.date} className="calendar-day placeholder" aria-hidden="true" />
@@ -442,4 +439,12 @@ function formatDateParam(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function formatCalendarDayMeta(day: DailyCalendarSummary) {
+  if (day.transaction_count === 0) {
+    return day.income_total > 0 ? "- / 収入あり" : "-";
+  }
+
+  return `${day.transaction_count}件${day.income_total > 0 ? " / 収入あり" : ""}`;
 }

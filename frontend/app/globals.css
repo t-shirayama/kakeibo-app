@@ -1061,12 +1061,28 @@ textarea {
 .calendar-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.86fr);
-  gap: 16px;
+  gap: 14px;
+}
+
+.calendar-page .page-header {
+  margin-bottom: 16px;
+}
+
+.calendar-page .panel {
+  padding: 14px;
+}
+
+.calendar-page .panel-title {
+  margin-bottom: 10px;
+}
+
+.calendar-page .panel-header {
+  margin-bottom: 10px;
 }
 
 .calendar-sidebar {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   align-content: start;
 }
 
@@ -1077,8 +1093,8 @@ textarea {
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .calendar-weekdays span {
@@ -1092,15 +1108,15 @@ textarea {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .calendar-day {
   display: grid;
   align-content: start;
-  gap: 6px;
-  min-height: 116px;
-  padding: 10px;
+  gap: 4px;
+  min-height: 98px;
+  padding: 8px 9px;
   color: var(--text);
   text-align: left;
   background: #ffffff;
@@ -1135,7 +1151,7 @@ textarea {
   display: inline-flex;
   justify-content: flex-end;
   color: var(--muted-strong);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 850;
 }
 
@@ -1147,7 +1163,7 @@ textarea {
 }
 
 .calendar-day-expense {
-  font-size: clamp(0.96rem, 1vw, 1.12rem);
+  font-size: clamp(0.92rem, 0.95vw, 1.06rem);
   font-weight: 900;
   line-height: 1.2;
   word-break: break-word;
@@ -1156,22 +1172,22 @@ textarea {
 .calendar-day-meta {
   margin-top: auto;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 
 .calendar-summary-grid {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .calendar-summary-tile {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  padding: 12px;
+  padding: 10px 12px;
   border-radius: 10px;
 }
 
@@ -1186,8 +1202,8 @@ textarea {
 .calendar-summary-icon {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   color: var(--primary);
   background: #ffffff;
   border-radius: 999px;
@@ -1211,23 +1227,23 @@ textarea {
 .calendar-summary-tile strong {
   display: block;
   margin-top: 2px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
 }
 
 .calendar-category-list,
 .calendar-transaction-list {
   display: grid;
-  gap: 10px;
-  max-height: 320px;
+  gap: 8px;
+  max-height: 260px;
   overflow-y: auto;
 }
 
 .calendar-category-row,
 .calendar-transaction-row {
   display: grid;
-  gap: 6px;
-  padding: 10px 12px;
+  gap: 5px;
+  padding: 9px 10px;
   border: 1px solid #edf2f7;
   border-radius: 8px;
 }
@@ -1247,14 +1263,14 @@ textarea {
 .calendar-selected-day-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .calendar-inline-summary {
   display: grid;
   gap: 3px;
-  padding: 10px;
+  padding: 8px 9px;
   background: #f8fbff;
   border: 1px solid #dbe7f6;
   border-radius: 8px;
@@ -1267,7 +1283,7 @@ textarea {
 }
 
 .calendar-inline-summary strong {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
 }
 
@@ -1291,8 +1307,8 @@ textarea {
 .calendar-panel-empty {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .expense-improved {
