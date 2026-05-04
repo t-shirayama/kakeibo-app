@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] `frontend/src/lib/api.ts` の責務を分割する
+  - 対応: `frontend/src/lib/api.ts` は薄い公開口に縮小し、実装を `frontend/src/lib/api/` 配下へ移した。transport、認証再試行、download、upload、transactions / reports / settings / categories / income-settings / audit-logs の feature別呼び出し口へ分割し、生成クライアントの利用点を追いやすくした。あわせて `docs/specs/frontend-architecture.md` を新構成に同期した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts categories.spec.ts settings.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度B「frontend/src/lib/api.ts が少し太り気味」。
+
 - [x] バックエンド依存のlock運用を導入する
   - 対応: `backend/scripts/generate_requirements_lock.py` と `backend/requirements.lock` を追加し、`.[dev]` を一時venvへ解決して `pip freeze --exclude-editable` から再現可能なlockファイルを生成できるようにした。あわせて `backend/Dockerfile` と `frontend/Dockerfile` を lock ファイル前提のインストールへ切り替え、`README.md`、`docs/specs/development-workflow.md`、`.github/workflows/quality.yml` に更新手順と `--check` によるCI確認を追記した。
   - 確認: `docker compose build backend frontend`、`docker compose run --rm backend python scripts/generate_requirements_lock.py --check`、`docker compose run --rm backend python -m pytest` が通過した。

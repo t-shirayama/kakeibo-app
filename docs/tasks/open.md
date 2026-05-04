@@ -10,13 +10,6 @@
 
 ## 優先度B
 
-- [ ] `frontend/src/lib/api.ts` の責務を分割する
-  - 目的: 生成クライアントのアダプタ層を保ちつつ、認証再試行、アップロード、ダウンロード、feature別APIを追いやすくする。
-  - 対象: `frontend/src/lib/api.ts`、`frontend/src/lib/api/`、必要に応じて `frontend/src/features/*`、`docs/specs/frontend-architecture.md`
-  - 対応: transport、auth retry、download、upload、feature別の呼び出し口へ分割し、画面側のimportを段階的に置き換える。
-  - 完了条件: `api.ts` の責務が縮小され、主要API呼び出しが分割後の構成で動作する。型チェックと関連E2Eまたは画面テストが通過する。
-  - 根拠: `kakeibo-app-review.md` の優先度B「frontend/src/lib/api.ts が少し太り気味」。
-
 - [ ] フロントエンドDockerfileを用途別に分離する
   - 目的: 通常開発・E2E・本番ビルドで必要な依存を分け、イメージの責務と見通しを良くする。
   - 対象: `frontend/Dockerfile`、`docker-compose.yml`、必要に応じてCIやREADME
