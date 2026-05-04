@@ -3,9 +3,8 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.application.importing.pdf_importer import CardStatementParser
-from app.application.transactions import TransactionCategoryUseCases, TransactionCommand
+from app.application.transactions import TransactionCommand, TransactionRepositoryProtocol, TransactionUseCases
 from app.domain.entities import TransactionType, Upload, UploadStatus
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.infrastructure.repositories.uploads import UploadRepository
 from app.infrastructure.storage import LocalUploadStorage
 
@@ -20,14 +19,15 @@ class PdfUploadUseCases:
         self,
         *,
         upload_repository: UploadRepository,
-        transaction_repository: TransactionCategoryRepository,
+        transaction_repository: TransactionRepositoryProtocol,
+        transactions: TransactionUseCases,
         parser: CardStatementParser,
         storage: LocalUploadStorage,
         max_upload_size_mb: int,
     ) -> None:
         self._upload_repository = upload_repository
         self._transaction_repository = transaction_repository
-        self._transactions = TransactionCategoryUseCases(transaction_repository)
+        self._transactions = transactions
         self._parser = parser
         self._storage = storage
         self._max_upload_size = max_upload_size_mb * 1024 * 1024

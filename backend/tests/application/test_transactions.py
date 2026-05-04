@@ -6,8 +6,9 @@ from uuid import UUID, uuid4
 from zipfile import ZipFile
 
 from app.application.common import Page, PageResult
+from app.application.exporting.transaction_workbook_exporter import TransactionWorkbookExporter
 from app.application.reports import ReportUseCases, TransactionExportFilters
-from app.application.transactions import CategoryCommand, TransactionCategoryUseCases, TransactionCommand
+from app.application.transactions import CategoryCommand, CategoryUseCases, TransactionCommand, TransactionUseCases
 from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
@@ -19,7 +20,7 @@ FOOD_ID = UUID("33333333-3333-3333-3333-333333333333")
 DAILY_ID = UUID("44444444-4444-4444-4444-444444444444")
 
 
-class FakeTransactionCategoryRepository:
+class FakeFinanceRepository:
     # ユースケースの業務判断だけを検証するため、DBを使わない最小のリポジトリを用意する。
     def __init__(self) -> None:
         self.categories = {
@@ -58,23 +59,27 @@ class FakeTransactionCategoryRepository:
         date_from=None,
         date_to=None,
     ):
-        items = [transaction for transaction in self.transactions.values() if transaction.user_id == user_id]
+        items = [
+            self._to_row(transaction)
+            for transaction in self.transactions.values()
+            if transaction.user_id == user_id
+        ]
         if keyword:
             normalized_keyword = keyword.casefold()
             items = [
-                transaction
-                for transaction in items
-                if normalized_keyword in transaction.shop_name.casefold()
-                or normalized_keyword in (transaction.memo or "").casefold()
-                or normalized_keyword in self.categories[transaction.category_id].name.casefold()
-                or (normalized_keyword == "未分類" and self.categories[transaction.category_id].name == "未分類")
+                row
+                for row in items
+                if normalized_keyword in row.transaction.shop_name.casefold()
+                or normalized_keyword in (row.transaction.memo or "").casefold()
+                or normalized_keyword in row.category_name.casefold()
+                or (normalized_keyword == "未分類" and row.category_name == "未分類")
             ]
         if category_id:
-            items = [transaction for transaction in items if transaction.category_id == category_id]
+            items = [row for row in items if row.display_category_id == category_id]
         if date_from:
-            items = [transaction for transaction in items if transaction.transaction_date >= date_from]
+            items = [row for row in items if row.transaction.transaction_date >= date_from]
         if date_to:
-            items = [transaction for transaction in items if transaction.transaction_date <= date_to]
+            items = [row for row in items if row.transaction.transaction_date <= date_to]
         return PageResult(items=items, total=len(items), page=page.page, page_size=page.page_size)
 
     def list_transactions_with_categories(self, *, user_id: UUID, keyword=None, category_id=None, date_from=None, date_to=None, limit=None):
@@ -82,35 +87,34 @@ class FakeTransactionCategoryRepository:
         for transaction in self.transactions.values():
             if transaction.user_id != user_id:
                 continue
-            category = self.categories[transaction.category_id]
+            row = self._to_row(transaction)
             if keyword:
                 normalized_keyword = keyword.casefold()
                 if (
                     normalized_keyword not in transaction.shop_name.casefold()
                     and normalized_keyword not in (transaction.memo or "").casefold()
-                    and normalized_keyword not in category.name.casefold()
+                    and normalized_keyword not in row.category_name.casefold()
                 ):
                     continue
-            if category_id and transaction.category_id != category_id:
+            if category_id and row.display_category_id != category_id:
                 continue
             if date_from and transaction.transaction_date < date_from:
                 continue
             if date_to and transaction.transaction_date > date_to:
                 continue
-            rows.append(
-                TransactionWithCategory(
-                    transaction=transaction,
-                    display_category_id=category.id,
-                    category_name=category.name,
-                    category_color=category.color,
-                )
-            )
+            rows.append(row)
         rows.sort(key=lambda row: row.transaction.transaction_date, reverse=True)
         return rows[:limit] if limit is not None else rows
 
     def create_transaction(self, transaction: Transaction) -> Transaction:
         self.transactions[transaction.id] = transaction
         return transaction
+
+    def source_hash_exists(self, *, user_id: UUID, source_hash: str) -> bool:
+        return any(
+            transaction.user_id == user_id and transaction.source_hash == source_hash
+            for transaction in self.transactions.values()
+        )
 
     def get_transaction(self, *, user_id: UUID, transaction_id: UUID) -> Transaction | None:
         transaction = self.transactions.get(transaction_id)
@@ -164,7 +168,9 @@ class FakeTransactionCategoryRepository:
         self.transactions.pop(transaction_id, None)
 
     def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
-        return list(self.categories.values())
+        if include_inactive:
+            return list(self.categories.values())
+        return [category for category in self.categories.values() if category.is_active]
 
     def get_category(self, *, user_id: UUID, category_id: UUID) -> Category | None:
         return self.categories.get(category_id)
@@ -227,6 +233,15 @@ class FakeTransactionCategoryRepository:
     ) -> None:
         self.audit_logs.append((action, resource_id))
 
+    def _to_row(self, transaction: Transaction) -> TransactionWithCategory:
+        category = self.categories[transaction.category_id]
+        return TransactionWithCategory(
+            transaction=transaction,
+            display_category_id=category.id,
+            category_name=category.name,
+            category_color=category.color,
+        )
+
 
 def make_command(shop_name: str = "Store", category_id: UUID | None = None) -> TransactionCommand:
     return TransactionCommand(
@@ -239,10 +254,27 @@ def make_command(shop_name: str = "Store", category_id: UUID | None = None) -> T
     )
 
 
+def make_transaction_use_cases(repository: FakeFinanceRepository) -> TransactionUseCases:
+    return TransactionUseCases(
+        transaction_repository=repository,
+        transaction_query_repository=repository,
+        category_repository=repository,
+        audit_log_repository=repository,
+    )
+
+
+def make_category_use_cases(repository: FakeFinanceRepository) -> CategoryUseCases:
+    return CategoryUseCases(category_repository=repository)
+
+
+def make_report_use_cases(repository: FakeFinanceRepository) -> ReportUseCases:
+    return ReportUseCases(repository, TransactionWorkbookExporter())
+
+
 def test_create_transaction_falls_back_to_uncategorized() -> None:
     # カテゴリ推定できない明細は、登録失敗ではなく未分類へ入ることを確認する。
-    repository = FakeTransactionCategoryRepository()
-    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    use_cases = make_transaction_use_cases(repository)
 
     transaction = use_cases.create_transaction(user_id=USER_ID, command=make_command())
 
@@ -251,8 +283,8 @@ def test_create_transaction_falls_back_to_uncategorized() -> None:
 
 def test_create_transaction_reuses_past_category_for_same_shop() -> None:
     # 同一店舗の過去分類を使い、PDF取込後の手動分類が次回に反映されることを守る。
-    repository = FakeTransactionCategoryRepository()
-    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    use_cases = make_transaction_use_cases(repository)
 
     use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
     inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
@@ -261,8 +293,8 @@ def test_create_transaction_reuses_past_category_for_same_shop() -> None:
 
 
 def test_delete_transaction_records_audit_log() -> None:
-    repository = FakeTransactionCategoryRepository()
-    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    use_cases = make_transaction_use_cases(repository)
     transaction = use_cases.create_transaction(user_id=USER_ID, command=make_command(category_id=FOOD_ID))
 
     use_cases.delete_transaction(user_id=USER_ID, transaction_id=transaction.id)
@@ -271,8 +303,8 @@ def test_delete_transaction_records_audit_log() -> None:
 
 
 def test_category_can_be_disabled_and_enabled() -> None:
-    repository = FakeTransactionCategoryRepository()
-    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    use_cases = make_category_use_cases(repository)
 
     disabled = use_cases.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=False)
     enabled = use_cases.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=True)
@@ -282,8 +314,8 @@ def test_category_can_be_disabled_and_enabled() -> None:
 
 
 def test_update_category_changes_name_color_and_description() -> None:
-    repository = FakeTransactionCategoryRepository()
-    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    use_cases = make_category_use_cases(repository)
 
     category = use_cases.update_category(
         user_id=USER_ID,
@@ -298,8 +330,8 @@ def test_update_category_changes_name_color_and_description() -> None:
 
 
 def test_update_same_shop_category_updates_other_matching_shop_transactions_only() -> None:
-    repository = FakeTransactionCategoryRepository()
-    use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    use_cases = make_transaction_use_cases(repository)
     target = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
     same_shop = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
     other_shop = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Market", category_id=FOOD_ID))
@@ -321,9 +353,9 @@ def test_update_same_shop_category_updates_other_matching_shop_transactions_only
 
 
 def test_monthly_report_summarizes_expenses_by_category() -> None:
-    repository = FakeTransactionCategoryRepository()
-    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
-    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    transaction_use_cases = make_transaction_use_cases(repository)
+    report_use_cases = make_report_use_cases(repository)
     transaction_use_cases.create_transaction(
         user_id=USER_ID,
         command=make_command(shop_name="Cafe", category_id=FOOD_ID),
@@ -343,9 +375,9 @@ def test_monthly_report_summarizes_expenses_by_category() -> None:
 
 
 def test_dashboard_summary_compares_previous_month() -> None:
-    repository = FakeTransactionCategoryRepository()
-    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
-    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    transaction_use_cases = make_transaction_use_cases(repository)
+    report_use_cases = make_report_use_cases(repository)
     transaction_use_cases.create_transaction(user_id=USER_ID, command=make_command(category_id=FOOD_ID))
     transaction_use_cases.create_transaction(
         user_id=USER_ID,
@@ -376,9 +408,9 @@ def test_dashboard_summary_compares_previous_month() -> None:
 
 def test_report_export_workbook_contains_required_sheets() -> None:
     # Excel仕様として求められる3シートが生成物に含まれることを確認する。
-    repository = FakeTransactionCategoryRepository()
-    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
-    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    transaction_use_cases = make_transaction_use_cases(repository)
+    report_use_cases = make_report_use_cases(repository)
     transaction_use_cases.create_transaction(user_id=USER_ID, command=make_command(category_id=FOOD_ID))
 
     workbook = report_use_cases.export_workbook(user_id=USER_ID)
@@ -392,9 +424,9 @@ def test_report_export_workbook_contains_required_sheets() -> None:
 
 
 def test_report_export_workbook_filters_transactions_by_search_conditions() -> None:
-    repository = FakeTransactionCategoryRepository()
-    transaction_use_cases = TransactionCategoryUseCases(repository)  # type: ignore[arg-type]
-    report_use_cases = ReportUseCases(repository)  # type: ignore[arg-type]
+    repository = FakeFinanceRepository()
+    transaction_use_cases = make_transaction_use_cases(repository)
+    report_use_cases = make_report_use_cases(repository)
     transaction_use_cases.create_transaction(
         user_id=USER_ID,
         command=TransactionCommand(

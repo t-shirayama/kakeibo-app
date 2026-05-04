@@ -18,7 +18,7 @@ from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
 from app.infrastructure.repositories.auth import AuthRepository
 from app.infrastructure.repositories.settings import SettingsRepository
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
+from app.infrastructure.repositories.transactions import CategoryRepository, TransactionQueryRepository, TransactionRepository
 
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
@@ -46,12 +46,14 @@ def add_user(session: Session, *, password_hash: str = "hash") -> None:
 
 def test_transaction_repository_creates_lists_and_soft_deletes(db_session: Session) -> None:
     add_user(db_session)
-    repository = TransactionCategoryRepository(db_session)
-    category = repository.create_category(
+    transaction_repository = TransactionRepository(db_session)
+    transaction_query_repository = TransactionQueryRepository(db_session)
+    category_repository = CategoryRepository(db_session)
+    category = category_repository.create_category(
         Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444")
     )
 
-    transaction = repository.create_transaction(
+    transaction = transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -64,24 +66,26 @@ def test_transaction_repository_creates_lists_and_soft_deletes(db_session: Sessi
         )
     )
 
-    result = repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10))
+    result = transaction_query_repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10))
     assert result.total == 1
     assert result.items[0].transaction.shop_name == "Cafe"
     assert result.items[0].category_name == "食費"
     assert result.items[0].category_color == "#EF4444"
-    assert repository.source_hash_exists(user_id=USER_ID, source_hash="hash-1")
+    assert transaction_repository.source_hash_exists(user_id=USER_ID, source_hash="hash-1")
 
-    repository.soft_delete_transaction(user_id=USER_ID, transaction_id=transaction.id)
-    assert repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10)).total == 0
+    transaction_repository.soft_delete_transaction(user_id=USER_ID, transaction_id=transaction.id)
+    assert transaction_query_repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10)).total == 0
 
 
 def test_transaction_repository_filters_by_transaction_date(db_session: Session) -> None:
     add_user(db_session)
-    repository = TransactionCategoryRepository(db_session)
-    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    transaction_repository = TransactionRepository(db_session)
+    transaction_query_repository = TransactionQueryRepository(db_session)
+    category_repository = CategoryRepository(db_session)
+    category = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
 
     for transaction_date, shop_name in [(date(2026, 5, 1), "May Cafe"), (date(2026, 4, 30), "April Market")]:
-        repository.create_transaction(
+        transaction_repository.create_transaction(
             Transaction(
                 id=uuid4(),
                 user_id=USER_ID,
@@ -93,7 +97,7 @@ def test_transaction_repository_filters_by_transaction_date(db_session: Session)
             )
         )
 
-    result = repository.list_transactions(
+    result = transaction_query_repository.list_transactions(
         user_id=USER_ID,
         page=Page(page=1, page_size=10),
         date_from=date(2026, 5, 1),
@@ -106,11 +110,13 @@ def test_transaction_repository_filters_by_transaction_date(db_session: Session)
 
 def test_transaction_repository_keyword_matches_category_name_and_uncategorized(db_session: Session) -> None:
     add_user(db_session)
-    repository = TransactionCategoryRepository(db_session)
-    daily = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
-    inactive = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
-    repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
-    repository.create_transaction(
+    transaction_repository = TransactionRepository(db_session)
+    transaction_query_repository = TransactionQueryRepository(db_session)
+    category_repository = CategoryRepository(db_session)
+    daily = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+    inactive = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
+    transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -121,7 +127,7 @@ def test_transaction_repository_keyword_matches_category_name_and_uncategorized(
             transaction_type=TransactionType.EXPENSE,
         )
     )
-    repository.create_transaction(
+    transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -132,10 +138,10 @@ def test_transaction_repository_keyword_matches_category_name_and_uncategorized(
             transaction_type=TransactionType.EXPENSE,
         )
     )
-    repository.set_category_active(user_id=USER_ID, category_id=inactive.id, is_active=False)
+    category_repository.set_category_active(user_id=USER_ID, category_id=inactive.id, is_active=False)
 
-    category_result = repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10), keyword="日用品")
-    uncategorized_result = repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10), keyword="未分類")
+    category_result = transaction_query_repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10), keyword="日用品")
+    uncategorized_result = transaction_query_repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10), keyword="未分類")
 
     assert category_result.total == 1
     assert category_result.items[0].transaction.shop_name == "Amazon.co.jp"
@@ -147,10 +153,11 @@ def test_transaction_repository_keyword_matches_category_name_and_uncategorized(
 
 def test_transaction_repository_updates_category_for_same_shop(db_session: Session) -> None:
     add_user(db_session)
-    repository = TransactionCategoryRepository(db_session)
-    food = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
-    daily = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
-    target = repository.create_transaction(
+    transaction_repository = TransactionRepository(db_session)
+    category_repository = CategoryRepository(db_session)
+    food = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    daily = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+    target = transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -161,7 +168,7 @@ def test_transaction_repository_updates_category_for_same_shop(db_session: Sessi
             transaction_type=TransactionType.EXPENSE,
         )
     )
-    same_shop = repository.create_transaction(
+    same_shop = transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -172,7 +179,7 @@ def test_transaction_repository_updates_category_for_same_shop(db_session: Sessi
             transaction_type=TransactionType.EXPENSE,
         )
     )
-    other_shop = repository.create_transaction(
+    other_shop = transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -184,12 +191,12 @@ def test_transaction_repository_updates_category_for_same_shop(db_session: Sessi
         )
     )
 
-    candidate_count = repository.count_other_transactions_by_shop(
+    candidate_count = transaction_repository.count_other_transactions_by_shop(
         user_id=USER_ID,
         transaction_id=target.id,
         shop_name=target.shop_name,
     )
-    updated_count = repository.update_category_for_shop(
+    updated_count = transaction_repository.update_category_for_shop(
         user_id=USER_ID,
         shop_name=target.shop_name,
         category_id=daily.id,
@@ -198,17 +205,19 @@ def test_transaction_repository_updates_category_for_same_shop(db_session: Sessi
 
     assert candidate_count == 1
     assert updated_count == 1
-    assert repository.get_transaction(user_id=USER_ID, transaction_id=target.id).category_id == food.id
-    assert repository.get_transaction(user_id=USER_ID, transaction_id=same_shop.id).category_id == daily.id
-    assert repository.get_transaction(user_id=USER_ID, transaction_id=other_shop.id).category_id == food.id
+    assert transaction_repository.get_transaction(user_id=USER_ID, transaction_id=target.id).category_id == food.id
+    assert transaction_repository.get_transaction(user_id=USER_ID, transaction_id=same_shop.id).category_id == daily.id
+    assert transaction_repository.get_transaction(user_id=USER_ID, transaction_id=other_shop.id).category_id == food.id
 
 
 def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_session: Session) -> None:
     add_user(db_session)
-    repository = TransactionCategoryRepository(db_session)
-    uncategorized = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
-    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
-    repository.create_transaction(
+    transaction_repository = TransactionRepository(db_session)
+    transaction_query_repository = TransactionQueryRepository(db_session)
+    category_repository = CategoryRepository(db_session)
+    uncategorized = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
+    category = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    transaction_repository.create_transaction(
         Transaction(
             id=uuid4(),
             user_id=USER_ID,
@@ -220,9 +229,9 @@ def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_
         )
     )
 
-    repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=False)
+    category_repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=False)
 
-    result = repository.list_transactions(
+    result = transaction_query_repository.list_transactions(
         user_id=USER_ID,
         page=Page(page=1, page_size=10),
         category_id=uncategorized.id,
@@ -235,7 +244,7 @@ def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_
 
 def test_category_repository_can_disable_and_enable_category(db_session: Session) -> None:
     add_user(db_session)
-    repository = TransactionCategoryRepository(db_session)
+    repository = CategoryRepository(db_session)
     category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
 
     disabled = repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=False)

@@ -363,3 +363,21 @@
 - [x] `backend` の Alembic 適用確認を自動実行する。
 - [x] `docker compose run --rm --no-deps` 経由でシークレットスキャンをコンテナ内で実行する。
 - [x] `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` による未確定事項チェックをCIへ組み込む。
+
+## 39. トランザクション/カテゴリ/監査ログのリポジトリ責務を分離する
+
+- [x] `backend/app/infrastructure/repositories/transactions.py` の `TransactionCategoryRepository` を、少なくとも `TransactionRepository`、`TransactionQueryRepository`、`CategoryRepository`、`AuditLogRepository` 相当へ分割する。
+- [x] 明細検索条件の組み立て、未分類表示への正規化、同一店舗の自動分類検索など、永続化以外の責務を専用のクエリコンポーネントへ切り出す。
+- [x] 分割後も `/api/transactions`、カテゴリ管理、レポート集計から同じ表示結果になるように、関連するアプリケーション層・テストを更新する。
+
+## 40. 明細ユースケースとカテゴリユースケースの責務を分離する
+
+- [x] `backend/app/application/transactions.py` の `TransactionCategoryUseCases` を、明細操作中心の `TransactionUseCases` とカテゴリ管理中心の `CategoryUseCases` へ分割する。
+- [x] カテゴリ可用性チェック、未分類カテゴリの補完、同一店舗カテゴリ更新のような共通業務ルールを `TransactionCategoryPolicy` へ切り出す。
+- [x] APIルート、依存注入、単体テストを分割後の構成へ合わせて更新する。
+
+## 41. レポート集計とExcelエクスポート組み立ての責務を分離する
+
+- [x] `backend/app/application/reports.py` から、月次/週次/年次/ダッシュボードの集計ロジックと、Excelワークシート組み立てロジックを分離する。
+- [x] Excel出力向けのシート構築を `app/application/exporting/transaction_workbook_exporter.py` の専用コンポーネントへ切り出し、`ReportUseCases` は集計結果の生成に集中させる。
+- [x] エクスポートAPIと関連テストを、新しい責務境界に合わせて更新する。

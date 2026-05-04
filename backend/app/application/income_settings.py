@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from app.application.reports import add_months
+from app.application.transactions import CategoryRepositoryProtocol, TransactionRepositoryProtocol
 from app.domain.entities import Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 
 if TYPE_CHECKING:
     from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
@@ -54,9 +54,15 @@ class IncomeSetting:
 
 
 class IncomeSettingsUseCases:
-    def __init__(self, repository: IncomeSettingsRepository, transaction_repository: TransactionCategoryRepository) -> None:
+    def __init__(
+        self,
+        repository: IncomeSettingsRepository,
+        transaction_repository: TransactionRepositoryProtocol,
+        category_repository: CategoryRepositoryProtocol,
+    ) -> None:
         self._repository = repository
         self._transaction_repository = transaction_repository
+        self._category_repository = category_repository
 
     def list_settings(self, *, user_id: UUID) -> list[IncomeSetting]:
         self.apply_due_transactions(user_id=user_id)
@@ -132,7 +138,7 @@ class IncomeSettingsUseCases:
         if not command.member_name.strip():
             raise IncomeSettingsError("Member name is required.")
         self._validate_amount_and_day(amount=command.base_amount, day=command.base_day)
-        category = self._transaction_repository.get_category(user_id=user_id, category_id=command.category_id)
+        category = self._category_repository.get_category(user_id=user_id, category_id=command.category_id)
         if category is None or not category.is_active:
             raise IncomeSettingsError("Category not found or inactive.")
 

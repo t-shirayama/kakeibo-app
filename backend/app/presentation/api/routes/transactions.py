@@ -10,13 +10,13 @@ from sqlalchemy.orm import Session
 from app.application.auth.ports import UserRecord
 from app.application.common import Page, PageResult
 from app.application.reports import ReportUseCases, TransactionExportFilters
-from app.application.transactions import TransactionCategoryError, TransactionCategoryUseCases, TransactionCommand
+from app.application.transactions import TransactionCategoryError, TransactionCommand, TransactionUseCases
 from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Transaction, TransactionType
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 from app.presentation.api.routes.income_settings import apply_due_income_transactions
+from app.presentation.api.service_factories import build_report_use_cases, build_transaction_use_cases
 
 router = APIRouter()
 
@@ -106,7 +106,7 @@ def export_transactions(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> Response:
-    content = ReportUseCases(TransactionCategoryRepository(session)).export_workbook(
+    content = build_report_use_cases(session).export_workbook(
         user_id=current_user.id,
         filters=TransactionExportFilters(
             keyword=keyword,
@@ -211,8 +211,8 @@ def delete_transaction(
     return {"status": "ok"}
 
 
-def _use_cases(session: Session) -> TransactionCategoryUseCases:
-    return TransactionCategoryUseCases(TransactionCategoryRepository(session))
+def _use_cases(session: Session) -> TransactionUseCases:
+    return build_transaction_use_cases(session)
 
 
 def _command(request: TransactionRequest) -> TransactionCommand:

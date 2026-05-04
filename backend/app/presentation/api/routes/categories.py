@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
-from app.application.transactions import CategoryCommand, TransactionCategoryError, TransactionCategoryUseCases
+from app.application.transactions import CategoryCommand, CategoryUseCases, TransactionCategoryError
 from app.domain.entities import Category
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.service_factories import build_category_use_cases
 
 router = APIRouter()
 
@@ -117,8 +117,8 @@ def delete_category(
     return {"status": "ok"}
 
 
-def _use_cases(session: Session) -> TransactionCategoryUseCases:
-    return TransactionCategoryUseCases(TransactionCategoryRepository(session))
+def _use_cases(session: Session) -> CategoryUseCases:
+    return build_category_use_cases(session)
 
 
 def _category_response(category: Category) -> CategoryResponse:

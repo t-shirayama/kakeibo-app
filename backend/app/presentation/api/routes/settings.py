@@ -10,10 +10,10 @@ from app.application.settings import SettingsError, SettingsUseCases, UpdateSett
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.settings import SettingsRepository, UserSettingsRecord
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.infrastructure.storage import LocalUploadStorage
 from app.presentation.api.cookies import delete_auth_cookie
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.service_factories import build_report_use_cases
 
 router = APIRouter()
 
@@ -71,7 +71,7 @@ def export_user_data(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> Response:
-    content = ReportUseCases(TransactionCategoryRepository(session)).export_workbook(user_id=current_user.id)
+    content = build_report_use_cases(session).export_workbook(user_id=current_user.id)
     return Response(
         content=content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
