@@ -5,7 +5,7 @@
 ## 最近の完了タスク
 
 - [x] Backend Integration Test の基盤と最重要シナリオを導入する
-  - 対応: `backend/tests/integration/` を追加し、`integration` pytest marker、MySQL schema 確認、テストユーザー作成・後片付けfixtureを整備した。認証/CSRF/refresh、明細作成〜一覧取得〜更新〜削除、月次レポートとダッシュボード集計を FastAPI と MySQL を通して検証するITを追加した。あわせて `docs/specs/development-workflow.md` と `docs/e2e/index.md` に住み分けと実行手順を追記した。
+  - 対応: `backend/tests/integration/` を追加し、`integration` pytest marker、MySQL schema 確認、テストユーザー作成・後片付けfixtureを整備した。認証/CSRF/refresh、明細作成〜一覧取得〜更新〜削除、月次レポートとダッシュボード集計を FastAPI と MySQL を通して検証するITを追加した。あわせて既存の単体テスト群は `backend/tests/unit/` 配下へ整理し、`docs/specs/development-workflow.md` と `docs/e2e/index.md` に住み分けと実行手順を追記した。
   - 確認: `docker compose run --rm backend python -m pytest -m integration` が 3 件通過し、`docker compose run --rm backend python -m pytest` が 60 件すべて通過した。
   - 根拠: `docs/tasks/open.md` の優先度B「Backend Integration Test の基盤と最重要シナリオを導入する」。
 
@@ -95,7 +95,7 @@
   - 根拠: サーバー状態のキー管理を安定させ、画面間のキャッシュ操作を追いやすくするため。
 
 - [x] import依存ルールをCIでチェックする
-  - 対応: `backend/tests/application/test_layer_dependencies.py` を一般化し、`domain -> application/infrastructure/presentation` と `application -> infrastructure/presentation` の禁止を検証できるようにした。あわせて application 層の外側依存を Protocol / DTO へ寄せ、`.github/workflows/quality.yml` にレイヤ依存チェックを追加した。
+  - 対応: `backend/tests/unit/application/test_layer_dependencies.py` を一般化し、`domain -> application/infrastructure/presentation` と `application -> infrastructure/presentation` の禁止を検証できるようにした。あわせて application 層の外側依存を Protocol / DTO へ寄せ、`.github/workflows/quality.yml` にレイヤ依存チェックを追加した。
   - 確認: `docker compose run --rm backend python -m pytest` が 54 件すべて通過した。
   - 根拠: domain/application層の外側依存退行をCIで早期検出するため。
 

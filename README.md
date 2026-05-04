@@ -204,7 +204,7 @@ GitHub Actions のCIは `quality` と `test` の2系統に分けます。
 ```powershell
 docker compose run --rm --no-deps frontend npm run lint
 docker compose run --rm --no-deps frontend npm run typecheck
-docker compose run --rm backend python -m pytest tests/application/test_layer_dependencies.py
+docker compose run --rm backend python -m pytest tests/unit/application/test_layer_dependencies.py
 docker compose run --rm --no-deps secret-scan git /repo --no-banner --redact
 docker compose run --rm --no-deps frontend npm run build
 docker compose run --rm backend python scripts/generate_openapi_client.py --check

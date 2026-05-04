@@ -6,7 +6,7 @@ from pathlib import Path
 from app.infrastructure.parsers.rakuten_card_pdf_parser import RakutenCardPdfParser
 
 
-FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures"
+FIXTURE_DIR = Path(__file__).resolve().parents[2] / "fixtures"
 
 
 def test_parse_rakuten_card_statement_text_fixture() -> None:
