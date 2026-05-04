@@ -42,6 +42,7 @@ class PasswordResetStartRequest(BaseModel):
 
 
 class PasswordResetStartResponse(BaseModel):
+    status: str
     reset_token: str | None
 
 
@@ -140,8 +141,12 @@ def start_password_reset(
     request: PasswordResetStartRequest,
     session: Session = Depends(get_db_session),
 ) -> PasswordResetStartResponse:
+    settings = get_settings()
     reset_token = _use_cases(session).start_password_reset(email=request.email)
-    return PasswordResetStartResponse(reset_token=reset_token)
+    return PasswordResetStartResponse(
+        status="ok",
+        reset_token=reset_token if settings.app_env in {"local", "test"} else None,
+    )
 
 
 @router.post("/password-reset/confirm", dependencies=[Depends(validate_csrf_token)])

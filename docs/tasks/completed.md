@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] パスワードリセットAPIを本番安全化する
+  - 対応: `POST /api/auth/password-reset` を本番相当環境では常に `status="ok"` と `reset_token=null` を返す形へ変更し、`local` / `test` 環境だけ検証用トークンを返すようにした。あわせて `docs/specs/api-specs.md`、`docs/specs/security.md`、OpenAPI生成クライアント、APIテストを更新した。
+  - 確認: `docker compose run --rm backend python scripts/generate_openapi_client.py` で生成物を同期し、`docker compose run --rm backend python -m pytest` が 56 件すべて通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度A「パスワードリセットAPIが本番向きではない」。
+
 - [x] 画面要件の共通表示ルールを `requirements/common.md` へ分離する
   - 対応: `docs/requirements/common.md` を新設し、共通表示ルールを移した。`docs/requirements.md` は入口へ戻し、`docs/README.md` と `README.md` から新しい共通要件文書へ辿れるよう導線を更新した。
   - 確認: `docs/requirements.md` と `docs/requirements/common.md` の内容を確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。

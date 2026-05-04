@@ -8,13 +8,6 @@
 
 ## 優先度A
 
-- [ ] パスワードリセットAPIを本番安全化する
-  - 目的: パスワードリセットトークンが本番レスポンスに露出しないようにし、ユーザー存在有無も推測されにくくする。
-  - 対象: `backend/app/presentation/api/routes/auth.py`、`backend/app/application/auth/`、`docs/specs/security.md`、`docs/specs/api-specs.md`、必要に応じて `frontend/src/lib/api.ts`
-  - 対応: 開発環境と本番環境でパスワードリセット開始APIの返却方針を分ける、または本番では常に同一レスポンスへ統一する。必要なら設定値で切り替えられるようにし、仕様書とクライアント側の期待値も同期する。
-  - 完了条件: 本番想定設定で `POST /api/auth/password-reset` がリセットトークンを返さず、存在しないユーザーでも識別しにくいレスポンスになる。関連APIテストが更新される。
-  - 根拠: `kakeibo-app-review.md` の優先度A「パスワードリセットAPIが本番向きではない」。
-
 - [ ] CSRFトークンをセッションまたはユーザーに紐づけて強化する
   - 目的: CSRFトークンの使い回しやセッション跨ぎ利用の余地を減らし、本番運用時の防御を強める。
   - 対象: `backend/app/application/auth/csrf_service.py`、`backend/app/presentation/api/dependencies.py`、認証周辺の設定/テスト、`docs/specs/security.md`

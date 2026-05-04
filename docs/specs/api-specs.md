@@ -43,7 +43,9 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `GET /api/auth/csrf`
   - CSRFトークンをレスポンスボディで取得する。
 - `POST /api/auth/password-reset`
-  - パスワードリセットを開始する。初期実装ではメール通知を行わないため、存在するユーザーの場合は検証用トークンを返す。
+  - パスワードリセットを開始する。
+  - 本番相当環境では常に `{"status": "ok"}` を返し、登録済みユーザーかどうかやリセットトークンはレスポンスから判別できないようにする。
+  - `local` / `test` 環境では検証用に `reset_token` を返してよい。
 - `POST /api/auth/password-reset/confirm`
   - パスワードリセットを完了する。
 

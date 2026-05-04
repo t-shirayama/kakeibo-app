@@ -156,6 +156,7 @@ export type PasswordResetStartRequest = {
 };
 
 export type PasswordResetStartResponse = {
+  status: string;
   reset_token: string | null;
 };
 

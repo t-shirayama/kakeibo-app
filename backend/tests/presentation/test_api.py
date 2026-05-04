@@ -12,10 +12,12 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.application.auth.ports import UserRecord
+from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.models import Base
 from app.infrastructure.models.audit_log import AuditLogModel
 from app.infrastructure.models.category import CategoryModel
+from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
 from app.infrastructure.models.transaction import TransactionModel
 from app.infrastructure.models.user import UserModel
 from app.main import app
@@ -33,6 +35,110 @@ def test_health_and_csrf_endpoints() -> None:
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["cross-origin-resource-policy"] == "same-origin"
     assert client.get("/api/auth/csrf").json()["csrf_token"]
+
+
+def test_password_reset_start_hides_token_in_production(monkeypatch) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    with SessionLocal() as session:
+        session.add(
+            UserModel(
+                id=str(USER_ID),
+                email="user@example.com",
+                password_hash="hash",
+                is_admin=False,
+            )
+        )
+        session.commit()
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-32-bytes-minimum!!")
+    get_settings.cache_clear()
+    app.dependency_overrides[get_db_session] = override_session
+    client = TestClient(app)
+    csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
+    try:
+        existing_response = client.post(
+            "/api/auth/password-reset",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": "user@example.com"},
+        )
+        missing_response = client.post(
+            "/api/auth/password-reset",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": "missing@example.com"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+        get_settings.cache_clear()
+
+    assert existing_response.status_code == 200
+    assert missing_response.status_code == 200
+    assert existing_response.json() == {"status": "ok", "reset_token": None}
+    assert missing_response.json() == {"status": "ok", "reset_token": None}
+
+    with SessionLocal() as session:
+        reset_tokens = session.query(PasswordResetTokenModel).all()
+        assert len(reset_tokens) == 1
+    Base.metadata.drop_all(engine)
+
+
+def test_password_reset_start_returns_token_in_test_environment(monkeypatch) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    with SessionLocal() as session:
+        session.add(
+            UserModel(
+                id=str(USER_ID),
+                email="user@example.com",
+                password_hash="hash",
+                is_admin=False,
+            )
+        )
+        session.commit()
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-32-bytes-minimum!!")
+    get_settings.cache_clear()
+    app.dependency_overrides[get_db_session] = override_session
+    client = TestClient(app)
+    csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
+    try:
+        response = client.post(
+            "/api/auth/password-reset",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": "user@example.com"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+        get_settings.cache_clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert isinstance(body["reset_token"], str)
+    assert body["reset_token"]
+    Base.metadata.drop_all(engine)
 
 
 def test_malformed_upload_multipart_returns_api_error_without_internal_error() -> None:
