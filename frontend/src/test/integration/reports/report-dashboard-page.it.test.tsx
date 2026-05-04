@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import { ReportDashboardPage } from "../report-dashboard-page";
+import { ReportDashboardPage } from "@/features/reports/report-dashboard-page";
 import { setMockUrl } from "@/test/navigation";
 import { renderWithClient } from "@/test/render";
 import { server } from "@/test/msw/server";

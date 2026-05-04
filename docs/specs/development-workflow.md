@@ -28,7 +28,7 @@
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
 - バックエンドテストは `backend/tests/unit/` を単体テスト、`backend/tests/integration/` を Integration Test の置き場とする。`unit/` には domain / application / infrastructure / presentation の単体寄りテストを置き、`integration/` には `integration` pytest marker を付けた FastAPI + Cookie認証 + CSRF + MySQL 永続化の結合テストを置く。
-- フロントエンドの Integration Test は Vitest、React Testing Library、MSW、user-event、jsdom を使い、API mock と TanStack Query を通した画面結合を検証する。対象は `frontend/src/features/**/__tests__/*.it.test.tsx` とし、ログイン、明細一覧、ダッシュボードのような主要画面の表示、APIエラー、URLや条件変更による再取得を E2E より軽量に確認する。
+- フロントエンドテストは `frontend/src/test/unit/` を単体テスト、`frontend/src/test/integration/` を Integration Test の置き場とする。単体テストは純粋関数や小さな表示ロジックを検証し、Integration Test は Vitest、React Testing Library、MSW、user-event、jsdom を使い、API mock と TanStack Query を通した画面結合を検証する。ログイン、明細一覧、ダッシュボードのような主要画面の表示、APIエラー、URLや条件変更による再取得は Integration Test で確認する。
 - 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。
 
 ## Docker Compose での確認ルール
@@ -39,7 +39,7 @@
 - バックエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps backend python -m pytest tests/unit` を使う。単体テストはMySQL起動に依存させない。
 - バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。CI の `test` workflow では Alembic 適用確認後に単体テスト、Integration Test、E2Eを別ステップで実行する。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。
-- フロントエンドの Integration Test は `docker compose run --rm --no-deps frontend npm run test:it` を基本コマンドとする。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
+- フロントエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:unit`、Integration Test だけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:integration` を使う。どちらもバックエンドやMySQL起動に依存させない。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。
 - Alembic適用確認は `docker compose run --rm backend python -m alembic upgrade head` を使う。
 

@@ -2,7 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import TransactionsPage from "../transactions-page";
+import TransactionsPage from "@/features/transactions/transactions-page";
 import { getMockRouter, setMockUrl } from "@/test/navigation";
 import { renderWithClient } from "@/test/render";
 import { server } from "@/test/msw/server";

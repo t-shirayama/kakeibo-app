@@ -10,8 +10,8 @@
   - 根拠: `docs/tasks/open.md` の優先度B「Backend Integration Test の基盤と最重要シナリオを導入する」。
 
 - [x] Frontend Integration Test の基盤と主要画面テストを導入する
-  - 対応: `frontend/vitest.config.ts`、`frontend/src/test/`、MSW fixture / server、Next navigation mock、React Query 用 render helper を追加し、`frontend/package.json` に `test:it` を追加した。ログイン画面、明細一覧、ダッシュボードの Integration Test を `frontend/src/features/**/__tests__/*.it.test.tsx` に実装し、主要表示、APIエラー、条件変更や表示月変更による再取得を検証できるようにした。
-  - 確認: `docker compose run --rm --no-deps frontend npm run test:it`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` が通過した。ビルドでは既存の React Hooks 警告のみ出力された。
+  - 対応: `frontend/vitest.config.ts`、`frontend/src/test/`、MSW fixture / server、Next navigation mock、React Query 用 render helper を追加し、`frontend/package.json` に `test:unit` / `test:integration` を追加した。ログイン画面、明細一覧、ダッシュボードの Integration Test を `frontend/src/test/integration/` に実装し、主要表示、APIエラー、条件変更や表示月変更による再取得を検証できるようにした。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:unit`、`docker compose run --rm --no-deps frontend npm run test:integration`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` が通過した。ビルドでは既存の React Hooks 警告のみ出力された。
   - 根拠: `docs/tasks/open.md` の優先度B「Frontend Integration Test の基盤と主要画面テストを導入する」。
 
 - [x] 初期デザイン案をアーカイブへ移し、現行画面スクリーンショットを正本へ置き換える
