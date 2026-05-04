@@ -8,6 +8,9 @@ import { ApiErrorAlert } from "@/components/api-error-alert";
 import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
+import { categoriesQueryKeys } from "@/features/categories/queryKeys";
+import { settingsQueryKeys } from "@/features/settings/queryKeys";
+import { transactionsQueryKeys } from "@/features/transactions/queryKeys";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
 import { api, type TransactionRequest } from "@/lib/api";
 import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
@@ -37,8 +40,8 @@ export default function TransactionsPage() {
   const [isPreparingSave, setIsPreparingSave] = useState(false);
   const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const queryClient = useQueryClient();
-  const settingsQuery = useQuery({ queryKey: ["settings"], queryFn: api.get_settings });
-  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
+  const settingsQuery = useQuery({ queryKey: settingsQueryKeys.current(), queryFn: api.get_settings });
+  const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
 
   const defaultDateRange = useMemo(() => resolveDefaultDateRange(searchParams), [searchParams]);
   const defaultPageSize = settingsQuery.data?.page_size ?? 10;
@@ -64,7 +67,16 @@ export default function TransactionsPage() {
   }, [defaultDateRange, defaultPageSize, pathname, router, searchParams, settingsQuery.isLoading]);
 
   const transactionsQuery = useQuery({
-    queryKey: ["transactions", currentParams],
+    queryKey: transactionsQueryKeys.list({
+      keyword: currentParams.keyword || undefined,
+      date_from: currentParams.dateFrom || undefined,
+      date_to: currentParams.dateTo || undefined,
+      category_id: currentParams.categoryFilter || undefined,
+      page: currentParams.page,
+      page_size: currentParams.pageSize,
+      sort_field: currentParams.sortField,
+      sort_direction: currentParams.sortDirection,
+    }),
     queryFn: () =>
       api.list_transactions({
         keyword: currentParams.keyword || undefined,
@@ -92,14 +104,14 @@ export default function TransactionsPage() {
       return transaction;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: transactionsQueryKeys.all });
       setIsEditorOpen(false);
       setEditingTransaction(null);
     },
   });
   const deleteMutation = useMutation({
     mutationFn: api.delete_transaction,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: transactionsQueryKeys.all }),
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 

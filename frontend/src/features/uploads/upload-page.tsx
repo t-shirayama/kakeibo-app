@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
+import { uploadsQueryKeys } from "@/features/uploads/queryKeys";
 import { api } from "@/lib/api";
 
 const statusLabel = {
@@ -23,7 +24,7 @@ export default function UploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [lastFailedFile, setLastFailedFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
-  const uploadsQuery = useQuery({ queryKey: ["uploads"], queryFn: api.list_uploads });
+  const uploadsQuery = useQuery({ queryKey: uploadsQueryKeys.all, queryFn: api.list_uploads });
   const uploadMutation = useMutation({
     mutationFn: (file: File) =>
       api.upload_pdf(file, {
@@ -39,7 +40,7 @@ export default function UploadPage() {
       } else {
         setLastFailedFile(null);
       }
-      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+      queryClient.invalidateQueries({ queryKey: uploadsQueryKeys.all });
     },
     onError: (_, file) => {
       setLastFailedFile(file);

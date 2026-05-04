@@ -12,12 +12,6 @@
 
 ## 優先度C
 
-- [ ] TanStack QueryのqueryKeysをfeatureごとに分離する
-  - 目的: サーバー状態のキー管理を安定させ、画面間のキャッシュ操作を追いやすくする。
-  - 対象: `frontend/src/features/*/queryKeys.ts`, `frontend/src/lib/api.ts`
-  - 対応: 主要機能ごとにquery key定義を集約し、画面側の直書きを減らす。
-  - 完了条件: typecheckと関連E2Eが通る。
-
 - [ ] E2Eのデータ準備と共通操作を整理する
   - 目的: E2E増加時の重複と不安定化を抑える。
   - 対象: `frontend/e2e/`, `frontend/scripts/reset-e2e-db.mjs`

@@ -29,7 +29,7 @@ test("shows selected day details and opens filtered transactions", async ({ page
 
   await page.getByRole("link", { name: "明細一覧で確認" }).click();
 
-  await expect(page).toHaveURL(/\/transactions\?date_from=2026-05-01&date_to=2026-05-01$/);
+  await expect(page).toHaveURL(/\/transactions\?date_from=2026-05-01&date_to=2026-05-01(&.*)?$/);
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
 });

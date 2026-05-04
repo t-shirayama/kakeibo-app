@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] TanStack QueryのqueryKeysをfeatureごとに分離する
+  - 対応: `frontend/src/features/*/queryKeys.ts` を追加し、transactions / uploads / reports / income-settings / categories / settings / calendar の query key 定義を feature ごとに整理した。画面側の直書きキーを置き換え、カレンダーE2EのURL期待値も現行仕様へ合わせた。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts calendar.spec.ts` が通過した。
+  - 根拠: サーバー状態のキー管理を安定させ、画面間のキャッシュ操作を追いやすくするため。
+
 - [x] import依存ルールをCIでチェックする
   - 対応: `backend/tests/application/test_layer_dependencies.py` を一般化し、`domain -> application/infrastructure/presentation` と `application -> infrastructure/presentation` の禁止を検証できるようにした。あわせて application 層の外側依存を Protocol / DTO へ寄せ、`.github/workflows/quality.yml` にレイヤ依存チェックを追加した。
   - 確認: `docker compose run --rm backend python -m pytest` が 54 件すべて通過した。

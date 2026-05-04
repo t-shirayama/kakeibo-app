@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
+import { categoriesQueryKeys } from "@/features/categories/queryKeys";
+import { incomeSettingsQueryKeys } from "@/features/income-settings/queryKeys";
 import { api, type IncomeOverrideRequest, type IncomeSettingRequest } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import type { CategoryDto, IncomeSettingDto } from "@/lib/types";
@@ -24,8 +26,8 @@ export default function IncomeSettingsPage() {
   const [newCategoryId, setNewCategoryId] = useState("");
   const [overrideDrafts, setOverrideDrafts] = useState<Record<string, OverrideDraft>>({});
 
-  const incomeSettingsQuery = useQuery({ queryKey: ["income-settings"], queryFn: api.list_income_settings });
-  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
+  const incomeSettingsQuery = useQuery({ queryKey: incomeSettingsQueryKeys.all, queryFn: api.list_income_settings });
+  const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
   const categories = categoriesQuery.data ?? [];
   const incomeSettings = incomeSettingsQuery.data ?? [];
   const categoryById = useMemo(() => new Map(categories.map((category) => [category.category_id, category])), [categories]);
@@ -34,7 +36,7 @@ export default function IncomeSettingsPage() {
   const createMutation = useMutation({
     mutationFn: api.create_income_setting,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["income-settings"] });
+      await queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all });
       setNewMemberName("");
       setNewAmount("");
       setNewDay("25");
@@ -44,11 +46,11 @@ export default function IncomeSettingsPage() {
   const updateMutation = useMutation({
     mutationFn: ({ incomeSettingId, request }: { incomeSettingId: string; request: IncomeSettingRequest }) =>
       api.update_income_setting(incomeSettingId, request),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["income-settings"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all }),
   });
   const deleteMutation = useMutation({
     mutationFn: api.delete_income_setting,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["income-settings"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all }),
   });
   const overrideMutation = useMutation({
     mutationFn: ({
@@ -60,12 +62,12 @@ export default function IncomeSettingsPage() {
       targetMonth: string;
       request: IncomeOverrideRequest;
     }) => api.upsert_income_override(incomeSettingId, targetMonth, request),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["income-settings"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all }),
   });
   const deleteOverrideMutation = useMutation({
     mutationFn: ({ incomeSettingId, targetMonth }: { incomeSettingId: string; targetMonth: string }) =>
       api.delete_income_override(incomeSettingId, targetMonth),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["income-settings"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all }),
   });
 
   const apiError =

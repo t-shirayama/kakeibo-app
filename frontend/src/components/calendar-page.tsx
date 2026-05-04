@@ -8,6 +8,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
+import { calendarQueryKeys } from "@/features/calendar/queryKeys";
 import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
@@ -33,7 +34,7 @@ export function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
   const range = useMemo(() => getMonthDateRange(selectedYearMonth), [selectedYearMonth]);
   const transactionsQuery = useQuery({
-    queryKey: ["calendar-transactions", range.date_from, range.date_to],
+    queryKey: calendarQueryKeys.transactions(range.date_from, range.date_to),
     queryFn: () => api.list_all_transactions(range),
   });
 

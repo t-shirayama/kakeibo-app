@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingU
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
+import { reportsQueryKeys } from "@/features/reports/queryKeys";
 import { DashboardBars } from "@/features/reports/components/dashboard-bars";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
@@ -49,12 +50,12 @@ export function ReportDashboardPage() {
     setDisplayYearMonth(selectedYearMonth);
   }, [selectedYearMonth]);
   const summaryQuery = useQuery({
-    queryKey: ["dashboard-summary", selectedPeriod.year, selectedPeriod.month],
+    queryKey: reportsQueryKeys.dashboardSummary(selectedPeriod.year, selectedPeriod.month),
     queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
     placeholderData: keepPreviousData,
   });
   const previousSummaryQuery = useQuery({
-    queryKey: ["dashboard-summary", previousPeriod.year, previousPeriod.month],
+    queryKey: reportsQueryKeys.dashboardSummary(previousPeriod.year, previousPeriod.month),
     queryFn: () => api.get_dashboard_summary({ year: previousPeriod.year, month: previousPeriod.month }) as Promise<DashboardSummary>,
     placeholderData: keepPreviousData,
   });
