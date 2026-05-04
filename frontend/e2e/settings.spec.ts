@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { gotoAppPage } from "./helpers/navigation";
 
 test("shows, updates, and preserves destructive settings controls", async ({ page }) => {
-  await page.goto("/settings");
+  await gotoAppPage(page, "/settings", "設定");
 
   // 通貨など固定扱いの項目と、ユーザーが保存できる表示設定を同時に確認する。
-  await expect(page.getByRole("heading", { name: "設定" })).toBeVisible();
   await expect(page.getByLabel("表示通貨")).toHaveValue("JPY");
   await expect(page.getByLabel("1ページあたりの件数")).toHaveValue("10");
   await expect(page.getByLabel("日付形式")).toHaveValue("yyyy/MM/dd");

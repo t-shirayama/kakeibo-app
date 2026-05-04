@@ -11,9 +11,3 @@
 ## 優先度B
 
 ## 優先度C
-
-- [ ] E2Eのデータ準備と共通操作を整理する
-  - 目的: E2E増加時の重複と不安定化を抑える。
-  - 対象: `frontend/e2e/`, `frontend/scripts/reset-e2e-db.mjs`
-  - 対応: fixtures / helpers などへ共通処理を分離し、既存specから利用する。
-  - 完了条件: `docker compose run --rm e2e` が通り、代表的な共通操作がhelper化されている。

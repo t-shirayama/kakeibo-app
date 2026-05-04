@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { getMonthDateRange } from "./helpers/date";
+import { gotoAppPage } from "./helpers/navigation";
 
 test("shows monthly calendar and summaries", async ({ page }) => {
-  await page.goto("/calendar");
+  await gotoAppPage(page, "/calendar", "カレンダー");
 
-  await expect(page.getByRole("heading", { name: "カレンダー" })).toBeVisible();
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
   await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
   await expect(page.getByRole("heading", { name: "日別の支出カレンダー" })).toBeVisible();
@@ -14,7 +15,7 @@ test("shows monthly calendar and summaries", async ({ page }) => {
 });
 
 test("shows selected day details and opens filtered transactions", async ({ page }) => {
-  await page.goto("/calendar");
+  await gotoAppPage(page, "/calendar", "カレンダー");
   await page.getByLabel("表示月").fill("2026-04");
   await expect(page).toHaveURL(/month=2026-04/);
   await page.reload();

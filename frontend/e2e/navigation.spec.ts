@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { gotoAppPage } from "./helpers/navigation";
 
 const routes = [
   ["レポート", "/dashboard"],
@@ -24,7 +25,7 @@ test("navigates between all primary screens from the sidebar", async ({ page }) 
 
 test("places settings at the bottom of the desktop sidebar", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto("/dashboard");
+  await gotoAppPage(page, "/dashboard", "レポート");
 
   const sidebarBox = await page.getByLabel("メインナビゲーション").boundingBox();
   const settingsBox = await page.getByRole("link", { name: "設定", exact: true }).boundingBox();
@@ -38,8 +39,7 @@ test("places settings at the bottom of the desktop sidebar", async ({ page }) =>
 });
 
 test("keeps initial app page scroll inside the main content area", async ({ page }) => {
-  await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
+  await gotoAppPage(page, "/dashboard", "レポート");
 
   // 初期表示でbody側に少しだけ縦スクロールが出る退行を検知する。
   const documentScroll = await page.evaluate(() => {

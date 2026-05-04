@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { loginAsSampleUser, newAnonymousContext } from "./helpers/auth";
 
 test.describe("authentication", () => {
   test("redirects protected pages to login when unauthenticated", async ({ browser }) => {
     // 認証済み状態を持たない新規コンテキストで、保護画面のガードを確認する。
-    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const context = await newAnonymousContext(browser);
     const page = await context.newPage();
 
     await page.goto("/dashboard");
@@ -15,16 +16,10 @@ test.describe("authentication", () => {
   });
 
   test("logs in as the sample user", async ({ browser }) => {
-    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const context = await newAnonymousContext(browser);
     const page = await context.newPage();
 
-    await page.goto("/login");
-    await page.getByLabel("メールアドレス").fill("sample@example.com");
-    await page.getByLabel("パスワード").fill("SamplePassw0rd!");
-    await page.getByRole("button", { name: "ログイン" }).click();
-
-    await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
+    await loginAsSampleUser(page);
 
     await context.close();
   });

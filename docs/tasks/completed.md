@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] E2Eのデータ準備と共通操作を整理する
+  - 対応: `frontend/e2e/helpers/` を追加し、ログイン、ページ遷移、年月操作、明細追加、アップロード用PDF生成の共通処理を helper 化した。あわせて `frontend/scripts/e2e-runtime.mjs` を追加し、`reset-e2e-db.mjs` と `start-backend-e2e.mjs` の Python 解決、環境変数組み立て、コマンド実行を共通化した。既存 spec は helper 利用へ更新し、`docs/e2e/index.md` に運用方針を追記した。
+  - 確認: `docker compose run --rm e2e` が 20 件すべて通過した。
+  - 根拠: E2E増加時の重複と不安定化を抑えるため。
+
 - [x] TanStack QueryのqueryKeysをfeatureごとに分離する
   - 対応: `frontend/src/features/*/queryKeys.ts` を追加し、transactions / uploads / reports / income-settings / categories / settings / calendar の query key 定義を feature ごとに整理した。画面側の直書きキーを置き換え、カレンダーE2EのURL期待値も現行仕様へ合わせた。
   - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts calendar.spec.ts` が通過した。

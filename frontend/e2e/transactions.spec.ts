@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { gotoAppPage } from "./helpers/navigation";
+import { createTransaction, setTransactionDateRange } from "./helpers/transactions";
 
 test("searches, creates, edits, deletes, and exports transactions", async ({ page }) => {
-  await page.goto("/transactions");
+  await gotoAppPage(page, "/transactions", "明細一覧");
 
   // 初期表示は今月の明細に絞られるため、今月・先月の切り替えをまず確認する。
-  await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByLabel("適用中のフィルタ").getByText("今月")).toBeVisible();
   await expect(page.getByText(/件ヒット/)).toBeVisible();
   await expect(page.getByText("検索対象: 店名 / メモ / カテゴリ")).toBeVisible();
@@ -18,19 +19,13 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page).toHaveURL(/sort_field=date/);
   await expect(page).toHaveURL(/sort_direction=desc/);
 
-  await page.getByLabel("開始日").fill("2026-04-01");
-  await page.getByLabel("終了日").fill("2026-04-30");
-  await expect(page).toHaveURL(/date_from=2026-04-01/);
-  await expect(page).toHaveURL(/date_to=2026-04-30/);
+  await setTransactionDateRange(page, "2026-04-01", "2026-04-30");
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-04-01 - 2026-04-30")).toBeVisible();
 
-  await page.getByLabel("開始日").fill("2026-01-01");
-  await page.getByLabel("終了日").fill("2026-12-31");
+  await setTransactionDateRange(page, "2026-01-01", "2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "日用品" });
-  await expect(page).toHaveURL(/date_from=2026-01-01/);
-  await expect(page).toHaveURL(/date_to=2026-12-31/);
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
   await expect(page.getByLabel("適用中のフィルタ").getByText("日用品")).toBeVisible();
@@ -56,11 +51,8 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await page.getByLabel("明細検索").fill("");
   await page.getByRole("button", { name: "フィルタ解除" }).click();
-  await page.getByLabel("開始日").fill("2025-12-01");
-  await page.getByLabel("終了日").fill("2025-12-31");
+  await setTransactionDateRange(page, "2025-12-01", "2025-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "未分類" });
-  await expect(page).toHaveURL(/date_from=2025-12-01/);
-  await expect(page).toHaveURL(/date_to=2025-12-31/);
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
   // 未分類は検索語としても使えるため、カテゴリ名補完込みで検索対象に入ることを守る。
@@ -69,11 +61,8 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await page.getByRole("button", { name: "フィルタ解除" }).click();
   await expect(page).not.toHaveURL(/keyword=/);
-  await page.getByLabel("開始日").fill("2026-01-01");
-  await page.getByLabel("終了日").fill("2026-12-31");
+  await setTransactionDateRange(page, "2026-01-01", "2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
-  await expect(page).toHaveURL(/date_from=2026-01-01/);
-  await expect(page).toHaveURL(/date_to=2026-12-31/);
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();
   await page.getByRole("button", { name: "手動で追加" }).click();
   await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
@@ -126,9 +115,8 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 });
 
 test("asks whether to update categories for the same shop name", async ({ page }) => {
-  await page.goto("/transactions");
-  await page.getByLabel("開始日").fill("2026-01-01");
-  await page.getByLabel("終了日").fill("2026-12-31");
+  await gotoAppPage(page, "/transactions", "明細一覧");
+  await setTransactionDateRange(page, "2026-01-01", "2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
 
   await createTransaction(page, { shopName: "E2E一括店舗", amount: "1111", category: "食費" });
@@ -160,18 +148,3 @@ test("asks whether to update categories for the same shop name", async ({ page }
   await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "食費" })).toHaveCount(2);
   await expect(page.getByRole("row").filter({ hasText: "E2E単独店舗" }).filter({ hasText: "日用品" })).toHaveCount(0);
 });
-
-async function createTransaction(
-  page: import("@playwright/test").Page,
-  values: { shopName: string; amount: string; category: string },
-) {
-  await page.getByRole("button", { name: "手動で追加" }).click();
-  await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
-  await page.getByLabel("日付").fill("2026-05-02");
-  await page.getByLabel("店名").fill(values.shopName);
-  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: values.category });
-  await page.getByLabel("金額").fill(values.amount);
-  await page.getByLabel("支払い方法").fill("現金");
-  await page.getByRole("button", { name: "追加" }).click();
-  await expect(page.getByRole("cell", { name: values.shopName }).first()).toBeVisible();
-}

@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { gotoAppPage } from "./helpers/navigation";
+import { createPdfDataTransfer } from "./helpers/upload";
 
 test("shows upload history including completed and failed imports", async ({ page }) => {
-  await page.goto("/upload");
+  await gotoAppPage(page, "/upload", "アップロード");
 
   // 取込操作前でも、完了・失敗の履歴から状態と件数、失敗理由を確認できることを守る。
-  await expect(page.getByRole("heading", { name: "アップロード", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "PDF明細をアップロード" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "取り込み履歴" })).toBeVisible();
 
@@ -20,7 +21,7 @@ test("shows upload history including completed and failed imports", async ({ pag
 });
 
 test("uploads a PDF by dropping it onto the upload zone", async ({ page }) => {
-  await page.goto("/upload");
+  await gotoAppPage(page, "/upload", "アップロード");
   await expect(page.getByRole("heading", { name: "PDF明細をアップロード" })).toBeVisible();
 
   const uploadResponse = page.waitForResponse((response) =>
@@ -28,12 +29,7 @@ test("uploads a PDF by dropping it onto the upload zone", async ({ page }) => {
   );
 
   await page.getByLabel("PDFファイルのドロップゾーン").dispatchEvent("drop", {
-    dataTransfer: await page.evaluateHandle(() => {
-      const dataTransfer = new DataTransfer();
-      const content = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]);
-      dataTransfer.items.add(new File([content], "e2e-drop-test.pdf", { type: "application/pdf" }));
-      return dataTransfer;
-    }),
+    dataTransfer: await createPdfDataTransfer(page, "e2e-drop-test.pdf"),
   });
 
   await expect(page.getByLabel("アップロード進捗")).toBeVisible();

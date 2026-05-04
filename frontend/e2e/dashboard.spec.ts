@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { addMonths, getMonthDateRange } from "./helpers/date";
+import { gotoAppPage } from "./helpers/navigation";
 
 test("shows integrated report dashboard metrics, charts, and export action", async ({ page }) => {
-  await page.goto("/dashboard");
+  await gotoAppPage(page, "/dashboard", "レポート");
 
-  await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
   await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
   await expect(page.locator(".month-input-label span", { hasText: "表示月" })).toHaveClass(/sr-only/);
@@ -55,7 +56,7 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
 });
 
 test("changes dashboard month with month picker and arrow buttons", async ({ page }) => {
-  await page.goto("/dashboard");
+  await gotoAppPage(page, "/dashboard", "レポート");
 
   const monthInput = page.getByLabel("表示月");
   const currentValue = await monthInput.inputValue();
@@ -95,7 +96,7 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
 });
 
 test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {
-  await page.goto("/dashboard");
+  await gotoAppPage(page, "/dashboard", "レポート");
 
   const selectedMonth = await page.getByLabel("表示月").inputValue();
   const expectedRange = getMonthDateRange(selectedMonth);
@@ -112,35 +113,6 @@ test("opens transactions filtered by selected month and category from category s
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
 });
-
-function addMonths(value: string, amount: number) {
-  const { year, month } = parseYearMonth(value);
-  const date = new Date(year, month - 1 + amount, 1);
-  const nextValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-  return {
-    ...parseYearMonth(nextValue),
-    value: nextValue,
-    label: `${date.getFullYear()}年${date.getMonth() + 1}月`,
-  };
-}
-
-function parseYearMonth(value: string) {
-  const [year, month] = value.split("-").map(Number);
-
-  return { year, month };
-}
-
-function getMonthDateRange(value: string) {
-  const { year, month } = parseYearMonth(value);
-  const lastDay = new Date(year, month, 0).getDate();
-  const paddedMonth = String(month).padStart(2, "0");
-
-  return {
-    date_from: `${year}-${paddedMonth}-01`,
-    date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
-  };
-}
 
 async function expectCategoryAmountsToBeDescending(page: import("@playwright/test").Page) {
   const amounts = await page.locator(".category-pie-legend-row .amount").evaluateAll((nodes) =>

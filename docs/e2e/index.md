@@ -41,6 +41,7 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 - E2Eは `docker compose run --rm e2e` で実行し、`frontend/playwright.config.ts` からコンテナ内のバックエンドとフロントエンドを起動する。
 - E2E専用DBは既定で `kakeibo_e2e` を使う。
 - 実行前に `frontend/scripts/reset-e2e-db.mjs` がE2E専用DBを作り直し、Alembic `upgrade head` でサンプルユーザーとサンプルデータを投入する。
+- `frontend/scripts/e2e-runtime.mjs` は E2E 用の Python 解決、環境変数組み立て、コマンド実行を共通化し、`reset-e2e-db.mjs` と `start-backend-e2e.mjs` から使う。
 - DB作成と権限付与には `E2E_ADMIN_DATABASE_URL` を使う。Docker Composeでは `mysql+pymysql://root:root_password@mysql:3306/mysql` を使う。
 - 通常の開発DB `kakeibo` は変更しない。
 - 認証には `sample@example.com` / `SamplePassw0rd!` を使う。
@@ -68,6 +69,7 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 - 失敗時はtrace、スクリーンショット、動画を保存し、通常成功時には成果物を残さない。
 - テストが作成したデータは同じテスト内で削除するか、次回実行時のDBリセットに依存できるE2E専用DBだけで扱う。
 - 開発サーバーとE2Eを同じポートで同時起動しない。必要な場合は `E2E_BACKEND_PORT` / `E2E_FRONTEND_PORT` を指定する。
+- `frontend/e2e/helpers/` に、ログイン、ページ遷移、年月操作、明細追加、アップロード用PDF生成のような共通操作をまとめ、spec側で重複実装しない。
 
 ## 更新方針
 

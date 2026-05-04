@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { gotoAppPage } from "./helpers/navigation";
 
 test("creates and updates monthly income settings", async ({ page }) => {
-  await page.goto("/income-settings");
-  await expect(page.getByRole("heading", { name: "収入設定" })).toBeVisible();
+  await gotoAppPage(page, "/income-settings", "収入設定");
 
   await page.getByLabel("対象").fill("E2E収入");
   await page.getByLabel("毎月の金額").fill("345000");
