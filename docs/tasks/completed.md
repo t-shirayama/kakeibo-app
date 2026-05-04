@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Dependabotを導入する
+  - 対応: `.github/dependabot.yml` を追加し、`frontend` の npm、`backend` の Python、GitHub Actions、`backend` / `frontend` の Dockerfile を週次で更新する設定を追加した。あわせて `docs/specs/project-rules.md` と `docs/README.md` に依存更新運用を追記した。
+  - 確認: `.github/dependabot.yml` を目視確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。
+  - 根拠: 依存更新を定期PR化し、手動追従漏れを減らすため。
+
 - [x] calendar-pageをfeatures/calendarへ移す
   - 対応: カレンダー画面の実体を `frontend/src/features/calendar/calendar-page.tsx` へ移し、`frontend/app/(app)/calendar/page.tsx` の参照先とフロントエンド設計文書を更新した。
   - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- calendar.spec.ts navigation.spec.ts settings.spec.ts` が通過した。
