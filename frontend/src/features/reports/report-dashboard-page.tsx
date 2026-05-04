@@ -110,7 +110,7 @@ export function ReportDashboardPage() {
   return (
     <div className="report-dashboard-page" aria-busy={summaryQuery.isFetching || previousSummaryQuery.isFetching}>
       <PageHeader
-        title="レポート"
+        title="ダッシュボード"
         subtitle="お金の流れを振り返り、より良い家計管理に役立てましょう。"
         actions={
           <div className="toolbar report-toolbar">
@@ -230,7 +230,7 @@ export function ReportDashboardPage() {
           ) : comparisonRows.length === 0 ? (
             <EmptyState title="カテゴリ集計がありません" description="支出明細が登録されるとカテゴリ別の比較が表示されます。" />
           ) : (
-            <div className="table-wrap">
+            <div className="table-wrap dashboard-comparison-table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -260,7 +260,7 @@ export function ReportDashboardPage() {
           )}
         </div>
 
-        <div className="card panel">
+        <div className="card panel category-pie-panel">
           <div className="panel-header">
             <h2 className="panel-title">カテゴリ別支出の割合</h2>
             <span className="panel-caption">クリックで対象カテゴリの明細へ移動</span>

@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { api } from "@/lib/api";
+import { refresh_csrf_token } from "@/lib/csrf";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<Error | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    void refresh_csrf_token().catch(() => null);
+  }, []);
 
   return (
     <main className="login-page">

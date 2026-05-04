@@ -1,5 +1,5 @@
 import { getLoginPath } from "../auth";
-import { clear_csrf_token, get_csrf_token } from "../csrf";
+import { clear_csrf_token, get_csrf_token, refresh_csrf_token } from "../csrf";
 import { ApiError } from "./error";
 
 export function get_api_base_url(): string {
@@ -23,12 +23,35 @@ export async function retry_after_csrf_refresh<T>(
   parse: (response: Response) => Promise<T>,
 ): Promise<T> {
   let response = await request();
-  if (response.status === 403) {
+  if (await should_refresh_csrf(response)) {
     // CSRF期限切れの可能性があるため、保持トークンを捨てて一度だけ再試行する。
     clear_csrf_token();
+    await refresh_csrf_token();
     response = await request();
   }
   return parse(response);
+}
+
+async function should_refresh_csrf(response: Response): Promise<boolean> {
+  if (response.status !== 403) {
+    return false;
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    return true;
+  }
+
+  try {
+    const body = await response.clone().json() as {
+      error?: { message?: string };
+      detail?: string;
+    };
+    const message = body.error?.message ?? body.detail ?? "";
+    return message.includes("CSRF");
+  } catch {
+    return true;
+  }
 }
 
 export async function api_fetch<T>(path: string, init: RequestInit = {}): Promise<T> {

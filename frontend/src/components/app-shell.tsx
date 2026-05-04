@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "レポート", icon: BarChart3 },
+  { href: "/dashboard", label: "ダッシュボード", icon: BarChart3 },
   { href: "/calendar", label: "カレンダー", icon: CalendarDays },
   { href: "/transactions", label: "明細一覧", icon: FileText },
   { href: "/income-settings", label: "収入設定", icon: WalletCards },

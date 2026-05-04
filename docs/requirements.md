@@ -14,5 +14,5 @@
 - [明細詳細（編集モーダル）](requirements/transaction-edit-modal.md)
 - [カテゴリ管理](requirements/categories.md)
 - [アップロード](requirements/upload.md)
-- [レポート（グラフ）](requirements/reports.md)
+- [レガシーレポート導線](requirements/reports.md)
 - [設定](requirements/settings.md)

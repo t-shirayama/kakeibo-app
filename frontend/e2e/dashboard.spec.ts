@@ -3,7 +3,7 @@ import { addMonths, getMonthDateRange } from "./helpers/date";
 import { gotoAppPage } from "./helpers/navigation";
 
 test("shows integrated report dashboard metrics, charts, and export action", async ({ page }) => {
-  await gotoAppPage(page, "/dashboard", "レポート");
+  await gotoAppPage(page, "/dashboard", "ダッシュボード");
 
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
   await expect(page.getByLabel("表示月")).toHaveAttribute("type", "month");
@@ -57,7 +57,7 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
 });
 
 test("changes dashboard month with month picker and arrow buttons", async ({ page }) => {
-  await gotoAppPage(page, "/dashboard", "レポート");
+  await gotoAppPage(page, "/dashboard", "ダッシュボード");
 
   const monthInput = page.getByLabel("表示月");
   const currentValue = await monthInput.inputValue();
@@ -97,7 +97,7 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
 });
 
 test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {
-  await gotoAppPage(page, "/dashboard", "レポート");
+  await gotoAppPage(page, "/dashboard", "ダッシュボード");
 
   const selectedMonth = await page.getByLabel("表示月").inputValue();
   const expectedRange = getMonthDateRange(selectedMonth);
@@ -113,6 +113,47 @@ test("opens transactions filtered by selected month and category from category s
   expect(url.searchParams.get("category_id")).toBeTruthy();
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
+});
+
+test("keeps category legend scrolling inside the dashboard panel", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 640 });
+  await gotoAppPage(page, "/dashboard", "ダッシュボード");
+
+  const legend = page.getByLabel("カテゴリ別支出割合のカテゴリ一覧");
+  await expect(legend).toBeVisible();
+
+  const metricsBefore = await legend.evaluate((node) => ({
+    clientHeight: node.clientHeight,
+    scrollHeight: node.scrollHeight,
+    scrollTop: node.scrollTop,
+  }));
+  expect(metricsBefore.scrollHeight).toBeGreaterThan(metricsBefore.clientHeight);
+
+  const mainScrollBefore = await page.locator(".main").evaluate((node) => node.scrollTop);
+  await legend.evaluate((node) => {
+    node.scrollTop += 360;
+  });
+
+  await expect.poll(async () => legend.evaluate((node) => node.scrollTop)).toBeGreaterThan(metricsBefore.scrollTop);
+  await expect(page.locator(".main")).toHaveJSProperty("scrollTop", mainScrollBefore);
+});
+
+test("keeps the march dashboard within the main viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await gotoAppPage(page, "/dashboard?month=2026-03", "ダッシュボード");
+
+  const mainScroll = await page.locator(".main").evaluate((node) => ({
+    clientHeight: node.clientHeight,
+    scrollHeight: node.scrollHeight,
+  }));
+  expect(mainScroll.scrollHeight).toBeLessThanOrEqual(mainScroll.clientHeight + 1);
+
+  const comparisonWrap = page.locator(".dashboard-comparison-table-wrap");
+  const comparisonMetrics = await comparisonWrap.evaluate((node) => ({
+    clientHeight: node.clientHeight,
+    scrollHeight: node.scrollHeight,
+  }));
+  expect(comparisonMetrics.scrollHeight).toBeGreaterThan(comparisonMetrics.clientHeight);
 });
 
 async function expectCategoryAmountsToBeDescending(page: import("@playwright/test").Page) {

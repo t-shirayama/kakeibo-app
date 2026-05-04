@@ -57,7 +57,7 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 - [収入設定](income-settings.md): 収入設定の追加、月別変更、削除。
 - [カテゴリ管理](categories.md): カテゴリ表示、追加、編集、無効化、有効化、削除、未分類確認リンク。
 - [アップロード](upload.md): アップロード画面と取込履歴の表示。
-- [レポート](reports.md): 月別支出、カテゴリ別サマリー、Excelエクスポート。
+- [レガシーレポート導線](reports.md): `/reports` からダッシュボードへ遷移し、従来の導線でExcelエクスポートできること。
 - [設定](settings.md): 設定表示、保存、全データ削除ガード。
 
 ## 安定化方針

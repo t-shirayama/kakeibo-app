@@ -20,7 +20,7 @@ export async function loginAsSampleUser(page: Page) {
   await page.getByRole("button", { name: "ログイン" }).click();
 
   await expect(page).toHaveURL(/\/dashboard(\?.*)?$/);
-  await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
 }
 
 export async function newAnonymousContext(browser: Browser): Promise<BrowserContext> {
