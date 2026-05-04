@@ -28,8 +28,33 @@ USER_ID = UUID("11111111-1111-1111-1111-111111111111")
 def test_health_and_csrf_endpoints() -> None:
     client = TestClient(app)
 
-    assert client.get("/api/health").json() == {"status": "ok"}
+    response = client.get("/api/health")
+    assert response.json() == {"status": "ok"}
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["cross-origin-resource-policy"] == "same-origin"
     assert client.get("/api/auth/csrf").json()["csrf_token"]
+
+
+def test_malformed_upload_multipart_returns_api_error_without_internal_error() -> None:
+    client = TestClient(app, raise_server_exceptions=False)
+    csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
+
+    response = client.post(
+        "/api/uploads",
+        headers={
+            "Content-Type": "multipart/form-data; boundary=invalid-boundary",
+            "X-CSRF-Token": csrf_token,
+        },
+        content=b"not-a-valid-multipart-body",
+    )
+
+    assert response.status_code == 400
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["cross-origin-resource-policy"] == "same-origin"
+    payload = response.json()
+    assert payload["error"]["code"] == "http_400"
+    assert payload["error"]["message"]
+    assert "Internal server error" not in response.text
 
 
 def test_settings_endpoint_with_overridden_user() -> None:
