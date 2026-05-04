@@ -21,6 +21,7 @@
 - コード、単体テスト、E2Eテストへコメントを追加する場合は、原則として日本語で、処理の意図や業務上の理由が分かるように簡潔に記載してください。
 - 仕様、設計、画面要件、API、DB、セキュリティ、E2E、運用方針を変更した場合は、関連するドキュメントを同じ作業内で更新してください。
 - コードを修正した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新してください。更新しない場合は、既存テストで同じリスクを検証できる理由を最終回答で説明してください。
+- 無効化カテゴリを未分類表示に寄せるなど、表示にも影響する業務ルールは画面ごとに重複実装せず、バックエンドまたは `src/lib` / アプリケーション層の共有ヘルパーへ集約してください。
 - 動作確認やテストは、原則としてホスト環境のPython/NodeではなくDocker Composeのコンテナ内で実行してください。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` や `docker compose run --rm --no-deps frontend npm run build` を優先してください。
 - バックエンドテストは `docker compose run --rm backend python -m pytest`、E2Eは `docker compose run --rm e2e` を優先してください。

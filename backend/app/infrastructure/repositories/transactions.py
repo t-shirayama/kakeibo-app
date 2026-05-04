@@ -7,7 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.application.common import Page, PageResult
-from app.application.reports import TransactionWithCategory
+from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
 from app.infrastructure.models.audit_log import AuditLogModel
@@ -32,7 +32,7 @@ class TransactionCategoryRepository:
         category_id: UUID | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
-    ) -> PageResult[Transaction]:
+    ) -> PageResult[TransactionWithCategory]:
         filters = self._build_transaction_filters(
             user_id=user_id,
             keyword=keyword,
@@ -42,15 +42,35 @@ class TransactionCategoryRepository:
         )
 
         total = self._session.scalar(select(func.count()).select_from(TransactionModel).where(*filters)) or 0
-        rows = self._session.scalars(
-            select(TransactionModel)
+        rows = self._session.execute(
+            select(
+                TransactionModel,
+                CategoryModel.id,
+                CategoryModel.name,
+                CategoryModel.color,
+                CategoryModel.is_active,
+                CategoryModel.deleted_at,
+            )
+            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
             .where(*filters)
             .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
             .offset(page.offset)
             .limit(page.page_size)
         ).all()
+        uncategorized = self._get_uncategorized_category_display(user_id)
         return PageResult(
-            items=[self._to_transaction(row) for row in rows],
+            items=[
+                self._to_transaction_with_category(
+                    transaction=transaction,
+                    category_id=category_id_value,
+                    category_name=category_name,
+                    category_color=category_color,
+                    category_is_active=category_is_active,
+                    category_deleted_at=category_deleted_at,
+                    uncategorized=uncategorized,
+                )
+                for transaction, category_id_value, category_name, category_color, category_is_active, category_deleted_at in rows
+            ],
             total=total,
             page=page.page,
             page_size=page.page_size,
@@ -75,21 +95,33 @@ class TransactionCategoryRepository:
         )
 
         statement = (
-            select(TransactionModel, CategoryModel.name, CategoryModel.color)
-            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id)
+            select(
+                TransactionModel,
+                CategoryModel.id,
+                CategoryModel.name,
+                CategoryModel.color,
+                CategoryModel.is_active,
+                CategoryModel.deleted_at,
+            )
+            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
             .where(*filters)
             .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
         )
         if limit is not None:
             statement = statement.limit(limit)
 
+        uncategorized = self._get_uncategorized_category_display(user_id)
         return [
-            TransactionWithCategory(
-                transaction=self._to_transaction(transaction),
+            self._to_transaction_with_category(
+                transaction=transaction,
+                category_id=category_id_value,
                 category_name=category_name,
                 category_color=category_color,
+                category_is_active=category_is_active,
+                category_deleted_at=category_deleted_at,
+                uncategorized=uncategorized,
             )
-            for transaction, category_name, category_color in self._session.execute(statement).all()
+            for transaction, category_id_value, category_name, category_color, category_is_active, category_deleted_at in self._session.execute(statement).all()
         ]
 
     def create_transaction(self, transaction: Transaction) -> Transaction:
@@ -393,6 +425,52 @@ class TransactionCategoryRepository:
             )
         )
         return category.id
+
+    def _get_uncategorized_category_display(self, user_id: UUID) -> tuple[UUID | None, str, str]:
+        row = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.name == "未分類",
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        if row is None:
+            return None, "未分類", "#6B7280"
+        return UUID(row.id), row.name, row.color
+
+    def _to_transaction_with_category(
+        self,
+        *,
+        transaction: TransactionModel,
+        category_id: str | None,
+        category_name: str | None,
+        category_color: str | None,
+        category_is_active: bool | None,
+        category_deleted_at: datetime | None,
+        uncategorized: tuple[UUID | None, str, str],
+    ) -> TransactionWithCategory:
+        uncategorized_id, uncategorized_name, uncategorized_color = uncategorized
+        is_display_uncategorized = (
+            category_id is None
+            or category_name is None
+            or category_color is None
+            or category_is_active is not True
+            or category_deleted_at is not None
+        )
+        display_category_id = uncategorized_id or UUID(transaction.category_id)
+        display_name = uncategorized_name
+        display_color = uncategorized_color
+        if not is_display_uncategorized:
+            display_category_id = UUID(category_id)
+            display_name = category_name
+            display_color = category_color
+
+        return TransactionWithCategory(
+            transaction=self._to_transaction(transaction),
+            display_category_id=display_category_id,
+            category_name=display_name,
+            category_color=display_color,
+        )
 
     def find_category_id_for_shop(
         self,

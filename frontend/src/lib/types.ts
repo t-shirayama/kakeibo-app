@@ -3,12 +3,14 @@ export type TransactionDto = {
   transaction_date: string;
   shop_name: string;
   category_id: string;
+  display_category_id?: string | null;
   amount: number;
   transaction_type: "expense" | "income";
   payment_method: string | null;
   card_user_name?: string | null;
   memo: string | null;
   category_name?: string;
+  category_color?: string;
 };
 
 export type CategoryDto = {

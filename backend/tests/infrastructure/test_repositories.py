@@ -66,7 +66,9 @@ def test_transaction_repository_creates_lists_and_soft_deletes(db_session: Sessi
 
     result = repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10))
     assert result.total == 1
-    assert result.items[0].shop_name == "Cafe"
+    assert result.items[0].transaction.shop_name == "Cafe"
+    assert result.items[0].category_name == "食費"
+    assert result.items[0].category_color == "#EF4444"
     assert repository.source_hash_exists(user_id=USER_ID, source_hash="hash-1")
 
     repository.soft_delete_transaction(user_id=USER_ID, transaction_id=transaction.id)
@@ -99,7 +101,7 @@ def test_transaction_repository_filters_by_transaction_date(db_session: Session)
     )
 
     assert result.total == 1
-    assert result.items[0].shop_name == "May Cafe"
+    assert result.items[0].transaction.shop_name == "May Cafe"
 
 
 def test_transaction_repository_keyword_matches_category_name_and_uncategorized(db_session: Session) -> None:
@@ -136,9 +138,11 @@ def test_transaction_repository_keyword_matches_category_name_and_uncategorized(
     uncategorized_result = repository.list_transactions(user_id=USER_ID, page=Page(page=1, page_size=10), keyword="未分類")
 
     assert category_result.total == 1
-    assert category_result.items[0].shop_name == "Amazon.co.jp"
+    assert category_result.items[0].transaction.shop_name == "Amazon.co.jp"
     assert uncategorized_result.total == 1
-    assert uncategorized_result.items[0].shop_name == "名称未確定の取引"
+    assert uncategorized_result.items[0].transaction.shop_name == "名称未確定の取引"
+    assert uncategorized_result.items[0].category_name == "未分類"
+    assert uncategorized_result.items[0].category_color == "#6B7280"
 
 
 def test_transaction_repository_updates_category_for_same_shop(db_session: Session) -> None:
@@ -225,7 +229,8 @@ def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_
     )
 
     assert result.total == 1
-    assert result.items[0].shop_name == "Inactive Category Store"
+    assert result.items[0].transaction.shop_name == "Inactive Category Store"
+    assert result.items[0].category_name == "未分類"
 
 
 def test_category_repository_can_disable_and_enable_category(db_session: Session) -> None:

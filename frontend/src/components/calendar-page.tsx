@@ -9,6 +9,7 @@ import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
+import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { TransactionDto } from "@/lib/types";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
@@ -201,7 +202,7 @@ export function CalendarPage() {
                         <div className="calendar-transaction-row" key={transaction.transaction_id}>
                           <div>
                             <strong>{transaction.shop_name}</strong>
-                            <p>{transaction.category_name ?? "未分類"}{transaction.memo ? ` / ${transaction.memo}` : ""}</p>
+                            <p>{getTransactionCategoryDisplay(transaction).name}{transaction.memo ? ` / ${transaction.memo}` : ""}</p>
                           </div>
                           <span className={`amount transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</span>
                         </div>
@@ -312,12 +313,13 @@ function buildCategorySummaries(transactions: TransactionDto[]): CategoryMonthly
   const categoryMap = new Map<string, CategoryMonthlySummary>();
 
   for (const transaction of expenseTransactions) {
-    const key = transaction.category_id || "uncategorized";
+    const display = getTransactionCategoryDisplay(transaction);
+    const key = display.category_id;
     const existing = categoryMap.get(key) ?? {
       category_id: key,
-      name: transaction.category_name ?? "未分類",
+      name: display.name,
       amount: 0,
-      color: inferCategoryColor(transaction.category_name),
+      color: display.color,
       ratio: 0,
       transaction_count: 0,
     };
@@ -332,16 +334,6 @@ function buildCategorySummaries(transactions: TransactionDto[]): CategoryMonthly
       ...item,
       ratio: totalExpense > 0 ? item.amount / totalExpense : 0,
     }));
-}
-
-function inferCategoryColor(categoryName?: string) {
-  if (!categoryName) {
-    return "#cbd5e1";
-  }
-
-  const fallbackColors = ["#fb7185", "#f59e0b", "#38bdf8", "#34d399", "#a78bfa", "#94a3b8"];
-  const code = [...categoryName].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return fallbackColors[code % fallbackColors.length];
 }
 
 function getDefaultSelectedDate(selectedYearMonth: string, transactions: TransactionDto[]) {

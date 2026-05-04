@@ -6,8 +6,9 @@ from uuid import UUID, uuid4
 from zipfile import ZipFile
 
 from app.application.common import Page, PageResult
-from app.application.reports import ReportUseCases, TransactionExportFilters, TransactionWithCategory
+from app.application.reports import ReportUseCases, TransactionExportFilters
 from app.application.transactions import CategoryCommand, TransactionCategoryUseCases, TransactionCommand
+from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
 
@@ -99,6 +100,7 @@ class FakeTransactionCategoryRepository:
             rows.append(
                 TransactionWithCategory(
                     transaction=transaction,
+                    display_category_id=category.id,
                     category_name=category.name,
                     category_color=category.color,
                 )

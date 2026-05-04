@@ -5,6 +5,7 @@ from datetime import date
 from uuid import UUID
 
 from app.application.common import Page, PageResult
+from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
 from app.infrastructure.repositories.transactions import TransactionCategoryRepository
@@ -53,7 +54,7 @@ class TransactionCategoryUseCases:
         category_id: UUID | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
-    ) -> PageResult[Transaction]:
+    ) -> PageResult[TransactionWithCategory]:
         return self._repository.list_transactions(
             user_id=user_id,
             page=page,

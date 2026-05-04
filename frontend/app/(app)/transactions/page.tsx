@@ -10,6 +10,7 @@ import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
 import { api, type TransactionRequest } from "@/lib/api";
+import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
@@ -93,7 +94,7 @@ export default function TransactionsPage() {
     const suggestions = new Set<string>();
     for (const transaction of transactionsQuery.data ?? []) {
       suggestions.add(transaction.shop_name);
-      suggestions.add(transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類");
+      suggestions.add(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name);
       if (transaction.memo) {
         suggestions.add(transaction.memo);
       }
@@ -331,8 +332,8 @@ export default function TransactionsPage() {
                   <td>{transaction.transaction_date}</td>
                   <td>{transaction.shop_name}</td>
                   <td>
-                    <span className="badge" style={getCategoryBadgeStyle(categoryById.get(transaction.category_id))}>
-                      {transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類"}
+                    <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
+                      {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
                     </span>
                   </td>
                   <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
@@ -521,8 +522,7 @@ function getCurrentMonthRange() {
   };
 }
 
-function getCategoryBadgeStyle(category: CategoryDto | undefined): React.CSSProperties {
-  const backgroundColor = category?.color ?? "#e2e8f0";
+function getCategoryBadgeStyle(backgroundColor: string): React.CSSProperties {
   return {
     backgroundColor,
     borderColor: backgroundColor,

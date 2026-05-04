@@ -11,7 +11,7 @@ test("shows monthly calendar, summaries, and category breakdown", async ({ page 
   await expect(page.getByLabel("月間サマリー").getByText("収支", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "カテゴリ別サマリー" })).toBeVisible();
   await expect(page.getByRole("gridcell", { name: /2026-05-05 祝日こどもの日/ })).toBeVisible();
-  await expect(page.locator(".calendar-category-row").first()).toBeVisible();
+  await expect(page.getByLabel("カテゴリ別サマリー").getByText("食費")).toBeVisible();
 });
 
 test("shows selected day details and opens filtered transactions", async ({ page }) => {

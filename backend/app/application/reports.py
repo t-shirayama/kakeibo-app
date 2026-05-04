@@ -6,14 +6,8 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.exporting.excel_exporter import Worksheet, export_workbook
+from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Transaction, TransactionType
-
-
-@dataclass(frozen=True, slots=True)
-class TransactionWithCategory:
-    transaction: Transaction
-    category_name: str
-    category_color: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -267,8 +261,8 @@ def _category_summaries(rows: list[TransactionWithCategory]) -> list[CategorySum
         amount = _expense_amount(row.transaction)
         if amount == 0:
             continue
-        _, _, current = totals.get(row.transaction.category_id, (row.category_name, row.category_color, 0))
-        totals[row.transaction.category_id] = (row.category_name, row.category_color, current + amount)
+        _, _, current = totals.get(row.display_category_id, (row.category_name, row.category_color, 0))
+        totals[row.display_category_id] = (row.category_name, row.category_color, current + amount)
     total = sum(amount for _, _, amount in totals.values())
     return [
         CategorySummary(

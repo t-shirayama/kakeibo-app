@@ -11,6 +11,7 @@ from app.application.auth.ports import UserRecord
 from app.application.common import Page, PageResult
 from app.application.reports import ReportUseCases, TransactionExportFilters
 from app.application.transactions import TransactionCategoryError, TransactionCategoryUseCases, TransactionCommand
+from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Transaction, TransactionType
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.transactions import TransactionCategoryRepository
@@ -23,6 +24,9 @@ router = APIRouter()
 class TransactionResponse(BaseModel):
     transaction_id: str
     category_id: str
+    display_category_id: str | None = None
+    category_name: str | None = None
+    category_color: str | None = None
     transaction_date: date
     shop_name: str
     amount: int
@@ -225,9 +229,9 @@ def _command(request: TransactionRequest) -> TransactionCommand:
     )
 
 
-def _list_response(result: PageResult[Transaction]) -> TransactionListResponse:
+def _list_response(result: PageResult[TransactionWithCategory]) -> TransactionListResponse:
     return TransactionListResponse(
-        items=[_transaction_response(transaction) for transaction in result.items],
+        items=[_transaction_row_response(row) for row in result.items],
         total=result.total,
         page=result.page,
         page_size=result.page_size,
@@ -252,3 +256,11 @@ def _transaction_response(transaction: Transaction) -> TransactionResponse:
         source_format=transaction.source_format,
         source_hash=transaction.source_hash,
     )
+
+
+def _transaction_row_response(row: TransactionWithCategory) -> TransactionResponse:
+    response = _transaction_response(row.transaction)
+    response.display_category_id = str(row.display_category_id)
+    response.category_name = row.category_name
+    response.category_color = row.category_color
+    return response
