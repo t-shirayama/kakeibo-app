@@ -14,9 +14,10 @@ export type CategoryPieChartItem = {
 type CategoryPieChartProps = {
   items: CategoryPieChartItem[];
   onCategoryClick?: (item: CategoryPieChartItem) => void;
+  centerLabel?: string;
 };
 
-export function CategoryPieChart({ items, onCategoryClick }: CategoryPieChartProps) {
+export function CategoryPieChart({ items, onCategoryClick, centerLabel = "合計" }: CategoryPieChartProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const total = items.reduce((sum, item) => sum + item.amount, 0);
   const segments = buildSegments(items, total);
@@ -44,11 +45,11 @@ export function CategoryPieChart({ items, onCategoryClick }: CategoryPieChartPro
           ) : null}
         </div>
         <div className="category-pie-center">
-          <span>合計</span>
+          <span>{centerLabel}</span>
           <strong>{formatCurrency(total)}</strong>
         </div>
       </div>
-      <div className="category-pie-legend">
+      <div className="category-pie-legend" aria-label="カテゴリ別支出割合のカテゴリ一覧">
         {segments.rows.map((item) => (
           <button
             className={`category-pie-legend-row category-row${item.category_id === activeCategoryId ? " active" : ""}`}

@@ -6,14 +6,8 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.exporting.excel_exporter import Worksheet, export_workbook
+from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Transaction, TransactionType
-
-
-@dataclass(frozen=True, slots=True)
-class TransactionWithCategory:
-    transaction: Transaction
-    category_name: str
-    category_color: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,13 +56,23 @@ class DashboardSummary:
     monthly_summaries: list[PeriodSummary]
 
 
+@dataclass(frozen=True, slots=True)
+class TransactionExportFilters:
+    keyword: str | None = None
+    category_id: UUID | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+
+
 class ReportRepositoryProtocol(Protocol):
     def list_transactions_with_categories(
         self,
         *,
         user_id: UUID,
-        start_date: date | None = None,
-        end_date: date | None = None,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
         limit: int | None = None,
     ) -> list[TransactionWithCategory]:
         raise NotImplementedError
@@ -84,19 +88,19 @@ class ReportUseCases:
         previous_start, previous_end = previous_month_range(start_date)
         current = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+            date_from=start_date,
+            date_to=end_date,
         )
         previous = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=previous_start,
-            end_date=previous_end,
+            date_from=previous_start,
+            date_to=previous_end,
         )
         trend_start = add_months(start_date, -5)
         trend = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=trend_start,
-            end_date=end_date,
+            date_from=trend_start,
+            date_to=end_date,
         )
         current_summary = _period_summary(f"{year:04d}-{month:02d}", current)
         previous_summary = _period_summary(previous_start.strftime("%Y-%m"), previous)
@@ -120,8 +124,8 @@ class ReportUseCases:
     def category_summary(self, *, user_id: UUID, start_date: date, end_date: date) -> list[CategorySummary]:
         rows = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+            date_from=start_date,
+            date_to=end_date,
         )
         return _category_summaries(rows)
 
@@ -129,13 +133,13 @@ class ReportUseCases:
         start_date, end_date = month_range(year, month)
         rows = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+            date_from=start_date,
+            date_to=end_date,
         )
         trend = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=add_months(start_date, -11),
-            end_date=end_date,
+            date_from=add_months(start_date, -11),
+            date_to=end_date,
         )
         return _report(
             period=f"{year:04d}-{month:02d}",
@@ -150,8 +154,8 @@ class ReportUseCases:
         end_date = start_date + timedelta(days=6)
         rows = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+            date_from=start_date,
+            date_to=end_date,
         )
         return _report(
             period=f"{year:04d}-W{week:02d}",
@@ -166,8 +170,8 @@ class ReportUseCases:
         end_date = date(year, 12, 31)
         rows = self._repository.list_transactions_with_categories(
             user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+            date_from=start_date,
+            date_to=end_date,
         )
         return _report(
             period=f"{year:04d}",
@@ -177,8 +181,15 @@ class ReportUseCases:
             period_summaries=_monthly_summaries(rows, start_date, end_date),
         )
 
-    def export_workbook(self, *, user_id: UUID) -> bytes:
-        rows = self._repository.list_transactions_with_categories(user_id=user_id)
+    def export_workbook(self, *, user_id: UUID, filters: TransactionExportFilters | None = None) -> bytes:
+        export_filters = filters or TransactionExportFilters()
+        rows = self._repository.list_transactions_with_categories(
+            user_id=user_id,
+            keyword=export_filters.keyword,
+            category_id=export_filters.category_id,
+            date_from=export_filters.date_from,
+            date_to=export_filters.date_to,
+        )
         return export_workbook(
             [
                 Worksheet(name="明細一覧", rows=_transaction_sheet(rows)),
@@ -250,8 +261,8 @@ def _category_summaries(rows: list[TransactionWithCategory]) -> list[CategorySum
         amount = _expense_amount(row.transaction)
         if amount == 0:
             continue
-        _, _, current = totals.get(row.transaction.category_id, (row.category_name, row.category_color, 0))
-        totals[row.transaction.category_id] = (row.category_name, row.category_color, current + amount)
+        _, _, current = totals.get(row.display_category_id, (row.category_name, row.category_color, 0))
+        totals[row.display_category_id] = (row.category_name, row.category_color, current + amount)
     total = sum(amount for _, _, amount in totals.values())
     return [
         CategorySummary(

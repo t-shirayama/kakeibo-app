@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getLoginPath, hasSessionCookie, isAuthGuardEnabled } from "./src/lib/auth";
 
-const protectedRoutes = ["/dashboard", "/transactions", "/upload", "/categories", "/reports", "/settings"];
+const protectedRoutes = ["/dashboard", "/calendar", "/transactions", "/upload", "/categories", "/reports", "/settings"];
 
 export function middleware(request: NextRequest) {
   if (!isAuthGuardEnabled()) {
@@ -19,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/transactions/:path*", "/upload/:path*", "/categories/:path*", "/reports/:path*", "/settings/:path*"],
+  matcher: ["/dashboard/:path*", "/calendar/:path*", "/transactions/:path*", "/upload/:path*", "/categories/:path*", "/reports/:path*", "/settings/:path*"],
 };

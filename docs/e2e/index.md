@@ -51,6 +51,7 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 - [認証](auth.md): ログイン、未ログインリダイレクト、認証切れ時のログイン誘導。
 - [ナビゲーション](navigation.md): サイドナビから主要画面へ遷移できること。
 - [ダッシュボード](dashboard.md): 指標、カテゴリ別支出、最近の明細の表示。
+- [カレンダー](calendar.md): 日別支出カレンダー、カテゴリ別サマリー、選択日の明細表示。
 - [明細一覧](transactions.md): 検索、絞り込み、未分類表示、追加、編集、削除、Excelエクスポート。
 - [収入設定](income-settings.md): 収入設定の追加、月別変更、削除。
 - [カテゴリ管理](categories.md): カテゴリ表示、追加、編集、無効化、有効化、削除、未分類確認リンク。

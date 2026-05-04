@@ -25,7 +25,7 @@ export default function SettingsPage() {
         title="設定"
         subtitle="アカウント、表示、データ管理の基本設定です。"
         actions={
-          <button className="button" type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          <button className="button" type="button" onClick={() => saveMutation.mutate(undefined)} disabled={saveMutation.isPending}>
             <Save size={15} aria-hidden="true" />
             {saveMutation.isPending ? "保存中" : "保存"}
           </button>
@@ -101,7 +101,7 @@ export default function SettingsPage() {
             disabled={confirmationText !== "DELETE" || deleteMutation.isPending}
             onClick={() => {
               if (window.confirm("全データを削除しますか？")) {
-                deleteMutation.mutate();
+                deleteMutation.mutate(undefined);
               }
             }}
           >

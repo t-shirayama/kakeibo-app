@@ -4,7 +4,8 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from app.application.reports import CategorySummary, PeriodSummary, Report, TransactionWithCategory
+from app.application.reports import CategorySummary, PeriodSummary, Report
+from app.application.transaction_views import TransactionWithCategory
 
 
 class CategorySummaryResponse(BaseModel):
@@ -87,7 +88,7 @@ def recent_transaction_response(row: TransactionWithCategory) -> RecentTransacti
         transaction_id=str(transaction.id),
         transaction_date=transaction.transaction_date,
         shop_name=transaction.shop_name,
-        category_id=str(transaction.category_id),
+        category_id=str(row.display_category_id),
         category_name=row.category_name,
         amount=transaction.amount.amount,
         transaction_type=transaction.transaction_type.value,

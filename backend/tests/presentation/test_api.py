@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import date
+from io import BytesIO
 from uuid import UUID
+from zipfile import ZipFile
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -133,3 +136,130 @@ def test_income_settings_create_override_and_apply_due_transaction() -> None:
         assert rows[0].amount == 320000
         assert rows[0].source_format == "income_setting"
         Base.metadata.drop_all(engine)
+
+
+def test_transaction_export_endpoint_applies_search_filters() -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    daily_id = "22222222-2222-2222-2222-222222222222"
+    food_id = "33333333-3333-3333-3333-333333333333"
+    with SessionLocal() as session:
+        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        session.add_all(
+            [
+                CategoryModel(id=daily_id, user_id=str(USER_ID), name="日用品", color="#8B5CF6", is_active=True),
+                CategoryModel(id=food_id, user_id=str(USER_ID), name="食費", color="#EF4444", is_active=True),
+                TransactionModel(
+                    id="44444444-4444-4444-4444-444444444444",
+                    user_id=str(USER_ID),
+                    category_id=daily_id,
+                    transaction_date=date(2026, 4, 10),
+                    shop_name="Amazon.co.jp",
+                    amount=4600,
+                    transaction_type="expense",
+                ),
+                TransactionModel(
+                    id="55555555-5555-5555-5555-555555555555",
+                    user_id=str(USER_ID),
+                    category_id=food_id,
+                    transaction_date=date(2026, 5, 10),
+                    shop_name="成城石井",
+                    amount=3200,
+                    transaction_type="expense",
+                ),
+            ]
+        )
+        session.commit()
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    def override_user() -> UserRecord:
+        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
+
+    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_current_user] = override_user
+    try:
+        response = TestClient(app).get(
+            "/api/transactions/export",
+            params={
+                "keyword": "Amazon",
+                "category_id": daily_id,
+                "date_from": "2026-04-01",
+                "date_to": "2026-04-30",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(engine)
+
+    assert response.status_code == 200
+    with ZipFile(BytesIO(response.content)) as archive:
+        workbook_text = "\n".join(
+            archive.read(name).decode("utf-8")
+            for name in archive.namelist()
+            if name.endswith(".xml")
+        )
+
+    assert "Amazon.co.jp" in workbook_text
+    assert "成城石井" not in workbook_text
+
+
+def test_transaction_list_response_normalizes_inactive_category_for_display() -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    inactive_id = "66666666-6666-6666-6666-666666666666"
+    uncategorized_id = "77777777-7777-7777-7777-777777777777"
+    with SessionLocal() as session:
+        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        session.add_all(
+            [
+                CategoryModel(id=inactive_id, user_id=str(USER_ID), name="食費", color="#EF4444", is_active=False),
+                CategoryModel(id=uncategorized_id, user_id=str(USER_ID), name="未分類", color="#6B7280", is_active=True),
+                TransactionModel(
+                    id="88888888-8888-8888-8888-888888888888",
+                    user_id=str(USER_ID),
+                    category_id=inactive_id,
+                    transaction_date=date(2026, 5, 1),
+                    shop_name="名称未確定の取引",
+                    amount=1200,
+                    transaction_type="expense",
+                ),
+            ]
+        )
+        session.commit()
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    def override_user() -> UserRecord:
+        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
+
+    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_current_user] = override_user
+    try:
+        response = TestClient(app).get("/api/transactions")
+    finally:
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(engine)
+
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert item["category_id"] == inactive_id
+    assert item["display_category_id"] == uncategorized_id
+    assert item["category_name"] == "未分類"
+    assert item["category_color"] == "#6B7280"

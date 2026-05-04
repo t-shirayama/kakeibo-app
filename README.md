@@ -119,13 +119,40 @@ npm run test:e2e
 
 ```powershell
 docker compose run --rm backend python -m pytest
+docker compose run --rm backend python -m alembic upgrade head
+docker compose run --rm --no-deps frontend npm run lint
 docker compose run --rm --no-deps frontend npm run typecheck
 docker compose run --rm --no-deps frontend npm run test:pages
+docker compose run --rm --no-deps secret-scan git /repo --no-banner --redact
 docker compose run --rm --no-deps frontend npm run build
 docker compose run --rm e2e
 ```
 
 E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/e2e/index.md](docs/e2e/index.md) を参照してください。
+
+### GitHub Actionsで実行する標準コマンド
+
+GitHub Actions のCIは `quality` と `test` の2系統に分けます。
+
+- `quality`: `frontend` の `lint` / `typecheck` / `build`、ドキュメント未確定事項チェック、シークレットスキャン
+- `test`: `backend` の Alembic 適用確認、`pytest`、`e2e`
+
+シークレットスキャンは `gitleaks` の `git` モードを使い、追跡対象の差分と履歴を中心に確認します。
+
+各ワークフローでは次のDocker Composeコマンドを標準で実行します。
+
+```powershell
+docker compose run --rm --no-deps frontend npm run lint
+docker compose run --rm --no-deps frontend npm run typecheck
+docker compose run --rm --no-deps secret-scan git /repo --no-banner --redact
+docker compose run --rm --no-deps frontend npm run build
+docker compose run --rm backend python -m alembic upgrade head
+docker compose run --rm backend python -m pytest
+docker compose run --rm e2e
+if rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"; then exit 1; fi
+```
+
+未確定事項チェックは、CIではこのコマンドをベースにしつつ、ルール文書に記載されたコマンド自体の説明行だけ除外して判定します。
 
 ## 重要な仕様
 

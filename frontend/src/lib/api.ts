@@ -5,13 +5,14 @@ import type { ApiErrorShape } from "@/components/api-error-alert";
 
 export type ApiClient = {
   list_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
+  list_all_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
   list_categories: (params?: CategoryListParams) => Promise<CategoryDto[]>;
   create_transaction: (request: TransactionRequest) => Promise<TransactionDto>;
   update_transaction: (transactionId: string, request: TransactionRequest) => Promise<TransactionDto>;
   count_same_shop_transactions: (transactionId: string) => Promise<{ count: number }>;
   update_same_shop_category: (transactionId: string, shopName: string, categoryId: string) => Promise<{ updated_count: number }>;
   delete_transaction: (transactionId: string) => Promise<{ status: string }>;
-  export_transactions: () => Promise<void>;
+  export_transactions: (params?: TransactionListParams) => Promise<void>;
   list_uploads: () => Promise<UploadJobDto[]>;
   upload_pdf: (file: File) => Promise<UploadJobDto>;
   list_category_summaries: () => Promise<CategorySummaryDto[]>;
@@ -54,6 +55,9 @@ export type TransactionRequest = {
 };
 
 export type TransactionListParams = {
+  keyword?: string;
+  page?: number;
+  page_size?: number;
   date_from?: string;
   date_to?: string;
   category_id?: string;
@@ -217,7 +221,10 @@ export function get_api_base_url(): string {
 
 export const api: ApiClient = {
   async list_transactions(params = {}) {
-    const searchParams = new URLSearchParams({ page: "1", page_size: "100" });
+    const searchParams = new URLSearchParams({ page: String(params.page ?? 1), page_size: String(params.page_size ?? 100) });
+    if (params.keyword) {
+      searchParams.set("keyword", params.keyword);
+    }
     if (params.date_from) {
       searchParams.set("date_from", params.date_from);
     }
@@ -230,6 +237,34 @@ export const api: ApiClient = {
 
     const response = await api_fetch<{ items: TransactionDto[] }>(`/api/transactions?${searchParams.toString()}`);
     return response.items;
+  },
+  async list_all_transactions(params = {}) {
+    const items: TransactionDto[] = [];
+    let page = 1;
+    let total = 0;
+
+    do {
+      const searchParams = new URLSearchParams({ page: String(page), page_size: "100" });
+      if (params.keyword) {
+        searchParams.set("keyword", params.keyword);
+      }
+      if (params.date_from) {
+        searchParams.set("date_from", params.date_from);
+      }
+      if (params.date_to) {
+        searchParams.set("date_to", params.date_to);
+      }
+      if (params.category_id) {
+        searchParams.set("category_id", params.category_id);
+      }
+
+      const response = await api_fetch<{ items: TransactionDto[]; total: number }>(`/api/transactions?${searchParams.toString()}`);
+      items.push(...response.items);
+      total = response.total;
+      page += 1;
+    } while (items.length < total);
+
+    return items;
   },
   async list_categories(params = {}) {
     const searchParams = new URLSearchParams();
@@ -266,9 +301,23 @@ export const api: ApiClient = {
   async delete_transaction(transactionId) {
     return api_mutation<{ status: string }>(`/api/transactions/${transactionId}`, { method: "DELETE" });
   },
-  async export_transactions() {
-    const response = await retry_after_auth_refresh("/api/transactions/export", () =>
-      fetch(`${get_api_base_url()}/api/transactions/export`, { credentials: "include" }),
+  async export_transactions(params = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.keyword) {
+      searchParams.set("keyword", params.keyword);
+    }
+    if (params.date_from) {
+      searchParams.set("date_from", params.date_from);
+    }
+    if (params.date_to) {
+      searchParams.set("date_to", params.date_to);
+    }
+    if (params.category_id) {
+      searchParams.set("category_id", params.category_id);
+    }
+    const path = `/api/transactions/export${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    const response = await retry_after_auth_refresh(path, () =>
+      fetch(`${get_api_base_url()}${path}`, { credentials: "include" }),
     );
     if (!response.ok) {
       await parse_json_response<never>(response);

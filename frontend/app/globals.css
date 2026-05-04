@@ -147,7 +147,7 @@ textarea {
 .main {
   min-width: 0;
   min-height: 0;
-  padding: 34px;
+  padding: 26px 28px;
   overflow: auto;
 }
 
@@ -156,7 +156,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .page-title {
@@ -177,6 +177,11 @@ textarea {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+}
+
+.report-toolbar {
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .filter-panel {
@@ -313,6 +318,21 @@ textarea {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
 }
 
+.report-metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.report-main-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 14px;
+}
+
+.report-bottom-grid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+  gap: 14px;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid #e1e8f3;
@@ -322,6 +342,83 @@ textarea {
 .metric-card {
   min-height: 118px;
   padding: 22px 24px;
+}
+
+.summary-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 104px;
+  padding: 18px 18px 16px;
+  border-color: #dfe7f3;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgb(15 23 42 / 5%);
+}
+
+.summary-card-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+}
+
+.summary-card-icon.income {
+  color: var(--success);
+  background: rgb(34 197 94 / 14%);
+}
+
+.summary-card-icon.expense {
+  color: #ef4444;
+  background: rgb(239 68 68 / 12%);
+}
+
+.summary-card-icon.balance {
+  color: #f59e0b;
+  background: rgb(245 158 11 / 14%);
+}
+
+.summary-card-icon.saving {
+  color: var(--primary);
+  background: rgb(47 125 246 / 12%);
+}
+
+.summary-card-body {
+  min-width: 0;
+}
+
+.summary-card-label {
+  margin: 2px 0 6px;
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.summary-card-value {
+  margin: 0;
+  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
+}
+
+.summary-card-delta {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.summary-card-delta.good {
+  color: var(--success);
+}
+
+.summary-card-delta.bad {
+  color: #dc2626;
+}
+
+.summary-card-delta.neutral {
+  color: var(--muted-strong);
 }
 
 .metric-label {
@@ -373,13 +470,31 @@ textarea {
 }
 
 .panel {
-  padding: 22px;
+  padding: 18px;
 }
 
 .panel-title {
-  margin: 0 0 18px;
-  font-size: 15px;
+  margin: 0 0 14px;
+  font-size: 14px;
   font-weight: 850;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-header .panel-title {
+  margin-bottom: 0;
+}
+
+.panel-caption {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .button {
@@ -418,6 +533,16 @@ textarea {
 .button.compact {
   min-height: 32px;
   padding: 0 12px;
+}
+
+.text-link-button {
+  padding: 0;
+  color: var(--primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .icon-button {
@@ -480,6 +605,31 @@ textarea {
   padding: 14px 18px;
   border-bottom: 1px solid #edf2f7;
   white-space: nowrap;
+}
+
+.transaction-row {
+  outline: none;
+}
+
+.transaction-row td {
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.transaction-row:focus-visible td,
+.transaction-row:focus-within td {
+  background: #f4f9ff;
+}
+
+.transaction-row:focus-visible td:first-child,
+.transaction-row:focus-within td:first-child {
+  box-shadow: inset 3px 0 0 #2563eb;
+}
+
+.transaction-row:focus-visible td:last-child,
+.transaction-row:focus-within td:last-child {
+  box-shadow: inset -1px 0 0 #dbeafe;
 }
 
 .badge {
@@ -579,13 +729,13 @@ textarea {
 
 .chart-shell {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .chart-plot {
   display: grid;
   grid-template-columns: 44px 1fr;
-  min-height: 220px;
+  min-height: 192px;
 }
 
 .chart-y-axis {
@@ -606,8 +756,8 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
-  min-height: 220px;
-  padding: 0 10px;
+  min-height: 192px;
+  padding: 0 8px;
   border-left: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   background:
@@ -655,8 +805,8 @@ textarea {
   justify-content: center;
   gap: 5px;
   width: 100%;
-  min-height: 176px;
-  padding-top: 8px;
+  min-height: 148px;
+  padding-top: 6px;
 }
 
 .chart-bar {
@@ -683,9 +833,9 @@ textarea {
 .chart-legend {
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 12px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .chart-legend span {
@@ -714,7 +864,7 @@ textarea {
 }
 
 .section-gap {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .category-list {
@@ -736,16 +886,19 @@ textarea {
   display: grid;
   grid-template-columns: minmax(180px, 0.76fr) minmax(220px, 1fr);
   align-items: center;
-  gap: 22px;
+  gap: 16px;
+  min-height: 208px;
 }
 
 .category-pie-chart-wrap {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(220px, 100%);
+  width: min(188px, 100%);
+  min-width: 0;
   aspect-ratio: 1;
   justify-self: center;
+  align-self: center;
 }
 
 .category-pie-chart {
@@ -798,19 +951,25 @@ textarea {
 }
 
 .category-pie-center strong {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 850;
 }
 
 .category-pie-legend {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  align-content: start;
+  max-height: 208px;
+  padding-right: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .category-pie-legend-row {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   color: inherit;
   text-align: left;
   background: #ffffff;
@@ -823,6 +982,369 @@ textarea {
   border-color: #bfd2ef;
   outline: 0;
   box-shadow: 0 0 0 3px rgb(47 125 246 / 12%);
+}
+
+.insight-list {
+  display: grid;
+  gap: 10px;
+}
+
+.insight-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: inset 0 0 0 1px #edf2f7;
+}
+
+.insight-card strong,
+.insight-card p {
+  margin: 0;
+}
+
+.insight-card p {
+  margin-top: 4px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.insight-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+}
+
+.insight-card.good .insight-icon {
+  color: var(--success);
+  background: rgb(34 197 94 / 12%);
+}
+
+.insight-card.alert .insight-icon {
+  color: #ef4444;
+  background: rgb(239 68 68 / 12%);
+}
+
+.insight-card.info .insight-icon {
+  color: var(--info);
+  background: rgb(56 167 224 / 12%);
+}
+
+.category-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-dashboard-page .data-table {
+  font-size: 11.5px;
+}
+
+.report-dashboard-page .data-table th,
+.report-dashboard-page .data-table td {
+  padding: 10px 12px;
+}
+
+.report-dashboard-page .month-input {
+  width: 132px;
+}
+
+.report-dashboard-page .button.secondary {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.86fr);
+  gap: 14px;
+}
+
+.calendar-page .page-header {
+  margin-bottom: 16px;
+}
+
+.calendar-page .panel {
+  padding: 14px;
+}
+
+.calendar-page .panel-title {
+  margin-bottom: 10px;
+}
+
+.calendar-page .panel-header {
+  margin-bottom: 10px;
+}
+
+.calendar-sidebar {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.calendar-board-panel {
+  min-width: 0;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.calendar-weekdays span {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.calendar-weekdays span.holiday {
+  color: #dc2626;
+}
+
+.calendar-weekdays span.saturday {
+  color: #2563eb;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendar-day {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 98px;
+  padding: 8px 9px;
+  color: var(--text);
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e1e8f3;
+  border-radius: 10px;
+}
+
+.calendar-day:not(.placeholder) {
+  cursor: pointer;
+}
+
+.calendar-day.placeholder {
+  background: #f8fafc;
+  border-style: dashed;
+  opacity: 0.58;
+}
+
+.calendar-day.holiday {
+  border-color: #f5c2c7;
+}
+
+.calendar-day.saturday {
+  border-color: #bfdbfe;
+}
+
+.calendar-day.selected {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgb(47 125 246 / 12%);
+}
+
+.calendar-day.has-expense {
+  background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
+}
+
+.calendar-day.has-income {
+  box-shadow: inset 0 0 0 1px rgb(22 163 106 / 12%);
+}
+
+.calendar-day-number {
+  display: inline-flex;
+  justify-content: flex-end;
+  color: var(--muted-strong);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.calendar-day.holiday .calendar-day-number {
+  color: #dc2626;
+}
+
+.calendar-day.saturday .calendar-day-number {
+  color: #2563eb;
+}
+
+.calendar-day-expense-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.calendar-day-expense {
+  font-size: clamp(0.92rem, 0.95vw, 1.06rem);
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.calendar-day-meta {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.calendar-summary-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-summary-tile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.calendar-summary-tile.income {
+  background: #effcf6;
+}
+
+.calendar-summary-tile.expense {
+  background: #fff5f5;
+}
+
+.calendar-summary-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--primary);
+  background: #ffffff;
+  border-radius: 999px;
+}
+
+.calendar-summary-tile.expense .calendar-summary-icon {
+  color: #dc2626;
+}
+
+.calendar-summary-tile p,
+.calendar-summary-tile strong {
+  margin: 0;
+}
+
+.calendar-summary-tile p {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.calendar-summary-tile strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.calendar-category-list,
+.calendar-transaction-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.calendar-category-row,
+.calendar-transaction-row {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+}
+
+.calendar-category-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.calendar-category-meta {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.calendar-selected-day-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.calendar-inline-summary {
+  display: grid;
+  gap: 3px;
+  padding: 8px 9px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f6;
+  border-radius: 8px;
+}
+
+.calendar-inline-summary span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.calendar-inline-summary strong {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.calendar-transaction-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.calendar-transaction-row strong,
+.calendar-transaction-row p {
+  margin: 0;
+}
+
+.calendar-transaction-row p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.calendar-panel-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.expense-improved {
+  color: var(--success);
+}
+
+.expense-worse {
+  color: #dc2626;
+}
+
+.expense-neutral {
+  color: var(--muted-strong);
 }
 
 .income-form-grid {
@@ -1255,8 +1777,15 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .two-column-grid {
+  .calendar-layout,
+  .two-column-grid,
+  .report-main-grid,
+  .report-bottom-grid {
     grid-template-columns: 1fr;
+  }
+
+  .report-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1306,12 +1835,14 @@ textarea {
   }
 
   .page-header,
-  .settings-row {
+  .settings-row,
+  .panel-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .month-switcher {
+  .month-switcher,
+  .report-toolbar {
     width: 100%;
   }
 
@@ -1344,8 +1875,19 @@ textarea {
   .income-form-grid,
   .income-setting-main,
   .income-override-row,
-  .category-pie-layout {
+  .category-pie-layout,
+  .calendar-selected-day-summary {
     grid-template-columns: 1fr;
+  }
+
+  .category-pie-layout {
+    min-height: 0;
+  }
+
+  .category-pie-legend {
+    max-height: none;
+    padding-right: 0;
+    overflow-y: visible;
   }
 
   .filter-grid {
@@ -1363,5 +1905,25 @@ textarea {
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .report-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-weekdays {
+    display: none;
+  }
+
+  .summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .report-dashboard-page .data-table {
+    font-size: 12px;
   }
 }

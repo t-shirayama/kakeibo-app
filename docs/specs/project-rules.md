@@ -104,6 +104,7 @@ backend/
 - フロントエンドとバックエンドの境界はAPI契約で管理する。
 - API契約の機械可読な正はFastAPIが生成するOpenAPIとし、Swagger UIで確認できるようにする。
 - 画面表示に必要なデータはDTOとして返し、ドメインモデルをそのまま外部公開しない。
+- 無効化カテゴリを未分類表示に寄せるなどの表示用業務ルールは、画面ごとに再実装せず、バックエンドまたは共有ヘルパーで一元化する。
 
 ## 共通要件
 
@@ -168,3 +169,4 @@ backend/
 - コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
 - 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
 - バックエンドテストは `docker compose run --rm backend python -m pytest`、フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` / `docker compose run --rm --no-deps frontend npm run build`、E2Eは `docker compose run --rm e2e` を基本コマンドとする。
+- GitHub ActionsのCIは `quality` と `test` に分け、`quality` では `frontend` の `lint` / `typecheck` / `build`、未確定事項チェック、シークレットスキャンを実行し、`test` では Alembic 適用確認、`pytest`、E2Eを実行する。

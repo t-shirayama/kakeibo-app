@@ -25,6 +25,10 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
   await expect(page.getByLabel("適用中のフィルタ").getByText("日用品")).toBeVisible();
+  const amazonRow = page.getByRole("row").filter({ hasText: "Amazon.co.jp" }).first();
+  await amazonRow.focus();
+  await expect(amazonRow).toBeFocused();
+  await expect(amazonRow.locator("td").first()).toHaveCSS("background-color", "rgb(244, 249, 255)");
 
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
   await page.getByLabel("明細検索").fill("Amazon");
@@ -74,11 +78,18 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toBeVisible();
 
   // ブラウザの保存先に依存しないよう、Excel APIの成功レスポンスまでを検証する。
+  await page.getByLabel("明細検索").fill("Amazon");
+  await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   const downloadResponse = page.waitForResponse((response) =>
     response.url().includes("/api/transactions/export") && response.status() === 200,
   );
   await page.getByRole("button", { name: "エクスポート" }).click();
-  await downloadResponse;
+  const exportResponse = await downloadResponse;
+  expect(exportResponse.url()).toContain("keyword=Amazon");
+  expect(exportResponse.url()).toContain("date_from=2026-01-01");
+  expect(exportResponse.url()).toContain("date_to=2026-12-31");
+  await page.getByLabel("明細検索").fill("");
+  await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toBeVisible();
 
   await page
     .getByRole("row")

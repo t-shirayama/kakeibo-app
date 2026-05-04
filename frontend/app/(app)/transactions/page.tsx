@@ -10,6 +10,7 @@ import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
 import { api, type TransactionRequest } from "@/lib/api";
+import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
@@ -44,10 +45,11 @@ export default function TransactionsPage() {
   const queryClient = useQueryClient();
   const periodRange = useMemo(
     () => ({
+      keyword: query.trim() || undefined,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
     }),
-    [dateFrom, dateTo],
+    [dateFrom, dateTo, query],
   );
   const transactionsQuery = useQuery({
     queryKey: ["transactions", periodRange, categoryFilter],
@@ -86,28 +88,13 @@ export default function TransactionsPage() {
   );
   const transactions = useMemo(() => {
     const rows = transactionsQuery.data ?? [];
-    const normalizedQuery = query.trim().toLowerCase();
-    const searchedRows = normalizedQuery
-      ? rows.filter((transaction) =>
-          // APIのカテゴリ名が未設定でも、カテゴリ一覧から補完して検索対象に含める。
-          [
-            transaction.shop_name,
-            transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類",
-            transaction.memo ?? "",
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(normalizedQuery),
-        )
-      : rows;
-
-    return [...searchedRows].sort((a, b) => compareTransactions(a, b, sortField, sortDirection));
-  }, [categoryById, query, sortDirection, sortField, transactionsQuery.data]);
+    return [...rows].sort((a, b) => compareTransactions(a, b, sortField, sortDirection));
+  }, [sortDirection, sortField, transactionsQuery.data]);
   const searchSuggestions = useMemo(() => {
     const suggestions = new Set<string>();
     for (const transaction of transactionsQuery.data ?? []) {
       suggestions.add(transaction.shop_name);
-      suggestions.add(transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類");
+      suggestions.add(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name);
       if (transaction.memo) {
         suggestions.add(transaction.memo);
       }
@@ -220,7 +207,19 @@ export default function TransactionsPage() {
         subtitle="取り込んだ明細を検索、絞り込み、手動追加できます。"
         actions={
           <div className="toolbar">
-            <button className="button secondary" type="button" onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending}>
+            <button
+              className="button secondary"
+              type="button"
+              onClick={() =>
+                exportMutation.mutate({
+                  keyword: query.trim() || undefined,
+                  date_from: dateFrom || undefined,
+                  date_to: dateTo || undefined,
+                  category_id: categoryFilter || undefined,
+                })
+              }
+              disabled={exportMutation.isPending}
+            >
               {exportMutation.isPending ? "出力中" : "エクスポート"}
             </button>
             <button
@@ -329,12 +328,12 @@ export default function TransactionsPage() {
             </thead>
             <tbody>
               {transactions.map((transaction) => (
-                <tr key={transaction.transaction_id}>
+                <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
                   <td>{transaction.transaction_date}</td>
                   <td>{transaction.shop_name}</td>
                   <td>
-                    <span className="badge" style={getCategoryBadgeStyle(categoryById.get(transaction.category_id))}>
-                      {transaction.category_name ?? categoryById.get(transaction.category_id)?.name ?? "未分類"}
+                    <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
+                      {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
                     </span>
                   </td>
                   <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
@@ -523,8 +522,7 @@ function getCurrentMonthRange() {
   };
 }
 
-function getCategoryBadgeStyle(category: CategoryDto | undefined): React.CSSProperties {
-  const backgroundColor = category?.color ?? "#e2e8f0";
+function getCategoryBadgeStyle(backgroundColor: string): React.CSSProperties {
   return {
     backgroundColor,
     borderColor: backgroundColor,

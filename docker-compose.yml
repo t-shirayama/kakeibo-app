@@ -92,6 +92,12 @@ services:
         condition: service_healthy
     command: npm run test:e2e
 
+  secret-scan:
+    image: zricethezav/gitleaks:v8.24.2
+    working_dir: /repo
+    volumes:
+      - .:/repo:ro
+
 volumes:
   mysql-data:
   frontend-node-modules:
