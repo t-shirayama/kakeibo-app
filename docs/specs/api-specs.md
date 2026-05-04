@@ -43,6 +43,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - `GET /api/auth/csrf`
   - CSRFトークンをレスポンスボディで取得する。
   - あわせて、トークンを同一ブラウザセッションへ結び付けるための HttpOnly CSRF Cookie を設定または再利用する。
+  - レスポンスは `Cache-Control: no-store` とし、古いCSRFトークン本文だけがキャッシュ再利用されないようにする。
 - `POST /api/auth/password-reset`
   - パスワードリセットを開始する。
   - 本番相当環境では常に `{"status": "ok"}` を返し、登録済みユーザーかどうかやリセットトークンはレスポンスから判別できないようにする。

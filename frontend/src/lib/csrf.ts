@@ -28,8 +28,12 @@ export async function refresh_csrf_token(): Promise<string> {
 
 async function fetch_csrf_token(): Promise<string> {
   try {
+    const cacheBustingUrl = new URL(`${API_BASE_URL}/api/auth/csrf`);
+    cacheBustingUrl.searchParams.set("_", String(Date.now()));
+
     // CSRFトークンはCookieへ保存せず、フロントのメモリにだけ保持する。
-    const response = await fetch(`${API_BASE_URL}/api/auth/csrf`, {
+    const response = await fetch(cacheBustingUrl.toString(), {
+      cache: "no-store",
       credentials: "include",
     });
 

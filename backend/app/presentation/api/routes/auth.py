@@ -56,6 +56,8 @@ class PasswordResetConfirmRequest(BaseModel):
 @router.get("/csrf", response_model=CsrfTokenResponse)
 def get_csrf_token(request: Request, response: Response) -> CsrfTokenResponse:
     settings = get_settings()
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
     csrf_session = request.cookies.get(settings.csrf_session_cookie_name)
     if not csrf_session:
         csrf_session = token_urlsafe(32)

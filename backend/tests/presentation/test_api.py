@@ -37,6 +37,8 @@ def test_health_and_csrf_endpoints() -> None:
     csrf_response = client.get("/api/auth/csrf")
     assert csrf_response.json()["csrf_token"]
     assert "kakeibo_csrf_session=" in csrf_response.headers["set-cookie"]
+    assert csrf_response.headers["cache-control"] == "no-store"
+    assert csrf_response.headers["pragma"] == "no-cache"
 
 
 def test_password_reset_start_hides_token_in_production(monkeypatch) -> None:

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { refresh_csrf_token } from "@/lib/csrf";
 
 export default function LoginPage() {
@@ -15,6 +15,19 @@ export default function LoginPage() {
   useEffect(() => {
     void refresh_csrf_token().catch(() => null);
   }, []);
+
+  async function submitLogin(email: string, password: string) {
+    try {
+      return await api.login({ email, password });
+    } catch (caught) {
+      if (!isMissingCsrfSessionError(caught)) {
+        throw caught;
+      }
+
+      await refresh_csrf_token();
+      return api.login({ email, password });
+    }
+  }
 
   return (
     <main className="login-page">
@@ -34,11 +47,10 @@ export default function LoginPage() {
             setError(null);
             setIsSubmitting(true);
             const formData = new FormData(event.currentTarget);
+            const email = String(formData.get("email") ?? "");
+            const password = String(formData.get("password") ?? "");
             try {
-              await api.login({
-                email: String(formData.get("email") ?? ""),
-                password: String(formData.get("password") ?? ""),
-              });
+              await submitLogin(email, password);
               const searchParams = new URLSearchParams(window.location.search);
               router.push(searchParams.get("redirect") || "/dashboard");
               router.refresh();
@@ -68,4 +80,8 @@ export default function LoginPage() {
       </section>
     </main>
   );
+}
+
+function isMissingCsrfSessionError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403 && error.message.includes("CSRF session is required.");
 }

@@ -36,6 +36,7 @@
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
 - CSRFトークン自体はCookieへ保存せず、レスポンスボディのみで返す。
 - `GET /api/auth/csrf` では、トークン本体とは別に、セッション紐づけ用の HttpOnly CSRF Cookie を発行または再利用する。
+- `GET /api/auth/csrf` のレスポンスはキャッシュさせず、ブラウザや中間層が古いトークン本文だけを再利用しないようにする。
 - 変更系APIでは、CSRFトークンヘッダーとCSRFセッションCookieの組み合わせが一致した場合だけ受け付ける。
 - CSRFトークンの有効期限は30分とする。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
