@@ -24,15 +24,6 @@ type DailyCalendarSummary = {
   holiday_name: string | null;
 };
 
-type CategoryMonthlySummary = {
-  category_id: string;
-  name: string;
-  amount: number;
-  color: string;
-  ratio: number;
-  transaction_count: number;
-};
-
 export function CalendarPage() {
   const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth);
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
@@ -45,7 +36,6 @@ export function CalendarPage() {
   const transactions = transactionsQuery.data ?? [];
   const calendarDays = useMemo(() => buildCalendarDays(selectedYearMonth, transactions), [selectedYearMonth, transactions]);
   const monthlySummary = useMemo(() => buildMonthlySummary(transactions), [transactions]);
-  const categorySummaries = useMemo(() => buildCategorySummaries(transactions), [transactions]);
   const selectedDaySummary = useMemo(
     () => calendarDays.find((day) => day.date === selectedDate) ?? calendarDays.find((day) => day.date.startsWith(selectedYearMonth)) ?? null,
     [calendarDays, selectedDate, selectedYearMonth],
@@ -151,29 +141,6 @@ export function CalendarPage() {
                 <SummaryTile icon={<CreditCard size={16} aria-hidden="true" />} label="支出" value={formatCurrency(monthlySummary.total_expense)} tone="expense" />
                 <SummaryTile icon={<ReceiptText size={16} aria-hidden="true" />} label="収支" value={formatCurrency(monthlySummary.balance)} tone={monthlySummary.balance >= 0 ? "income" : "expense"} />
               </div>
-            </section>
-
-            <section className="card panel">
-              <div className="panel-header">
-                <h2 className="panel-title">カテゴリ別サマリー</h2>
-                <span className="panel-caption">支出が多い順</span>
-              </div>
-              {categorySummaries.length === 0 ? (
-                <p className="calendar-panel-empty">この月の支出明細はまだありません。</p>
-              ) : (
-                <div className="calendar-category-list" aria-label="カテゴリ別サマリー">
-                  {categorySummaries.map((category) => (
-                    <div className="calendar-category-row" key={category.category_id}>
-                      <div className="category-name-cell">
-                        <span className="swatch" style={{ background: category.color }} />
-                        <strong>{category.name}</strong>
-                      </div>
-                      <span className="amount">{formatCurrency(category.amount)}</span>
-                      <span className="calendar-category-meta">{Math.round(category.ratio * 100)}% / {category.transaction_count}件</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </section>
 
             <section className="card panel">
@@ -305,35 +272,6 @@ function buildMonthlySummary(transactions: TransactionDto[]) {
     total_expense,
     balance: total_income - total_expense,
   };
-}
-
-function buildCategorySummaries(transactions: TransactionDto[]): CategoryMonthlySummary[] {
-  const expenseTransactions = transactions.filter((transaction) => transaction.transaction_type === "expense");
-  const totalExpense = expenseTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-  const categoryMap = new Map<string, CategoryMonthlySummary>();
-
-  for (const transaction of expenseTransactions) {
-    const display = getTransactionCategoryDisplay(transaction);
-    const key = display.category_id;
-    const existing = categoryMap.get(key) ?? {
-      category_id: key,
-      name: display.name,
-      amount: 0,
-      color: display.color,
-      ratio: 0,
-      transaction_count: 0,
-    };
-    existing.amount += transaction.amount;
-    existing.transaction_count += 1;
-    categoryMap.set(key, existing);
-  }
-
-  return [...categoryMap.values()]
-    .sort((a, b) => b.amount - a.amount)
-    .map((item) => ({
-      ...item,
-      ratio: totalExpense > 0 ? item.amount / totalExpense : 0,
-    }));
 }
 
 function getDefaultSelectedDate(selectedYearMonth: string, transactions: TransactionDto[]) {

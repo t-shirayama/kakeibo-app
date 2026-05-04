@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("shows monthly calendar, summaries, and category breakdown", async ({ page }) => {
+test("shows monthly calendar and summaries", async ({ page }) => {
   await page.goto("/calendar");
 
   await expect(page.getByRole("heading", { name: "カレンダー" })).toBeVisible();
@@ -9,9 +9,7 @@ test("shows monthly calendar, summaries, and category breakdown", async ({ page 
   await expect(page.getByLabel("月間サマリー").getByText("収入", { exact: true })).toBeVisible();
   await expect(page.getByLabel("月間サマリー").getByText("支出", { exact: true })).toBeVisible();
   await expect(page.getByLabel("月間サマリー").getByText("収支", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "カテゴリ別サマリー" })).toBeVisible();
   await expect(page.getByRole("gridcell", { name: /2026-05-05 祝日こどもの日/ })).toBeVisible();
-  await expect(page.getByLabel("カテゴリ別サマリー").getByText("食費")).toBeVisible();
 });
 
 test("shows selected day details and opens filtered transactions", async ({ page }) => {

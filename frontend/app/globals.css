@@ -1255,7 +1255,6 @@ textarea {
   font-weight: 900;
 }
 
-.calendar-category-list,
 .calendar-transaction-list {
   display: grid;
   gap: 8px;
@@ -1263,25 +1262,12 @@ textarea {
   overflow-y: auto;
 }
 
-.calendar-category-row,
 .calendar-transaction-row {
   display: grid;
   gap: 5px;
   padding: 9px 10px;
   border: 1px solid #edf2f7;
   border-radius: 8px;
-}
-
-.calendar-category-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-}
-
-.calendar-category-meta {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .calendar-selected-day-summary {
