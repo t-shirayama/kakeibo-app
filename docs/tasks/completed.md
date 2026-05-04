@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] service_factories.pyをbootstrap/container.pyへ移す
+  - 対応: `backend/app/bootstrap/container.py` を新設し、ユースケース、Repository、Parser、Storage、Settingsの組み立てを bootstrap 層へ移した。`auth` と `settings` を含むAPIルートの依存配線も container 経由へ統一した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 53 件すべて通過した。
+  - 根拠: presentation層をHTTP入出力へ集中させ、依存配線の肥大化を防ぐため。
+
 - [x] Codex向けに変更パターン別の参照順を追加する
   - 対応: `.codex/AGENTS.md` に、API、DB、UI、E2E、PDF取込、認証・セキュリティの変更ごとに、仕様・実装・テスト・生成物の参照順を追記した。
   - 確認: ドキュメント更新後の未確定事項チェックを実行し、意図しない未確定事項が増えていないことを確認した。

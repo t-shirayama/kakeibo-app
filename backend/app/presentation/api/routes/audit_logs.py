@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 
 from app.application.audit_logs import AuditLogEntry, AuditLogUseCases
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_audit_log_use_cases
 from app.application.common import Page, PageResult
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user
-from app.presentation.api.service_factories import build_audit_log_use_cases
 
 router = APIRouter()
 

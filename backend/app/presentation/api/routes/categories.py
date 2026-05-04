@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
 from app.application.transactions import CategoryCommand, CategoryUseCases, TransactionCategoryError
+from app.bootstrap.container import build_category_use_cases
 from app.domain.entities import Category
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
-from app.presentation.api.service_factories import build_category_use_cases
 
 router = APIRouter()
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_report_use_cases, build_transaction_use_cases
 from app.application.common import Page, PageResult
 from app.application.reports import ReportUseCases, TransactionExportFilters
 from app.application.transactions import TransactionCategoryError, TransactionCommand, TransactionUseCases
@@ -17,7 +18,6 @@ from app.domain.entities import Transaction, TransactionType
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 from app.presentation.api.routes.income_settings import apply_due_income_transactions
-from app.presentation.api.service_factories import build_report_use_cases, build_transaction_use_cases
 
 router = APIRouter()
 

@@ -7,9 +7,9 @@ from app.application.auth.csrf_service import CsrfTokenService
 from app.application.auth.password_policy import PasswordPolicyError
 from app.application.auth.ports import UserRecord
 from app.application.auth.use_cases import AuthError, AuthTokens, AuthUseCases
+from app.bootstrap.container import build_auth_use_cases
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.auth import AuthRepository
 from app.presentation.api.cookies import delete_auth_cookie, set_auth_cookie
 from app.presentation.api.dependencies import get_current_user, require_admin_user, validate_csrf_token
 
@@ -157,7 +157,7 @@ def confirm_password_reset(
 
 
 def _use_cases(session: Session) -> AuthUseCases:
-    return AuthUseCases(repository=AuthRepository(session), settings=get_settings())
+    return build_auth_use_cases(session)
 
 
 def _set_auth_cookies(response: Response, tokens: AuthTokens) -> None:

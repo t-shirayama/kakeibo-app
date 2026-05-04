@@ -81,6 +81,7 @@
 ```text
 backend/
 └── app/
+    ├── bootstrap/
     ├── domain/
     ├── application/
     ├── infrastructure/

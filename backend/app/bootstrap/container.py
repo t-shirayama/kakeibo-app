@@ -3,15 +3,19 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.application.audit_logs import AuditLogUseCases
+from app.application.auth.use_cases import AuthUseCases
 from app.application.exporting.transaction_workbook_exporter import TransactionWorkbookExporter
 from app.application.importing.upload_import import PdfUploadUseCases
 from app.application.income_settings import IncomeSettingsUseCases
 from app.application.reports import ReportUseCases
+from app.application.settings import SettingsUseCases
 from app.application.transactions import CategoryUseCases, TransactionUseCases
 from app.infrastructure.config import get_settings
 from app.infrastructure.parsers.rakuten_card_pdf_parser import RakutenCardPdfParser
-from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
 from app.infrastructure.repositories.audit_logs import AuditLogQueryRepository
+from app.infrastructure.repositories.auth import AuthRepository
+from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
+from app.infrastructure.repositories.settings import SettingsRepository
 from app.infrastructure.repositories.transactions import (
     AuditLogRepository,
     CategoryRepository,
@@ -46,6 +50,14 @@ def build_report_use_cases(session: Session) -> ReportUseCases:
     )
 
 
+def build_settings_use_cases(session: Session) -> SettingsUseCases:
+    settings = get_settings()
+    return SettingsUseCases(
+        repository=SettingsRepository(session),
+        storage=LocalUploadStorage(settings.upload_storage_root),
+    )
+
+
 def build_income_settings_use_cases(session: Session) -> IncomeSettingsUseCases:
     return IncomeSettingsUseCases(
         IncomeSettingsRepository(session),
@@ -64,3 +76,7 @@ def build_pdf_upload_use_cases(session: Session) -> PdfUploadUseCases:
         storage=LocalUploadStorage(settings.upload_storage_root),
         max_upload_size_mb=settings.max_upload_size_mb,
     )
+
+
+def build_auth_use_cases(session: Session) -> AuthUseCases:
+    return AuthUseCases(repository=AuthRepository(session), settings=get_settings())

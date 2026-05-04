@@ -5,15 +5,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_report_use_cases, build_settings_use_cases
 from app.application.reports import ReportUseCases
 from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.settings import SettingsRepository, UserSettingsRecord
-from app.infrastructure.storage import LocalUploadStorage
+from app.infrastructure.repositories.settings import UserSettingsRecord
 from app.presentation.api.cookies import delete_auth_cookie
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
-from app.presentation.api.service_factories import build_report_use_cases
 
 router = APIRouter()
 
@@ -101,11 +100,7 @@ def delete_all_user_data(
 
 
 def _use_cases(session: Session) -> SettingsUseCases:
-    settings = get_settings()
-    return SettingsUseCases(
-        repository=SettingsRepository(session),
-        storage=LocalUploadStorage(settings.upload_storage_root),
-    )
+    return build_settings_use_cases(session)
 
 
 def _settings_response(settings: UserSettingsRecord) -> SettingsResponse:

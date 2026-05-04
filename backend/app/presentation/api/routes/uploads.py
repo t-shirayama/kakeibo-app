@@ -8,11 +8,11 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_pdf_upload_use_cases
 from app.application.importing.upload_import import PdfUploadError, PdfUploadUseCases
 from app.domain.entities import Upload, UploadStatus
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
-from app.presentation.api.service_factories import build_pdf_upload_use_cases
 
 router = APIRouter()
 

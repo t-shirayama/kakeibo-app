@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_income_settings_use_cases
 from app.application.income_settings import (
     IncomeOverride,
     IncomeOverrideCommand,
@@ -18,7 +19,6 @@ from app.application.income_settings import (
 )
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
-from app.presentation.api.service_factories import build_income_settings_use_cases
 
 router = APIRouter()
 

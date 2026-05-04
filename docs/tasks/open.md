@@ -10,12 +10,6 @@
 
 ## 優先度B
 
-- [ ] service_factories.pyをbootstrap/container.pyへ移す
-  - 目的: presentation層をHTTP入出力へ集中させ、依存配線の肥大化を防ぐ。
-  - 対象: `backend/app/presentation/api/service_factories.py`, `backend/app/bootstrap/container.py`
-  - 対応: ユースケース、Repository、Parser、Storage、Settingsの組み立てをbootstrap層へ分離する。
-  - 完了条件: APIルートの動作が変わらず、関連バックエンドテストが通る。
-
 - [ ] applicationファイルを機能別ディレクトリへ分割する
   - 目的: `transactions.py` などの責務集中を避け、commands / ports / policies / use_cases を見つけやすくする。
   - 対象: `backend/app/application/transactions.py`
