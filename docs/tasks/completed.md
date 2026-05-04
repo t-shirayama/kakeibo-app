@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] レポート画面の年月入力UIを `type="month"` ベースへ改善する
+  - 対応: `frontend/src/features/reports/report-dashboard-page.tsx` の表示月入力を `type="text"` から `type="month"` へ変更し、ブラウザ標準の月選択UIを使う形へ寄せた。あわせて `docs/requirements/dashboard.md` と `frontend/e2e/dashboard.spec.ts` を現行挙動へ同期した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度C「フロントの年月入力は type="month" も検討したい」。
+
 - [x] 本番向けCookie設定の確認手順を文書化する
   - 対応: `README.md` と `docs/specs/security.md` に、本番では `COOKIE_SECURE=true` を必須とすること、`kakeibo_access` / `kakeibo_refresh` / `kakeibo_csrf_session` に `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/` が付いていることを確認する手順、ローカルとの差分、`SameSite=Lax` が成立する前提を追記した。
   - 確認: 文書内容を見直し、未確定事項チェックを実行して意図しないメモが増えていないことを確認した。

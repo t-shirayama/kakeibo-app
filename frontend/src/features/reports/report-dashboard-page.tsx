@@ -123,12 +123,8 @@ export function ReportDashboardPage() {
                 <input
                   aria-label="表示月"
                   className="input month-input"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="\d{4}-\d{2}"
-                  placeholder="YYYY-MM"
+                  type="month"
                   value={displayYearMonth}
-                  onInput={(event) => handleSelectedYearMonthInput(event.currentTarget.value)}
                   onChange={(event) => handleSelectedYearMonthInput(event.target.value)}
                   onBlur={() => setDisplayYearMonth(normalizeYearMonth(displayYearMonth) ?? selectedYearMonth)}
                 />

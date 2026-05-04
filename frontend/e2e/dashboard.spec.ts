@@ -6,6 +6,7 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
   await gotoAppPage(page, "/dashboard", "レポート");
 
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
+  await expect(page.getByLabel("表示月")).toHaveAttribute("type", "month");
   await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
   await expect(page.locator(".month-input-label span", { hasText: "表示月" })).toHaveClass(/sr-only/);
   const summarySection = page.getByLabel("家計サマリー");
