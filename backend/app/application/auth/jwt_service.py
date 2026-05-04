@@ -4,11 +4,11 @@ from uuid import uuid4
 
 import jwt
 
-from app.infrastructure.config import Settings
+from app.application.auth.ports import AuthSettings
 
 
 class JwtService:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: AuthSettings) -> None:
         self._settings = settings
 
     def issue_access_token(self, subject: str) -> str:

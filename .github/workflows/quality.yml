@@ -24,6 +24,9 @@ jobs:
       - name: Frontend typecheck
         run: docker compose run --rm --no-deps frontend npm run typecheck
 
+      - name: Backend layer dependency check
+        run: docker compose run --rm backend python -m pytest tests/application/test_layer_dependencies.py
+
       - name: ドキュメント未確定事項チェック
         shell: bash
         run: |

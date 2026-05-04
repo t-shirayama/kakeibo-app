@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] import依存ルールをCIでチェックする
+  - 対応: `backend/tests/application/test_layer_dependencies.py` を一般化し、`domain -> application/infrastructure/presentation` と `application -> infrastructure/presentation` の禁止を検証できるようにした。あわせて application 層の外側依存を Protocol / DTO へ寄せ、`.github/workflows/quality.yml` にレイヤ依存チェックを追加した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 54 件すべて通過した。
+  - 根拠: domain/application層の外側依存退行をCIで早期検出するため。
+
 - [x] applicationファイルを機能別ディレクトリへ分割する
   - 対応: `backend/app/application/transactions.py` を `backend/app/application/transactions/` 配下の `commands`、`ports`、`policies`、`use_cases` へ分割し、`__init__.py` から再公開する構成へ整理した。関連する application 設計文書も更新した。
   - 確認: `docker compose run --rm backend python -m pytest` が 53 件すべて通過した。

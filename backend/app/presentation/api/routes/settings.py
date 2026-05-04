@@ -7,10 +7,9 @@ from sqlalchemy.orm import Session
 from app.application.auth.ports import UserRecord
 from app.bootstrap.container import build_report_use_cases, build_settings_use_cases
 from app.application.reports import ReportUseCases
-from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand
+from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand, UserSettingsRecord
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.settings import UserSettingsRecord
 from app.presentation.api.cookies import delete_auth_cookie
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 

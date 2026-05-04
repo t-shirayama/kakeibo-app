@@ -10,17 +10,6 @@
 
 ## 優先度B
 
-- [ ] applicationファイルを機能別ディレクトリへ分割する
-  - 目的: `transactions.py` などの責務集中を避け、commands / ports / policies / use_cases を見つけやすくする。
-  - 対象: `backend/app/application/transactions.py`
-  - 対応: 機能単位のディレクトリ構成へ分割し、既存importを更新する。
-  - 完了条件: 分割後もAPI・ユースケース・リポジトリテストが通る。
-- [ ] import依存ルールをCIでチェックする
-  - 目的: domain/application層が外側の層へ依存する退行を早期検出する。
-  - 対象: `backend/app/`, `.github/workflows/`
-  - 対応: `domain -> application/infrastructure/presentation` と `application -> infrastructure/presentation` を禁止するチェックを追加する。
-  - 完了条件: CIまたは品質チェックで依存違反が検出でき、既存構成でチェックが通る。
-
 ## 優先度C
 
 - [ ] TanStack QueryのqueryKeysをfeatureごとに分離する

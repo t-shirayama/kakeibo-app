@@ -7,9 +7,8 @@ from uuid import UUID
 from app.application.auth.jwt_service import JwtService
 from app.application.auth.password_hasher import PasswordHasher
 from app.application.auth.password_policy import PasswordPolicy
-from app.application.auth.ports import AuthRepositoryPort, UserRecord
+from app.application.auth.ports import AuthRepositoryPort, AuthSettings, UserRecord
 from app.application.auth.token_hash import hash_token
-from app.infrastructure.config import Settings
 
 
 class AuthError(ValueError):
@@ -29,7 +28,7 @@ class AuthUseCases:
     def __init__(
         self,
         repository: AuthRepositoryPort,
-        settings: Settings,
+        settings: AuthSettings,
         password_policy: PasswordPolicy | None = None,
         password_hasher: PasswordHasher | None = None,
     ) -> None:
