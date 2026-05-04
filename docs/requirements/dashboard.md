@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/ToBe/dashboard.png`
+- `docs/designs/dashboard.png`
 
 ## 目的
 

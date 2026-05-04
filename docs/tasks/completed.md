@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] 初期デザイン案をアーカイブへ移し、現行画面スクリーンショットを正本へ置き換える
+  - 対応: `docs/designs/README.md` を新設し、ダッシュボード、カレンダー、明細一覧、収入設定、アップロード、カテゴリ管理、設定、明細編集モーダルの現行スクリーンショットを配置した。初期構想の SVG 群と `ToBe/` は `docs/designs/archive/` へ移し、旧レポート画面の `reports.png` も `archive/legacy-screens/` へ退避した。あわせて `README.md` に画面イメージの埋め込み、`docs/README.md` と各画面要件の `対応デザイン`、`docs/specs/project-rules.md` の参照先を新構成へ同期した。
+  - 確認: `docker compose run --rm -e DOC_SCREENSHOT_CAPTURE=1 e2e npx playwright test docs-screenshots.spec.ts` で現行スクリーンショットを再生成し、未確定事項チェックを実行して意図しないメモがないことを確認した。
+  - 根拠: ユーザー依頼「designの初期構想をアーカイブに移動して現在の画面スクショに置き換えてほしい。そしてREADME.mdに画面イメージを参照して表示するようにしたい。」。
+
 - [x] レポート画面の年月入力UIを `type="month"` ベースへ改善する
   - 対応: `frontend/src/features/reports/report-dashboard-page.tsx` の表示月入力を `type="text"` から `type="month"` へ変更し、ブラウザ標準の月選択UIを使う形へ寄せた。あわせて `docs/requirements/dashboard.md` と `frontend/e2e/dashboard.spec.ts` を現行挙動へ同期した。
   - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts` が通過した。

@@ -3,7 +3,6 @@
 ## 対応デザイン
 
 - `docs/designs/upload.png`
-- `docs/designs/upload.svg`
 
 ## 目的
 

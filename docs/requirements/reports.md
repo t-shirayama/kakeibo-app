@@ -2,8 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/reports.png`
-- `docs/designs/reports.svg`
+- `docs/designs/dashboard.png`
 
 ## 目的
 

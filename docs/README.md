@@ -13,7 +13,7 @@
 画面共通の表示前提は `docs/requirements/common.md`
 5. E2Eテストの実行方法やシナリオを確認する: [E2Eテスト](e2e/index.md)
 6. 個別仕様を確認する: `docs/specs/` 配下の該当文書
-7. 画面デザイン画像を確認する: `docs/designs/`
+7. 画面イメージを確認する: [画面イメージ一覧](designs/README.md)
 8. 実装タスクを確認する: [タスク管理](tasks/)
 
 ## 構成
@@ -22,6 +22,8 @@
 docs/
 ├── README.md
 ├── designs/
+│   ├── README.md
+│   └── archive/
 ├── e2e.md
 ├── e2e/
 ├── requirements.md

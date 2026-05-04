@@ -3,7 +3,6 @@
 ## 対応デザイン
 
 - `docs/designs/categories.png`
-- `docs/designs/categories.svg`
 
 ## 目的
 

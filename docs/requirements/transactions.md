@@ -3,7 +3,6 @@
 ## 対応デザイン
 
 - `docs/designs/transactions.png`
-- `docs/designs/transactions.svg`
 
 ## 目的
 

@@ -3,7 +3,6 @@
 ## 対応デザイン
 
 - `docs/designs/settings.png`
-- `docs/designs/settings.svg`
 
 ## 目的
 
