@@ -13,7 +13,7 @@
 関連ファイルの役割は以下とする。
 
 - `docs/specs/project-rules.md`: SSOT全体の入口と、更新先の判断基準を置く。
-- `docs/specs/development-workflow.md`: 仕様更新、テスト更新、Docker Compose での確認、CI、Dependabot運用を置く。
+- `docs/specs/development-workflow.md`: 仕様更新、単体テスト・Integration Test・E2Eの方針、Docker Compose での確認、CI、Dependabot運用を置く。
 - `docs/specs/architecture-principles.md`: 技術スタック、レイヤ構成、依存方向、システム境界を置く。
 - `docs/specs/domain-model.md`: ドメイン概念、不変条件、業務ルールを置く。
 - `docs/specs/api-specs.md`: APIの共通契約とエンドポイント概要を置く。
@@ -44,7 +44,7 @@
   - DB項目、永続化方針: `db-schema.md`
   - 認証、認可、Cookie、CSRF、パスワード、削除保護: `security.md`
   - PDF取込、抽出、保存、重複判定: `pdf-import.md`
-  - 開発手順、テスト方針、CI、Dependabot: `development-workflow.md`
+  - 開発手順、単体テスト・Integration Test・E2Eの方針、CI、Dependabot: `development-workflow.md`
   - レイヤ構成、依存方向、システム境界: `architecture-principles.md`
   - 画面の表示、操作、例外状態: `docs/requirements/`
   - E2Eの対象、観点、実行方法: `docs/e2e/index.md` と `docs/e2e/`

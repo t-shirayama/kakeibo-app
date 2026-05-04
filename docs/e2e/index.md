@@ -8,7 +8,7 @@
 
 Playwrightで Next.js、FastAPI、MySQL を実際に接続し、ユーザー操作からAPI、認証Cookie、DB永続化までの結合を確認する。
 
-E2Eでは単体テストやAPIテストで検証済みの細かい分岐を重複して網羅しない。画面操作、認証、CSRF、Cookie、API接続、主要データ表示、破壊的操作のガードなど、結合時に壊れやすい観点を優先する。
+E2Eでは単体テストやIntegration Testで検証済みの細かい分岐を重複して網羅しない。画面操作、認証、CSRF、Cookie、実バックエンドとのAPI接続、主要データ表示、破壊的操作のガードなど、フルスタック結合時に壊れやすい観点を優先する。
 
 Backend Integration Test は `backend/tests/integration/` の FastAPI + MySQL を通す API 結合テストとして扱い、認証・CSRF・明細操作・月次集計の最重要経路を E2E より小さく確認する。バックエンドの単体寄りテストは `backend/tests/unit/` に分けて置く。Frontend Integration Test は `frontend/src/test/integration/` に置き、Vitest / React Testing Library / MSW による API mock 前提の画面結合テストとして扱う。フロントエンドの単体テストは `frontend/src/test/unit/` に置く。E2Eは実ブラウザ、実バックエンド、MySQL、Cookieを含む代表導線に集中し、細かいエラー分岐や表示再取得は Integration Test へ寄せる。
 
@@ -78,9 +78,10 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 コード変更時は、変更が影響するテスト層を同じ作業内で更新する。
 
 - ドメインルールや値オブジェクトを変更した場合は、該当する単体テストを更新する。
-- ユースケース、リポジトリ、API契約を変更した場合は、アプリケーション/API/リポジトリのテストを更新する。
+- ユースケース、リポジトリ、API契約を変更した場合は、該当する単体テストまたはBackend Integration Testを更新する。
+- 画面内の表示分岐、API mock 前提のエラー表示、条件変更による再取得を変更した場合は、Frontend Integration Testを更新する。
 - 画面の表示、操作、遷移、API接続、認証導線、エクスポート、主要なユーザーフローを変更した場合は、E2Eと該当するシナリオファイルを更新する。
-- E2Eの対象外にする場合は、既存の単体テスト/APIテストで同じリスクを検証できる理由をPRや作業メモに残す。
+- E2Eの対象外にする場合は、既存の単体テストまたはIntegration Testで同じリスクを検証できる理由をPRや作業メモに残す。
 
 E2Eを追加・修正した場合は、少なくとも次を確認する。
 
@@ -91,6 +92,7 @@ docker compose run --rm e2e
 関連する通常チェックも必要に応じて実行する。
 
 ```powershell
+docker compose run --rm --no-deps backend python -m pytest tests/unit
 docker compose run --rm backend python -m pytest -m integration
 docker compose run --rm --no-deps frontend npm run typecheck
 docker compose run --rm --no-deps frontend npm run test:unit

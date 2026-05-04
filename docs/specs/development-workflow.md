@@ -22,7 +22,7 @@
 
 ## テスト更新ルール
 
-- コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。
+- コードを変更した場合は、影響する単体テスト、Backend / Frontend Integration Test、E2Eを同じ作業内で更新する。
 - テストを更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
 - ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
@@ -37,7 +37,7 @@
 - `frontend/Dockerfile.dev` は通常開発用、`frontend/Dockerfile.e2e` は Playwright とE2E用バックエンド実行環境を含む検証用、`frontend/Dockerfile.prod` は本番ビルド確認用として分ける。
 - バックエンドテスト全体は `docker compose run --rm backend python -m pytest` を基本コマンドとする。
 - バックエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps backend python -m pytest tests/unit` を使う。単体テストはMySQL起動に依存させない。
-- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。CI の `test` workflow では Alembic 適用確認後に単体テスト、Integration Test、E2Eを別ステップで実行する。
+- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。CI の `test` workflow では Alembic 適用確認後にバックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを別ステップで実行する。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。
 - フロントエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:unit`、Integration Test だけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:integration` を使う。どちらもバックエンドやMySQL起動に依存させない。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。
@@ -48,7 +48,7 @@
 - GitHub ActionsのCIは `quality` と `test` に分ける。
 - `quality` では `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、未確定事項チェック、シークレットスキャン、OpenAPI生成物チェックを実行する。
 - `quality` ではあわせて `backend/requirements.lock` の再生成差分も検証する。
-- `test` では Alembic 適用確認、`pytest`、E2Eを実行する。
+- `test` では Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを分けて実行する。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
 - バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
 - 依存更新は Dependabot で管理し、少なくとも `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile の更新PRを週次で自動作成する。

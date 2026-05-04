@@ -63,9 +63,9 @@ docs/
 
 ## テスト
 
-テスト方針の正本は [開発・運用ワークフロー](specs/development-workflow.md) です。
+テスト方針の正本は [開発・運用ワークフロー](specs/development-workflow.md) です。単体テスト、Integration Test、E2Eの住み分け、フォルダ構成、Docker Composeでの実行コマンド、CIの実行単位は同文書を参照してください。
 
-E2Eの実行方法と更新方針は [E2Eテスト](e2e/index.md) を参照してください。シナリオ詳細は `docs/e2e/` 配下に分割しています。
+E2Eの実行方法と更新方針は [E2Eテスト](e2e/index.md) を参照してください。E2Eでは実ブラウザ、実バックエンド、MySQLを含む代表導線を扱い、細かい分岐は単体テストやIntegration Testへ寄せます。シナリオ詳細は `docs/e2e/` 配下に分割しています。
 
 ## タスク
 

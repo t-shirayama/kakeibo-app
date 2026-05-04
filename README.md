@@ -115,7 +115,11 @@ docker compose down -v
 ```powershell
 npm run dev
 npm run test:backend
+npm run test:backend:unit
+npm run test:backend:it
 npm run test:frontend
+npm run test:frontend:unit
+npm run test:frontend:integration
 npm run test:e2e
 ```
 
@@ -151,16 +155,20 @@ npm run test:e2e
 
 ```powershell
 docker compose run --rm backend python -m pytest
+docker compose run --rm --no-deps backend python -m pytest tests/unit
+docker compose run --rm backend python -m pytest -m integration
 docker compose run --rm backend python -m alembic upgrade head
 docker compose run --rm --no-deps frontend npm run lint
 docker compose run --rm --no-deps frontend npm run typecheck
+docker compose run --rm --no-deps frontend npm run test:unit
+docker compose run --rm --no-deps frontend npm run test:integration
 docker compose run --rm --no-deps frontend npm run test:pages
 docker compose run --rm --no-deps secret-scan git /repo --no-banner --redact
 docker compose run --rm --no-deps frontend npm run build
 docker compose run --rm e2e
 ```
 
-E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/e2e/index.md](docs/e2e/index.md) を参照してください。
+単体テストと結合テストの置き場、実行コマンド、CIでの実行単位は [docs/specs/development-workflow.md](docs/specs/development-workflow.md) を参照してください。E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/e2e/index.md](docs/e2e/index.md) を参照してください。
 
 ### OWASP ZAPスキャン
 
@@ -195,7 +203,7 @@ docker compose run --rm zap
 GitHub Actions のCIは `quality` と `test` の2系統に分けます。
 
 - `quality`: `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、ドキュメント未確定事項チェック、シークレットスキャン、OpenAPI生成物チェック
-- `test`: `backend` の Alembic 適用確認、`pytest`、`e2e`
+- `test`: `backend` の Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2E
 
 シークレットスキャンは `gitleaks` の `git` モードを使い、追跡対象の差分と履歴を中心に確認します。
 
@@ -210,7 +218,10 @@ docker compose run --rm --no-deps frontend npm run build
 docker compose run --rm backend python scripts/generate_openapi_client.py --check
 docker compose run --rm backend python scripts/generate_requirements_lock.py --check
 docker compose run --rm backend python -m alembic upgrade head
-docker compose run --rm backend python -m pytest
+docker compose run --rm --no-deps backend python -m pytest tests/unit
+docker compose run --rm backend python -m pytest -m integration
+docker compose run --rm --no-deps frontend npm run test:unit
+docker compose run --rm --no-deps frontend npm run test:integration
 docker compose run --rm e2e
 if rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"; then exit 1; fi
 ```
