@@ -72,7 +72,7 @@ export function ReportDashboardPage() {
   }
 
   return (
-    <>
+    <div className="report-dashboard-page">
       <PageHeader
         title="レポート"
         subtitle="お金の流れを振り返り、より良い家計管理に役立てましょう。"
@@ -234,7 +234,7 @@ export function ReportDashboardPage() {
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

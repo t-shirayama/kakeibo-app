@@ -147,7 +147,7 @@ textarea {
 .main {
   min-width: 0;
   min-height: 0;
-  padding: 34px;
+  padding: 26px 28px;
   overflow: auto;
 }
 
@@ -156,7 +156,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .page-title {
@@ -181,6 +181,7 @@ textarea {
 
 .report-toolbar {
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .filter-panel {
@@ -319,14 +320,17 @@ textarea {
 
 .report-metric-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .report-main-grid {
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 14px;
 }
 
 .report-bottom-grid {
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+  gap: 14px;
 }
 
 .card {
@@ -343,19 +347,19 @@ textarea {
 .summary-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
-  min-height: 124px;
-  padding: 24px 22px;
+  gap: 14px;
+  min-height: 104px;
+  padding: 18px 18px 16px;
   border-color: #dfe7f3;
-  border-radius: 16px;
-  box-shadow: 0 14px 30px rgb(15 23 42 / 6%);
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgb(15 23 42 / 5%);
 }
 
 .summary-card-icon {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
 }
 
@@ -384,23 +388,24 @@ textarea {
 }
 
 .summary-card-label {
-  margin: 2px 0 8px;
+  margin: 2px 0 6px;
   color: var(--muted-strong);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
 }
 
 .summary-card-value {
   margin: 0;
-  font-size: clamp(1.75rem, 2vw, 2.2rem);
+  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
+  line-height: 1.06;
 }
 
 .summary-card-delta {
-  margin: 10px 0 0;
-  font-size: 13px;
+  margin: 8px 0 0;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -465,12 +470,12 @@ textarea {
 }
 
 .panel {
-  padding: 22px;
+  padding: 18px;
 }
 
 .panel-title {
-  margin: 0 0 18px;
-  font-size: 15px;
+  margin: 0 0 14px;
+  font-size: 14px;
   font-weight: 850;
 }
 
@@ -479,7 +484,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .panel-header .panel-title {
@@ -488,7 +493,7 @@ textarea {
 
 .panel-caption {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -699,13 +704,13 @@ textarea {
 
 .chart-shell {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .chart-plot {
   display: grid;
   grid-template-columns: 44px 1fr;
-  min-height: 220px;
+  min-height: 192px;
 }
 
 .chart-y-axis {
@@ -726,8 +731,8 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
-  min-height: 220px;
-  padding: 0 10px;
+  min-height: 192px;
+  padding: 0 8px;
   border-left: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   background:
@@ -775,8 +780,8 @@ textarea {
   justify-content: center;
   gap: 5px;
   width: 100%;
-  min-height: 176px;
-  padding-top: 8px;
+  min-height: 148px;
+  padding-top: 6px;
 }
 
 .chart-bar {
@@ -803,9 +808,9 @@ textarea {
 .chart-legend {
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 12px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .chart-legend span {
@@ -834,7 +839,7 @@ textarea {
 }
 
 .section-gap {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .category-list {
@@ -856,14 +861,14 @@ textarea {
   display: grid;
   grid-template-columns: minmax(180px, 0.76fr) minmax(220px, 1fr);
   align-items: center;
-  gap: 22px;
+  gap: 16px;
 }
 
 .category-pie-chart-wrap {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(220px, 100%);
+  width: min(188px, 100%);
   aspect-ratio: 1;
   justify-self: center;
 }
@@ -918,19 +923,19 @@ textarea {
 }
 
 .category-pie-center strong {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 850;
 }
 
 .category-pie-legend {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .category-pie-legend-row {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   color: inherit;
   text-align: left;
   background: #ffffff;
@@ -947,15 +952,15 @@ textarea {
 
 .insight-list {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .insight-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
-  padding: 18px;
-  border-radius: 14px;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
   box-shadow: inset 0 0 0 1px #edf2f7;
 }
@@ -966,17 +971,17 @@ textarea {
 }
 
 .insight-card p {
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--muted-strong);
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .insight-icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
 }
 
@@ -998,7 +1003,25 @@ textarea {
 .category-name-cell {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.report-dashboard-page .data-table {
+  font-size: 11.5px;
+}
+
+.report-dashboard-page .data-table th,
+.report-dashboard-page .data-table td {
+  padding: 10px 12px;
+}
+
+.report-dashboard-page .month-input {
+  width: 132px;
+}
+
+.report-dashboard-page .button.secondary {
+  min-height: 34px;
+  padding: 0 12px;
 }
 
 .expense-improved {
@@ -1567,5 +1590,9 @@ textarea {
 
   .summary-card {
     grid-template-columns: 1fr;
+  }
+
+  .report-dashboard-page .data-table {
+    font-size: 12px;
   }
 }
