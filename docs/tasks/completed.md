@@ -4,6 +4,16 @@
 
 ## 最近の完了タスク
 
+- [x] 画面要件の共通表示ルールを `requirements/common.md` へ分離する
+  - 対応: `docs/requirements/common.md` を新設し、共通表示ルールを移した。`docs/requirements.md` は入口へ戻し、`docs/README.md` と `README.md` から新しい共通要件文書へ辿れるよう導線を更新した。
+  - 確認: `docs/requirements.md` と `docs/requirements/common.md` の内容を確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。
+  - 根拠: `requirements.md` を索引として保ちつつ、共通表示前提の置き場所を明確にするため。
+
+- [x] `project-rules.md` を薄い入口へ再編する
+  - 対応: `docs/specs/project-rules.md` を入口文書へ再構成し、`docs/specs/development-workflow.md` と `docs/specs/architecture-principles.md` を新設した。あわせて、共通要件の一部を `domain-model.md`、`api-specs.md`、`security.md`、`pdf-import.md`、`docs/requirements/` へ移し、`docs/README.md`、`README.md`、`.codex/AGENTS.md`、`docs/e2e/index.md` の参照導線を更新した。
+  - 確認: 文書リンクと内容の整合を目視確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。
+  - 根拠: `project-rules.md` に入口、運用、設計原則、共通要件が混在していたため、責務ごとに読める形へ整理するため。
+
 - [x] Dependabotを導入する
   - 対応: `.github/dependabot.yml` を追加し、`frontend` の npm、`backend` の Python、GitHub Actions、`backend` / `frontend` の Dockerfile を週次で更新する設定を追加した。あわせて `docs/specs/project-rules.md` と `docs/README.md` に依存更新運用を追記した。
   - 確認: `.github/dependabot.yml` を目視確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。

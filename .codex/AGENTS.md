@@ -4,6 +4,7 @@
 
 - 日本語で簡潔かつ丁寧に回答してください。
 - 実装や仕様確認で迷った場合は、まず `docs/README.md` を読み、次に `docs/specs/project-rules.md` を確認してください。
+- `docs/specs/project-rules.md` は入口文書です。開発フローは `docs/specs/development-workflow.md`、設計原則は `docs/specs/architecture-principles.md` を参照してください。
 - `.codex/config.toml` は Codex の設定ファイルであり、プロジェクト仕様の正本ではありません。
 
 ## 参照順

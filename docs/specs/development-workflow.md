@@ -1,0 +1,50 @@
+# 開発・運用ワークフロー
+
+## この文書の役割
+
+この文書は、仕様更新、テスト更新、Docker Compose での確認、CI、依存更新のような開発・運用フローの正本をまとめる。
+
+アーキテクチャ原則は `architecture-principles.md`、業務仕様は各SSOTを参照する。
+
+## 仕様更新ルール
+
+- 仕様、設計、技術選定、画面要件、データモデル、API、セキュリティ、運用方針を変更した場合は、関連するSSOT文書を同じ作業内で更新する。
+- `.codex/config.toml` はSSOTではなくCodexのローカル実行設定として扱う。Codexの参照入口、プロジェクトルート判定、承認・サンドボックス方針を変更した場合だけ同期する。
+- アーキテクチャ上の重要な決定を追加・変更した場合は `docs/specs/adrs/` にADRを追加または更新する。
+- 画面の振る舞い、表示項目、操作、例外状態を変更した場合は `docs/requirements/` の該当画面要件を更新する。
+- API仕様を変更した場合は `docs/specs/api-specs.md` を更新する。
+- DB項目や永続化方針を変更した場合は `docs/specs/db-schema.md` を更新する。
+- ドメイン概念、不変条件、業務ルールを変更した場合は `docs/specs/domain-model.md` を更新する。
+- セキュリティ、認証、認可、Cookie、CSRF、パスワード、ファイルアップロードの方針を変更した場合は `docs/specs/security.md` を更新する。
+- PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import.md` を更新する。
+- 用語を追加・変更した場合は `docs/specs/glossary.md` を更新する。
+- E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/e2e/index.md` と該当する `docs/e2e/` 配下のシナリオを更新する。
+
+## テスト更新ルール
+
+- コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。
+- テストを更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
+- ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
+- ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
+- インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
+- 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。
+
+## Docker Compose での確認ルール
+
+- 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
+- バックエンドテストは `docker compose run --rm backend python -m pytest` を基本コマンドとする。
+- フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。
+- E2Eは `docker compose run --rm e2e` を基本コマンドとする。
+- Alembic適用確認は `docker compose run --rm backend python -m alembic upgrade head` を使う。
+
+## CI と自動化
+
+- GitHub ActionsのCIは `quality` と `test` に分ける。
+- `quality` では `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、未確定事項チェック、シークレットスキャン、OpenAPI生成物チェックを実行する。
+- `test` では Alembic 適用確認、`pytest`、E2Eを実行する。
+- APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
+- 依存更新は Dependabot で管理し、少なくとも `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile の更新PRを週次で自動作成する。
+
+## ドキュメント品質チェック
+
+- ドキュメント更新後は `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` を実行し、意図しない未確定事項が残っていないか確認する。

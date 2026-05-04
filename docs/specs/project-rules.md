@@ -1,22 +1,29 @@
 # プロジェクトルール
 
-## ドキュメント管理
+## この文書の役割
+
+この文書は、`docs/specs/` 全体の入口として、参照導線と最重要の横断ルールだけをまとめる。
+
+詳細な開発・運用ルールは `development-workflow.md`、横断的な設計原則は `architecture-principles.md`、業務仕様は各SSOTを参照する。
+
+## ドキュメント構成
 
 `docs/specs/` を仕様書のSSOTとする。
 
-- ドメインモデル: `docs/specs/domain-model.md`
-- API仕様: `docs/specs/api-specs.md`
-- DBスキーマ: `docs/specs/db-schema.md`
-- 用語集: `docs/specs/glossary.md`
-- バックエンド設計: `docs/specs/backend-architecture.md`
-- フロントエンド設計: `docs/specs/frontend-architecture.md`
-- PDF取込仕様: `docs/specs/pdf-import.md`
-- セキュリティ仕様: `docs/specs/security.md`
-- プロジェクトルール: `docs/specs/project-rules.md`
-- アーキテクチャ決定記録: `docs/specs/adrs/`
-
 関連ファイルの役割は以下とする。
 
+- `docs/specs/project-rules.md`: SSOT全体の入口と、更新先の判断基準を置く。
+- `docs/specs/development-workflow.md`: 仕様更新、テスト更新、Docker Compose での確認、CI、Dependabot運用を置く。
+- `docs/specs/architecture-principles.md`: 技術スタック、レイヤ構成、依存方向、システム境界を置く。
+- `docs/specs/domain-model.md`: ドメイン概念、不変条件、業務ルールを置く。
+- `docs/specs/api-specs.md`: APIの共通契約とエンドポイント概要を置く。
+- `docs/specs/db-schema.md`: DBスキーマと永続化モデルを置く。
+- `docs/specs/security.md`: 認証、認可、Cookie、CSRF、パスワード、削除保護、セキュリティスキャンを置く。
+- `docs/specs/pdf-import.md`: PDF取込、抽出、保存、重複判定を置く。
+- `docs/specs/backend-architecture.md`: バックエンドの詳細設計を置く。
+- `docs/specs/frontend-architecture.md`: フロントエンドの詳細設計を置く。
+- `docs/specs/glossary.md`: 用語集を置く。
+- `docs/specs/adrs/`: 重要な設計判断の履歴を置く。
 - `docs/README.md`: 人間向けのドキュメント入口。参照先の案内を置く。
 - `.codex/AGENTS.md`: Codex向けの最小ルールと参照索引。仕様本文は置かない。
 - `.codex/config.toml`: Codexのローカル実行設定。プロジェクト仕様のSSOTではない。
@@ -28,151 +35,36 @@
 
 画面別要件の詳細は現時点では `docs/requirements/` に置く。将来、画面仕様をSSOT配下へ移す場合は、リンク切れが起きないようまとめて移動する。
 
-## 仕様更新ルール
+## 変更時の参照先
 
-- 仕様、設計、技術選定、画面要件、データモデル、API、セキュリティ、運用方針を変更した場合は、関連するSSOT文書を同じ作業内で更新する。
-- `.codex/config.toml` はSSOTではなくCodexのローカル実行設定として扱う。Codexの参照入口、プロジェクトルート判定、承認・サンドボックス方針を変更した場合だけ同期する。
-- アーキテクチャ上の重要な決定を追加・変更した場合は `docs/specs/adrs/` にADRを追加または更新する。
-- 画面の振る舞い、表示項目、操作、例外状態を変更した場合は `docs/requirements/` の該当画面要件を更新する。
-- API仕様を変更した場合は `docs/specs/api-specs.md` を更新する。
-- DB項目や永続化方針を変更した場合は `docs/specs/db-schema.md` を更新する。
-- ドメイン概念、不変条件、業務ルールを変更した場合は `docs/specs/domain-model.md` を更新する。
-- セキュリティ、認証、認可、Cookie、CSRF、パスワード、ファイルアップロードの方針を変更した場合は `docs/specs/security.md` を更新する。
-- PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import.md` を更新する。
-- 用語を追加・変更した場合は `docs/specs/glossary.md` を更新する。
-- E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/e2e/index.md` と該当する `docs/e2e/` 配下のシナリオを更新する。
-- コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
-- ドキュメント更新後は `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` を実行し、意図しない未確定事項が残っていないか確認する。
+- 仕様、設計、画面要件、運用フローを変更する場合は、関連するSSOT文書を同じ作業内で更新する。
+- 変更内容ごとの更新先は次を基本とする。
+  - 業務ルール、不変条件、集約: `domain-model.md`
+  - API契約、DTO、ページング、エラー形式: `api-specs.md`
+  - DB項目、永続化方針: `db-schema.md`
+  - 認証、認可、Cookie、CSRF、パスワード、削除保護: `security.md`
+  - PDF取込、抽出、保存、重複判定: `pdf-import.md`
+  - 開発手順、テスト方針、CI、Dependabot: `development-workflow.md`
+  - レイヤ構成、依存方向、システム境界: `architecture-principles.md`
+  - 画面の表示、操作、例外状態: `docs/requirements/`
+  - E2Eの対象、観点、実行方法: `docs/e2e/index.md` と `docs/e2e/`
 
-## 技術スタック
+## 最重要の横断ルール
 
-- バックエンドは FastAPI で開発する。
-- フロントエンドは Next.js で開発する。
-- フロントエンドは Next.js App Router を使う。
-- データベースは MySQL 8.4 を使う。
-- ORMは SQLAlchemy、マイグレーションは Alembic を使う。
-- 認証はJWTを使う。
-- JWTは HttpOnly Cookie に保存する。
-- リフレッシュトークンを使う。
-- アクセストークンの有効期限は15分、リフレッシュトークンの有効期限は5日とする。
-- リフレッシュトークンはローテーションする。
-- CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
-- CSRFトークンは `GET /api/auth/csrf` で取得する。
-- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
-- CSRFトークンの有効期限は30分とする。
-- Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
-- JWTライブラリは PyJWT を使う。
-- ユーザー登録は管理者が行う。
-- パスワードは12文字以上とし、英大文字、英小文字、数字、記号をそれぞれ1文字以上含める。
-- パスワードリセットを初期実装に含める。
-- アーキテクチャはドメイン駆動設計（DDD）を採用する。
+- 仕様の正本は `docs/specs/` 配下に置き、`.codex/config.toml` は仕様の正本として扱わない。
+- API契約の機械可読な正は FastAPI が生成する OpenAPI とする。
+- ドメインルールはバックエンドへ集約し、フロントエンドへ重複実装しない。
+- 表示用の共通業務ルールは、画面ごとに重複実装せず、バックエンドまたは共有ヘルパーで一元化する。
+- 動作確認やテストは Docker Compose のコンテナ内実行を標準とする。
 
-## レイヤ構成
+## 詳細への導線
 
-実装は以下の責務分離を基本とする。
-
-- ドメイン層: 業務概念、値オブジェクト、エンティティ、集約、ドメインサービス、リポジトリインターフェースを置く。
-- アプリケーション層: ユースケース、トランザクション境界、入力検証の調整、ドメインオブジェクトの呼び出しを行う。
-- インフラ層: データベース、外部API、PDF解析、ファイル保存などの技術詳細を実装する。
-- プレゼンテーション層: 画面、フォーム、APIルート、表示用DTO、ユーザー操作の受け付けを担当する。
-
-バックエンドの基本フォルダ構成は以下とする。
-
-```text
-backend/
-└── app/
-    ├── bootstrap/
-    ├── domain/
-    ├── application/
-    ├── infrastructure/
-    └── presentation/
-```
-
-## 依存関係のルール
-
-- ドメイン層は他の層に依存しない。
-- アプリケーション層はドメイン層に依存してよい。
-- インフラ層はドメイン層およびアプリケーション層で定義されたインターフェースを実装してよい。
-- プレゼンテーション層はアプリケーション層を呼び出す。
-- アプリケーション層の責務が大きくなった機能は、`app/application/<feature>/` 配下へ分け、`commands`、`ports`、`policies`、`use_cases` を機能単位で整理する。
-- ドメインモデルを直接変更する処理を画面側に書かない。
-- データベーススキーマ、ORM、HTTP、PDFライブラリなどの技術詳細をドメイン層へ持ち込まない。
-- リポジトリ実装は、少なくとも「集約の保存/取得」「一覧検索・表示用クエリ」「監査ログ」のような独立した変更理由を同じクラスへ混在させない。
-- アプリケーションサービスは、明細操作とカテゴリ管理のように変更理由が異なるユースケースを1クラスへまとめない。
-- 帳票やExcelなどの出力形式の組み立ては、集計や業務計算を行うユースケース本体から分離する。
-
-## フロントエンドとバックエンドの境界
-
-- FastAPI はAPI、ユースケース呼び出し、認証・認可、ファイルアップロード、PDF解析連携、永続化連携を担当する。
-- Next.js は画面表示、フォーム操作、クライアント側の状態管理、API呼び出しを担当する。
-- ドメインルールはバックエンドのドメイン層に集約し、Next.js 側に業務判断を重複実装しない。
-- フロントエンドとバックエンドの境界はAPI契約で管理する。
-- API契約の機械可読な正はFastAPIが生成するOpenAPIとし、Swagger UIで確認できるようにする。
-- 画面表示に必要なデータはDTOとして返し、ドメインモデルをそのまま外部公開しない。
-- 無効化カテゴリを未分類表示に寄せるなどの表示用業務ルールは、画面ごとに再実装せず、バックエンドまたは共有ヘルパーで一元化する。
-
-## 共通要件
-
-- 金額は日本円を前提に表示する。
-- 金額は整数JPYとして扱い、マイナス金額は取消明細を表す。
-- 0円明細を許可する。
-- 日付は初期表示では `YYYY/MM/DD` 形式を使う。
-- タイムゾーンは `Asia/Tokyo` を基準にする。
-- DBにはUTC日時を保存し、表示時に `Asia/Tokyo` へ変換する。
-- 一覧、集計、レポートはログインユーザー本人のデータのみを扱う。
-- PDFアップロード、明細登録、明細編集、カテゴリ変更などの変更操作は、成功・失敗がユーザーに分かるようにする。
-- 最大アップロードサイズは10MBとする。
-- エクスポート形式はExcel（`.xlsx`）とする。
-- 支払い方法は楽天PDFの値をそのまま保存する。
-- 初回取込時のカテゴリは未分類とし、ユーザーが分類する。
-- 次回以降は同一項目の過去分類からルールベースで自動分類する。
-- 過去分類が見つからない場合は未分類にする。
-- 収入明細は支出明細と同じ `transactions` テーブルで扱い、`transaction_type` で区別する。
-- 収入設定は家族や本人など対象者ごとに毎月の金額、発生日、カテゴリを持つ。
-- 収入設定は対象月ごとに金額と発生日を上書きできる。
-- 発生日を迎えた収入設定は、同じ収入設定・同じ対象月で重複しないよう収入明細を自動追加する。
-- 発生日が月末日を超える月は、その月の末日を発生日として扱う。
-- 明細、カテゴリ、アップロード履歴は論理削除する。
-- アップロード履歴を論理削除したとき、保存済みPDF原本も即削除する。
-- ユーザー削除時はユーザーと関連データを論理削除し、保存済みPDF原本はストレージから削除する。
-- アップロード済みPDFの保存パスは `storage/uploads/{user_id}/{upload_id}/original.pdf` の相対パスとする。
-- PDF抽出ライブラリは PyMuPDF を使う。
-- 楽天カード明細PDFのテストデータは、抽出後テキストfixtureと期待値JSONで管理する。
-- `source_upload_id` 以外の抽出元情報として、`source_file_name`, `source_row_number`, `source_page_number`, `source_format`, `source_hash` を保存する。
-- MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
-- UIライブラリは shadcn/ui と Tailwind CSS を使う。
-- フロントエンドのサーバー状態管理は TanStack Query を使い、グローバル状態は最小限にする。
-- APIクライアントはOpenAPIから自動生成する。
-- CSRFトークンはフロントエンドのメモリに保持し、期限切れまたは403時に再取得する。
-- 初期カテゴリはユーザー作成時にユーザーごとに複製する。
-- 使用中カテゴリは物理削除せず、既存明細のカテゴリ参照を維持したまま論理削除または無効化する。
-- 無効化または論理削除されたカテゴリに紐づく明細は、明細一覧の表示と未分類絞り込みでは未分類として扱う。
-- ダッシュボードの初期表示月は当月とする。
-- 最近の取引の表示件数は5件とする。
-- 通貨は初期リリースではJPY固定とする。
-- ダークモードは初期リリースでは設定項目のみ用意し、表示切り替え実装は後回しにする。
-- 全データ削除時はパスワード再入力または確認文字列入力を必須とする。
-- メモの最大文字数は500文字とする。
-- レポート集計単位は月別、週別、年別とする。
-- 1ページあたりの初期表示件数は10件とし、設定で10件、20件、50件を選択できるようにする。
-- ページネーションは `page` と `page_size` を使うoffset/page方式とする。
-- APIとフロントDTOのID項目名は `transaction_id` などのsnake_caseで統一する。
-- APIエラーは `error.code`, `error.message`, `error.details`, `error.request_id` を持つ共通形式で返す。
-- Excel出力には明細一覧、カテゴリ集計、月別集計を含める。
-- 明細編集、明細削除、アップロード失敗などを監査ログとして残す。
-- メール通知は初期リリースでは実装しない。
-- 多通貨対応は初期リリースでは実装しない。
-- S3互換ストレージ移行は初期リリースでは実装しない。
-- ダークモードの表示切り替えは初期リリースでは実装しない。
-
-## テスト方針
-
-- ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
-- ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
-- インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
-- 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。E2Eの詳細は `docs/e2e/index.md` を参照する。
-- コードを変更した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新する。更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
-- 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
-- バックエンドテストは `docker compose run --rm backend python -m pytest`、フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` / `docker compose run --rm --no-deps frontend npm run build`、E2Eは `docker compose run --rm e2e` を基本コマンドとする。
-- GitHub ActionsのCIは `quality` と `test` に分け、`quality` では `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、未確定事項チェック、シークレットスキャンを実行し、`test` では Alembic 適用確認、`pytest`、E2Eを実行する。
-- 依存更新は Dependabot で管理し、少なくとも `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile の更新PRを週次で自動作成する。
+- 開発・運用ルール: `development-workflow.md`
+- 横断アーキテクチャ原則: `architecture-principles.md`
+- ドメイン仕様: `domain-model.md`
+- API仕様: `api-specs.md`
+- DBスキーマ: `db-schema.md`
+- セキュリティ仕様: `security.md`
+- PDF取込仕様: `pdf-import.md`
+- バックエンド詳細設計: `backend-architecture.md`
+- フロントエンド詳細設計: `frontend-architecture.md`

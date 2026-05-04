@@ -16,15 +16,6 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - 金額は数値で返し、表示形式への変換はフロントエンドで行う。
 - 変更操作は成功・失敗が判別できるレスポンスを返す。
 - 認可対象のリソースはログインユーザー本人のデータに限定する。
-- 認証はJWTを使う。
-- JWTは HttpOnly Cookie に保存する。
-- リフレッシュトークンを使う。
-- アクセストークンの有効期限は15分とする。
-- リフレッシュトークンの有効期限は5日とする。
-- リフレッシュトークンはローテーションする。
-- CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
-- CSRFトークンは `GET /api/auth/csrf` で取得する。
-- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
 - エクスポート形式はExcel（`.xlsx`）とする。
 - MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
@@ -33,6 +24,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - ページネーションは `page` と `page_size` を使うoffset/page方式とする。
 - ID項目名は `transaction_id` などのsnake_caseで統一する。
 - フロントDTOもsnake_caseのまま扱う。
+- APIクライアントはOpenAPIから自動生成する。
 
 ## 認証
 
