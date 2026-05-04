@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] features移行後の関連E2Eをデスクトップ環境で確認する
+  - 対応: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts` を実行し、ダッシュボードの月切り替え、カテゴリクリックからの明細遷移、収入設定、アップロード履歴、PDFドロップ操作まで確認した。
+  - 確認: Playwright の 9 シナリオがすべて通過した。
+  - 根拠: features移行作業の残確認。mac環境で持ち越していたE2E確認をデスクトップ環境で完了。
+
 - [x] フロントエンドをfeatures構成へ段階的に移行する
   - 対応: dashboard / transactions / upload / income-settings の画面実体を `frontend/src/features/*` へ移し、`frontend/app/(app)/*/page.tsx` はルーティング入口へ整理した。
   - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` が通過。関連E2Eはmac環境で重いため、残確認タスクとして `open.md` に追加。
