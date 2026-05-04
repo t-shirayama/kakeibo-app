@@ -83,6 +83,8 @@ class TransactionQueryRepositoryProtocol(Protocol):
         category_id: UUID | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        sort_field: str = "date",
+        sort_direction: str = "desc",
     ) -> PageResult[TransactionWithCategory]:
         raise NotImplementedError
 
@@ -214,6 +216,8 @@ class TransactionUseCases:
         category_id: UUID | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        sort_field: str = "date",
+        sort_direction: str = "desc",
     ) -> PageResult[TransactionWithCategory]:
         return self._transaction_query_repository.list_transactions(
             user_id=user_id,
@@ -222,6 +226,8 @@ class TransactionUseCases:
             category_id=category_id,
             date_from=date_from,
             date_to=date_to,
+            sort_field=sort_field,
+            sort_direction=sort_direction,
         )
 
     def create_transaction(self, *, user_id: UUID, command: TransactionCommand) -> Transaction:

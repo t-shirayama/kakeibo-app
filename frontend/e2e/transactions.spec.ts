@@ -9,12 +9,19 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByText(/件ヒット/)).toBeVisible();
   await expect(page.getByText("検索対象: 店名 / メモ / カテゴリ")).toBeVisible();
   await expect(page.getByText("ソート: 日付 降順")).toBeVisible();
+  await expect(page.getByText(/1ページ (10|20|50)件/)).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toHaveCount(0);
   await expect(page.locator(".transaction-amount.expense").first()).toBeVisible();
+  await expect(page).toHaveURL(/page=1/);
+  await expect(page).toHaveURL(/page_size=(10|20|50)/);
+  await expect(page).toHaveURL(/sort_field=date/);
+  await expect(page).toHaveURL(/sort_direction=desc/);
 
   await page.getByLabel("開始日").fill("2026-04-01");
   await page.getByLabel("終了日").fill("2026-04-30");
+  await expect(page).toHaveURL(/date_from=2026-04-01/);
+  await expect(page).toHaveURL(/date_to=2026-04-30/);
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-04-01 - 2026-04-30")).toBeVisible();
@@ -22,6 +29,8 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await page.getByLabel("開始日").fill("2026-01-01");
   await page.getByLabel("終了日").fill("2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "日用品" });
+  await expect(page).toHaveURL(/date_from=2026-01-01/);
+  await expect(page).toHaveURL(/date_to=2026-12-31/);
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
   await expect(page.getByLabel("適用中のフィルタ").getByText("日用品")).toBeVisible();
@@ -32,6 +41,7 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
   await page.getByLabel("明細検索").fill("Amazon");
+  await expect(page).toHaveURL(/keyword=Amazon/);
   await expect(page.locator('datalist#transaction-search-suggestions option[value="Amazon.co.jp"]')).toHaveCount(1);
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toHaveCount(0);
@@ -41,20 +51,29 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByText("ソート: 金額 昇順")).toBeVisible();
   await page.getByRole("button", { name: /取引額でソート/ }).click();
   await expect(page.getByText("ソート: 金額 降順")).toBeVisible();
+  await expect(page).toHaveURL(/sort_field=amount/);
+  await expect(page).toHaveURL(/sort_direction=desc/);
 
   await page.getByLabel("明細検索").fill("");
   await page.getByRole("button", { name: "フィルタ解除" }).click();
+  await page.getByLabel("開始日").fill("2025-12-01");
+  await page.getByLabel("終了日").fill("2025-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "未分類" });
+  await expect(page).toHaveURL(/date_from=2025-12-01/);
+  await expect(page).toHaveURL(/date_to=2025-12-31/);
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
   // 未分類は検索語としても使えるため、カテゴリ名補完込みで検索対象に入ることを守る。
   await page.getByLabel("明細検索").fill("未分類");
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();
 
-  await page.getByLabel("明細検索").fill("");
+  await page.getByRole("button", { name: "フィルタ解除" }).click();
+  await expect(page).not.toHaveURL(/keyword=/);
   await page.getByLabel("開始日").fill("2026-01-01");
   await page.getByLabel("終了日").fill("2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
+  await expect(page).toHaveURL(/date_from=2026-01-01/);
+  await expect(page).toHaveURL(/date_to=2026-12-31/);
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();
   await page.getByRole("button", { name: "手動で追加" }).click();
   await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
@@ -79,6 +98,10 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   // ブラウザの保存先に依存しないよう、Excel APIの成功レスポンスまでを検証する。
   await page.getByLabel("明細検索").fill("Amazon");
+  await expect(page).toHaveURL(/keyword=Amazon/);
+  await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("明細検索")).toHaveValue("Amazon");
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   const downloadResponse = page.waitForResponse((response) =>
     response.url().includes("/api/transactions/export") && response.status() === 200,

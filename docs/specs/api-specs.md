@@ -71,6 +71,8 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - 明細一覧を検索、期間、カテゴリ、ページ指定で取得する。
   - `keyword` は店名、メモ、カテゴリ名を対象に検索し、`未分類` 指定時は未分類表示対象の明細も含める。
   - 期間指定には `date_from` と `date_to` を `YYYY-MM-DD` 形式で指定する。
+  - `sort_field` は `date` または `amount`、`sort_direction` は `asc` または `desc` を受け付ける。初期値は `date` / `desc` とする。
+  - `page_size` の既定値は10件とする。
   - 未分類カテゴリで絞り込む場合は、未分類カテゴリに紐づく明細に加え、無効化または論理削除されたカテゴリに紐づく明細も返す。
   - 一覧レスポンスには `category_name`、`category_color`、`display_category_id` を含め、無効化または論理削除されたカテゴリは表示上 `未分類` として正規化して返す。
 - `POST /api/transactions`
@@ -130,6 +132,13 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - アップロード結果を取得する。
 - `DELETE /api/uploads/{upload_id}`
   - アップロード履歴を論理削除し、保存済みPDF原本をストレージから即削除する。
+
+### 監査ログ
+
+- `GET /api/audit-logs`
+  - 監査ログ一覧を取得する。
+  - `page`、`page_size`、`action`、`resource_type`、`date_from`、`date_to` で絞り込める。
+  - ログインユーザー本人の監査ログだけを返す。
 
 ### レポート
 

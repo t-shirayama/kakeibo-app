@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, CreditCard, ReceiptText, Wallet } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
@@ -25,7 +26,10 @@ type DailyCalendarSummary = {
 };
 
 export function CalendarPage() {
-  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [selectedYearMonth, setSelectedYearMonth] = useState(() => normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth());
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
   const range = useMemo(() => getMonthDateRange(selectedYearMonth), [selectedYearMonth]);
   const transactionsQuery = useQuery({
@@ -54,11 +58,35 @@ export function CalendarPage() {
   );
 
   useEffect(() => {
+    const normalized = normalizeYearMonth(searchParams.get("month"));
+    if (normalized && normalized !== selectedYearMonth) {
+      setSelectedYearMonth(normalized);
+    }
+  }, [searchParams, selectedYearMonth]);
+
+  useEffect(() => {
+    if (normalizeYearMonth(searchParams.get("month"))) {
+      return;
+    }
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("month", selectedYearMonth);
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams, selectedYearMonth]);
+
+  useEffect(() => {
     if (isDateInYearMonth(selectedDate, selectedYearMonth)) {
       return;
     }
     setSelectedDate(getDefaultSelectedDate(selectedYearMonth, transactions));
   }, [selectedDate, selectedYearMonth, transactions]);
+
+  function updateSelectedYearMonth(nextValue: string) {
+    const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
+    setSelectedYearMonth(normalized);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("month", normalized);
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }
 
   return (
     <div className="calendar-page">
@@ -68,14 +96,14 @@ export function CalendarPage() {
         actions={
           <div className="toolbar report-toolbar">
             <div className="month-switcher" aria-label="対象月の切り替え">
-              <button className="icon-button" type="button" aria-label="前月" onClick={() => setSelectedYearMonth((value) => addMonths(value, -1))}>
+              <button className="icon-button" type="button" aria-label="前月" onClick={() => updateSelectedYearMonth(addMonths(selectedYearMonth, -1))}>
                 <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <label className="month-input-label">
                 <span className="sr-only">表示月</span>
-                <input aria-label="表示月" className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => setSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
+                <input aria-label="表示月" className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => updateSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
               </label>
-              <button className="icon-button" type="button" aria-label="翌月" onClick={() => setSelectedYearMonth((value) => addMonths(value, 1))}>
+              <button className="icon-button" type="button" aria-label="翌月" onClick={() => updateSelectedYearMonth(addMonths(selectedYearMonth, 1))}>
                 <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
@@ -320,6 +348,13 @@ function parseYearMonth(value: string) {
     year: Number.isInteger(year) ? year : Number(getCurrentYearMonth().slice(0, 4)),
     month: Number.isInteger(month) ? month : Number(getCurrentYearMonth().slice(5, 7)),
   };
+}
+
+function normalizeYearMonth(value: string | null) {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) {
+    return null;
+  }
+  return value;
 }
 
 function addMonths(value: string, amount: number) {

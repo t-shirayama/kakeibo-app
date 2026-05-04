@@ -151,6 +151,8 @@ class TransactionQueryRepository:
         category_id: UUID | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        sort_field: str = "date",
+        sort_direction: str = "desc",
     ) -> PageResult[TransactionWithCategory]:
         filters = self._build_transaction_filters(
             user_id=user_id,
@@ -171,7 +173,7 @@ class TransactionQueryRepository:
             )
             .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
             .where(*filters)
-            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
+            .order_by(*self._transaction_order_by(sort_field=sort_field, sort_direction=sort_direction))
             .offset(page.offset)
             .limit(page.page_size)
         ).all()
@@ -266,6 +268,18 @@ class TransactionQueryRepository:
             .limit(1)
         )
         return UUID(row.category_id) if row else None
+
+    def _transaction_order_by(self, *, sort_field: str, sort_direction: str) -> tuple[object, ...]:
+        descending = sort_direction != "asc"
+        if sort_field == "amount":
+            amount_order = TransactionModel.amount.desc() if descending else TransactionModel.amount.asc()
+            date_order = TransactionModel.transaction_date.desc() if descending else TransactionModel.transaction_date.asc()
+            created_order = TransactionModel.created_at.desc() if descending else TransactionModel.created_at.asc()
+            return (amount_order, date_order, created_order)
+
+        date_order = TransactionModel.transaction_date.desc() if descending else TransactionModel.transaction_date.asc()
+        created_order = TransactionModel.created_at.desc() if descending else TransactionModel.created_at.asc()
+        return (date_order, created_order)
 
     def _build_transaction_filters(
         self,

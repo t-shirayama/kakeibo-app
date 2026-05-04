@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from app.application.audit_logs import AuditLogUseCases
 from app.application.exporting.transaction_workbook_exporter import TransactionWorkbookExporter
 from app.application.importing.upload_import import PdfUploadUseCases
 from app.application.income_settings import IncomeSettingsUseCases
@@ -10,6 +11,7 @@ from app.application.transactions import CategoryUseCases, TransactionUseCases
 from app.infrastructure.config import get_settings
 from app.infrastructure.parsers.rakuten_card_pdf_parser import RakutenCardPdfParser
 from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
+from app.infrastructure.repositories.audit_logs import AuditLogQueryRepository
 from app.infrastructure.repositories.transactions import (
     AuditLogRepository,
     CategoryRepository,
@@ -31,6 +33,10 @@ def build_transaction_use_cases(session: Session) -> TransactionUseCases:
 
 def build_category_use_cases(session: Session) -> CategoryUseCases:
     return CategoryUseCases(category_repository=CategoryRepository(session))
+
+
+def build_audit_log_use_cases(session: Session) -> AuditLogUseCases:
+    return AuditLogUseCases(AuditLogQueryRepository(session))
 
 
 def build_report_use_cases(session: Session) -> ReportUseCases:

@@ -14,6 +14,7 @@ from sqlalchemy.pool import StaticPool
 from app.application.auth.ports import UserRecord
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.models import Base
+from app.infrastructure.models.audit_log import AuditLogModel
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.transaction import TransactionModel
 from app.infrastructure.models.user import UserModel
@@ -263,3 +264,112 @@ def test_transaction_list_response_normalizes_inactive_category_for_display() ->
     assert item["display_category_id"] == uncategorized_id
     assert item["category_name"] == "未分類"
     assert item["category_color"] == "#6B7280"
+
+
+def test_transaction_list_defaults_to_page_size_10() -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    category_id = "99999999-9999-9999-9999-999999999999"
+    with SessionLocal() as session:
+        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        session.add(CategoryModel(id=category_id, user_id=str(USER_ID), name="食費", color="#EF4444", is_active=True))
+        session.add_all(
+            [
+                TransactionModel(
+                    id=f"00000000-0000-0000-0000-{index:012d}",
+                    user_id=str(USER_ID),
+                    category_id=category_id,
+                    transaction_date=date(2026, 5, min(index, 28)),
+                    shop_name=f"テスト店舗{index}",
+                    amount=1000 + index,
+                    transaction_type="expense",
+                )
+                for index in range(1, 13)
+            ]
+        )
+        session.commit()
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    def override_user() -> UserRecord:
+        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
+
+    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_current_user] = override_user
+    try:
+        response = TestClient(app).get("/api/transactions")
+    finally:
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(engine)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["page"] == 1
+    assert payload["page_size"] == 10
+    assert payload["total"] == 12
+    assert len(payload["items"]) == 10
+
+
+def test_audit_log_endpoint_lists_filtered_rows() -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    with SessionLocal() as session:
+        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        session.add_all(
+            [
+                AuditLogModel(
+                    id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                    user_id=str(USER_ID),
+                    action="transaction.updated",
+                    resource_type="transaction",
+                    resource_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                    details={"shop_name": "成城石井"},
+                ),
+                AuditLogModel(
+                    id="cccccccc-cccc-cccc-cccc-cccccccccccc",
+                    user_id=str(USER_ID),
+                    action="upload.failed",
+                    resource_type="upload",
+                    resource_id="dddddddd-dddd-dddd-dddd-dddddddddddd",
+                    details={"file_name": "broken.pdf"},
+                ),
+            ]
+        )
+        session.commit()
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    def override_user() -> UserRecord:
+        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
+
+    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_current_user] = override_user
+    try:
+        response = TestClient(app).get("/api/audit-logs", params={"action": "upload.failed"})
+    finally:
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(engine)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert payload["page_size"] == 10
+    assert payload["items"][0]["action"] == "upload.failed"
+    assert payload["items"][0]["resource_type"] == "upload"
+    assert payload["items"][0]["details"]["file_name"] == "broken.pdf"

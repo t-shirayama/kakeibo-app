@@ -39,3 +39,6 @@ jobs:
 
       - name: Frontend build
         run: docker compose run --rm --no-deps frontend npm run build
+
+      - name: OpenAPI client is up to date
+        run: docker compose run --rm backend python scripts/generate_openapi_client.py --check

@@ -15,6 +15,8 @@ test("shows upload history including completed and failed imports", async ({ pag
   const failedRow = page.getByRole("row").filter({ hasText: "2026_05_読み取り不可.pdf" });
   await expect(failedRow).toContainText("失敗");
   await expect(failedRow).toContainText("明細行を抽出できませんでした。");
+  await expect(page.getByText("直近の失敗: 2026_05_読み取り不可.pdf")).toBeVisible();
+  await expect(page.getByRole("button", { name: "ファイルを選び直して再試行" })).toBeVisible();
 });
 
 test("uploads a PDF by dropping it onto the upload zone", async ({ page }) => {
@@ -34,6 +36,8 @@ test("uploads a PDF by dropping it onto the upload zone", async ({ page }) => {
     }),
   });
 
+  await expect(page.getByLabel("アップロード進捗")).toBeVisible();
+  await expect(page.getByText("e2e-drop-test.pdf")).toBeVisible();
   await uploadResponse;
   await expect(page.getByRole("row").filter({ hasText: "e2e-drop-test.pdf" })).toBeVisible();
 });

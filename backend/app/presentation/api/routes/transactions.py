@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -76,11 +77,13 @@ class SameShopCategoryResponse(BaseModel):
 @router.get("", response_model=TransactionListResponse)
 def list_transactions(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=10, ge=1, le=100),
     keyword: str | None = Query(default=None),
     category_id: UUID | None = Query(default=None),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
+    sort_field: Literal["date", "amount"] = Query(default="date"),
+    sort_direction: Literal["asc", "desc"] = Query(default="desc"),
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> TransactionListResponse:
@@ -93,6 +96,8 @@ def list_transactions(
         category_id=category_id,
         date_from=date_from,
         date_to=date_to,
+        sort_field=sort_field,
+        sort_direction=sort_direction,
     )
     return _list_response(result)
 

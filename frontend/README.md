@@ -6,7 +6,7 @@ Next.js App Router based frontend skeleton for the kakeibo app.
 
 - This package owns only files under `frontend/`.
 - DTOs are represented in snake_case to match the API contract.
-- OpenAPI generated clients should be placed under `src/lib/generated/` in the future.
+- OpenAPI generated clients live under `src/lib/generated/`.
 - Dark mode is intentionally not implemented in this initial skeleton.
 
 ## Setup
@@ -33,4 +33,10 @@ npm run dev
 
 ## Notes For API Integration
 
-Use `src/lib/api.ts` as the handwritten adapter layer around the future generated OpenAPI client. Keep generated files isolated under `src/lib/generated/` so application code can import stable functions from `src/lib/api.ts`.
+Use `src/lib/api.ts` as the handwritten adapter layer around the generated OpenAPI client. Keep generated files isolated under `src/lib/generated/` so application code can import stable functions from `src/lib/api.ts`.
+
+To regenerate the client from FastAPI OpenAPI, run:
+
+```bash
+docker compose run --rm backend python scripts/generate_openapi_client.py
+```

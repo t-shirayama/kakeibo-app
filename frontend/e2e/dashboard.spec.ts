@@ -5,6 +5,7 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
 
   await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
+  await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
   await expect(page.locator(".month-input-label span", { hasText: "表示月" })).toHaveClass(/sr-only/);
   const summarySection = page.getByLabel("家計サマリー");
   await expect(summarySection.getByText("収入", { exact: true })).toBeVisible();
@@ -63,6 +64,7 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   await monthInput.fill(pickerMonth.value);
 
   await expect(monthInput).toHaveValue(pickerMonth.value);
+  await expect(page).toHaveURL(new RegExp(`month=${pickerMonth.value}`));
   await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
 
   const nextMonth = addMonths(pickerMonth.value, 1);
@@ -70,12 +72,16 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   await page.getByRole("button", { name: "翌月" }).click();
 
   await expect(monthInput).toHaveValue(nextMonth.value);
+  await expect(page).toHaveURL(new RegExp(`month=${nextMonth.value}`));
   await expect(page.getByText(`${nextMonth.label}までの直近6ヶ月`)).toBeVisible();
 
   await page.getByRole("button", { name: "前月" }).click();
 
   await expect(monthInput).toHaveValue(pickerMonth.value);
+  await expect(page).toHaveURL(new RegExp(`month=${pickerMonth.value}`));
   await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
+  await page.reload();
+  await expect(monthInput).toHaveValue(pickerMonth.value);
 });
 
 test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {

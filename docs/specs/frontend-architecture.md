@@ -44,6 +44,7 @@ APIクライアントはOpenAPIから自動生成する。
 ## API連携
 
 - API契約はFastAPIのOpenAPIを正とする。
+- OpenAPI生成クライアントは `frontend/src/lib/generated/openapi-client.ts` を正とし、`backend/scripts/generate_openapi_client.py` で更新する。
 - 画面表示に必要なデータはAPI DTOとして受け取る。
 - フロントDTOはsnake_caseのまま扱う。
 - 金額表示、日付表示などの表示整形はフロントエンドで行う。

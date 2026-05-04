@@ -1,10 +1,46 @@
-import type { CategoryDto, CategorySummaryDto, IncomeSettingDto, MonthlyReportDto, TransactionDto, UploadJobDto } from "./types";
 import { clear_csrf_token, get_csrf_token } from "./csrf";
 import { getLoginPath } from "./auth";
+import {
+  createGeneratedApiClient,
+  type AuditLogListResponse,
+  type CategoryRequest as GeneratedCategoryRequest,
+  type DashboardSummaryResponse,
+  type DeleteDataRequest,
+  type GeneratedApiTransport,
+  type GetDashboardSummaryParams,
+  type GetMonthlyReportParams,
+  type GetRecentTransactionsParams,
+  type IncomeOverrideRequest as GeneratedIncomeOverrideRequest,
+  type IncomeSettingRequest as GeneratedIncomeSettingRequest,
+  type ListAuditLogsParams,
+  type ListCategoriesParams,
+  type ListCategorySummariesParams,
+  type ListTransactionsParams,
+  type LoginRequest as GeneratedLoginRequest,
+  type ReportResponse,
+  type SettingsResponse,
+  type TransactionListResponse,
+  type TransactionRequest as GeneratedTransactionRequest,
+  type UpdateSettingsRequest,
+  type UploadResponse,
+  type UserResponse,
+} from "./generated/openapi-client";
+import type {
+  AuditLogEntryDto,
+  CategoryDto,
+  CategorySummaryDto,
+  DashboardSummaryDto,
+  IncomeSettingDto,
+  MonthlyReportDto,
+  SettingsDto,
+  TransactionDto,
+  UploadJobDto,
+  UserDto,
+} from "./types";
 import type { ApiErrorShape } from "@/components/api-error-alert";
 
 export type ApiClient = {
-  list_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
+  list_transactions: (params?: TransactionListParams) => Promise<TransactionListResponse>;
   list_all_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
   list_categories: (params?: CategoryListParams) => Promise<CategoryDto[]>;
   create_transaction: (request: TransactionRequest) => Promise<TransactionDto>;
@@ -12,14 +48,18 @@ export type ApiClient = {
   count_same_shop_transactions: (transactionId: string) => Promise<{ count: number }>;
   update_same_shop_category: (transactionId: string, shopName: string, categoryId: string) => Promise<{ updated_count: number }>;
   delete_transaction: (transactionId: string) => Promise<{ status: string }>;
-  export_transactions: (params?: TransactionListParams) => Promise<void>;
+  export_transactions: (params?: TransactionExportParams) => Promise<void>;
   list_uploads: () => Promise<UploadJobDto[]>;
-  upload_pdf: (file: File) => Promise<UploadJobDto>;
-  list_category_summaries: () => Promise<CategorySummaryDto[]>;
-  get_monthly_report: () => Promise<MonthlyReportDto>;
+  upload_pdf: (file: File, options?: UploadPdfOptions) => Promise<UploadJobDto>;
+  list_category_summaries: (params?: CategorySummaryListParams) => Promise<CategorySummaryDto[]>;
+  get_monthly_report: (params?: MonthlyReportParams) => Promise<MonthlyReportDto>;
+  get_dashboard_summary: (params?: DashboardSummaryParams) => Promise<DashboardSummaryDto>;
+  get_recent_transactions: (params?: RecentTransactionsParams) => Promise<TransactionDto[]>;
   login: (request: LoginRequest) => Promise<UserDto>;
+  get_settings: () => Promise<SettingsDto>;
   update_settings: (request: SettingsRequest) => Promise<SettingsDto>;
-  delete_all_data: (confirmationText: string) => Promise<{ status: string }>;
+  delete_all_data: (confirmationText: string, password?: string) => Promise<{ status: string }>;
+  export_user_data: () => Promise<void>;
   create_category: (request: CategoryRequest) => Promise<CategoryDto>;
   update_category: (categoryId: string, request: CategoryRequest) => Promise<CategoryDto>;
   set_category_active: (categoryId: string, isActive: boolean) => Promise<CategoryDto>;
@@ -30,72 +70,32 @@ export type ApiClient = {
   delete_income_setting: (incomeSettingId: string) => Promise<{ status: string }>;
   upsert_income_override: (incomeSettingId: string, targetMonth: string, request: IncomeOverrideRequest) => Promise<IncomeSettingDto>;
   delete_income_override: (incomeSettingId: string, targetMonth: string) => Promise<IncomeSettingDto>;
+  list_audit_logs: (params?: ListAuditLogsParams) => Promise<AuditLogListResponse>;
 };
 
-export type LoginRequest = {
-  email: string;
-  password: string;
-};
-
-export type UserDto = {
-  user_id: string;
-  email: string;
-  is_admin: boolean;
-};
-
-export type TransactionRequest = {
-  transaction_date: string;
-  shop_name: string;
-  amount: number;
-  transaction_type: "expense" | "income";
-  category_id: string | null;
-  payment_method: string | null;
-  card_user_name?: string | null;
-  memo: string | null;
-};
-
-export type TransactionListParams = {
+export type LoginRequest = GeneratedLoginRequest;
+export type TransactionRequest = GeneratedTransactionRequest;
+export type TransactionListParams = ListTransactionsParams;
+export type TransactionExportParams = {
   keyword?: string;
-  page?: number;
-  page_size?: number;
   date_from?: string;
   date_to?: string;
   category_id?: string;
 };
-
-export type CategoryRequest = {
-  name: string;
-  color: string;
-  description: string | null;
+export type CategoryRequest = GeneratedCategoryRequest;
+export type CategoryListParams = Pick<ListCategoriesParams, "include_inactive">;
+export type SettingsRequest = UpdateSettingsRequest;
+export type IncomeSettingRequest = GeneratedIncomeSettingRequest;
+export type IncomeOverrideRequest = GeneratedIncomeOverrideRequest;
+export type AuditLogListParams = ListAuditLogsParams;
+export type AuditLogListRequest = ListAuditLogsParams;
+export type UploadPdfOptions = {
+  onProgress?: (progress: number) => void;
 };
-
-export type CategoryListParams = {
-  include_inactive?: boolean;
-};
-
-export type SettingsRequest = {
-  page_size: number;
-  date_format: string;
-  dark_mode: boolean;
-};
-
-export type SettingsDto = SettingsRequest & {
-  user_id: string;
-  currency: string;
-  timezone: string;
-};
-
-export type IncomeSettingRequest = {
-  member_name: string;
-  category_id: string;
-  base_amount: number;
-  base_day: number;
-};
-
-export type IncomeOverrideRequest = {
-  amount: number;
-  day: number;
-};
+export type CategorySummaryListParams = ListCategorySummariesParams;
+export type MonthlyReportParams = GetMonthlyReportParams;
+export type DashboardSummaryParams = GetDashboardSummaryParams;
+export type RecentTransactionsParams = GetRecentTransactionsParams;
 
 export class ApiError extends Error {
   // バックエンド共通エラー形式を画面で扱いやすいErrorへ包む。
@@ -144,6 +144,24 @@ export async function api_mutation<T>(path: string, init: RequestInit = {}): Pro
     ),
   );
   return parse_json_response<T>(response);
+}
+
+async function api_blob(path: string, init: RequestInit = {}): Promise<Blob> {
+  const response = await retry_after_auth_refresh(path, () =>
+    retry_after_csrf_refresh(
+      async () => {
+        if ((init.method ?? "GET").toUpperCase() === "GET") {
+          return fetch(`${get_api_base_url()}${path}`, { ...init, credentials: "include" });
+        }
+        return fetch(`${get_api_base_url()}${path}`, await with_csrf_headers(init));
+      },
+      async (nextResponse) => nextResponse,
+    ),
+  );
+  if (!response.ok) {
+    await parse_json_response<never>(response);
+  }
+  return response.blob();
 }
 
 export async function retry_after_csrf_refresh<T>(
@@ -219,46 +237,44 @@ export function get_api_base_url(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 }
 
+const transport: GeneratedApiTransport = {
+  requestJson: (config) => {
+    const init: RequestInit = {
+      method: config.method,
+      headers: config.headers,
+      body: config.body,
+    };
+    if (config.method === "GET") {
+      return api_fetch(config.path, init);
+    }
+    return api_mutation(config.path, init);
+  },
+  requestBlob: (config) =>
+    api_blob(config.path, {
+      method: config.method,
+      headers: config.headers,
+      body: config.body,
+    }),
+};
+
+const generatedApi = createGeneratedApiClient(transport);
+
 export const api: ApiClient = {
   async list_transactions(params = {}) {
-    const searchParams = new URLSearchParams({ page: String(params.page ?? 1), page_size: String(params.page_size ?? 100) });
-    if (params.keyword) {
-      searchParams.set("keyword", params.keyword);
-    }
-    if (params.date_from) {
-      searchParams.set("date_from", params.date_from);
-    }
-    if (params.date_to) {
-      searchParams.set("date_to", params.date_to);
-    }
-    if (params.category_id) {
-      searchParams.set("category_id", params.category_id);
-    }
-
-    const response = await api_fetch<{ items: TransactionDto[] }>(`/api/transactions?${searchParams.toString()}`);
-    return response.items;
+    return generatedApi.list_transactions(params);
   },
   async list_all_transactions(params = {}) {
     const items: TransactionDto[] = [];
     let page = 1;
     let total = 0;
+    const pageSize = 100;
 
     do {
-      const searchParams = new URLSearchParams({ page: String(page), page_size: "100" });
-      if (params.keyword) {
-        searchParams.set("keyword", params.keyword);
-      }
-      if (params.date_from) {
-        searchParams.set("date_from", params.date_from);
-      }
-      if (params.date_to) {
-        searchParams.set("date_to", params.date_to);
-      }
-      if (params.category_id) {
-        searchParams.set("category_id", params.category_id);
-      }
-
-      const response = await api_fetch<{ items: TransactionDto[]; total: number }>(`/api/transactions?${searchParams.toString()}`);
+      const response = await generatedApi.list_transactions({
+        ...params,
+        page,
+        page_size: pageSize,
+      });
       items.push(...response.items);
       total = response.total;
       page += 1;
@@ -267,160 +283,174 @@ export const api: ApiClient = {
     return items;
   },
   async list_categories(params = {}) {
-    const searchParams = new URLSearchParams();
-    if (params.include_inactive) {
-      searchParams.set("include_inactive", "true");
-    }
-    const queryString = searchParams.toString();
-    return api_fetch<CategoryDto[]>(`/api/categories${queryString ? `?${queryString}` : ""}`);
+    return generatedApi.list_categories(params);
   },
   async create_transaction(request) {
-    return api_mutation<TransactionDto>("/api/transactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.create_transaction(request);
   },
   async update_transaction(transactionId, request) {
-    return api_mutation<TransactionDto>(`/api/transactions/${transactionId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.update_transaction({ transaction_id: transactionId }, request);
   },
   async count_same_shop_transactions(transactionId) {
-    return api_fetch<{ count: number }>(`/api/transactions/${transactionId}/same-shop-count`);
+    return generatedApi.count_same_shop_transactions({ transaction_id: transactionId });
   },
   async update_same_shop_category(transactionId, shopName, categoryId) {
-    return api_mutation<{ updated_count: number }>(`/api/transactions/${transactionId}/same-shop-category`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shop_name: shopName, category_id: categoryId }),
-    });
+    return generatedApi.update_same_shop_category(
+      { transaction_id: transactionId },
+      { shop_name: shopName, category_id: categoryId },
+    );
   },
   async delete_transaction(transactionId) {
-    return api_mutation<{ status: string }>(`/api/transactions/${transactionId}`, { method: "DELETE" });
+    return generatedApi.delete_transaction({ transaction_id: transactionId }) as Promise<{ status: string }>;
   },
   async export_transactions(params = {}) {
-    const searchParams = new URLSearchParams();
-    if (params.keyword) {
-      searchParams.set("keyword", params.keyword);
-    }
-    if (params.date_from) {
-      searchParams.set("date_from", params.date_from);
-    }
-    if (params.date_to) {
-      searchParams.set("date_to", params.date_to);
-    }
-    if (params.category_id) {
-      searchParams.set("category_id", params.category_id);
-    }
-    const path = `/api/transactions/export${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-    const response = await retry_after_auth_refresh(path, () =>
-      fetch(`${get_api_base_url()}${path}`, { credentials: "include" }),
-    );
-    if (!response.ok) {
-      await parse_json_response<never>(response);
-    }
-    const blob = await response.blob();
-    // fetchで受け取ったExcelをブラウザのダウンロード動作へ橋渡しする。
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "kakeibo-export.xlsx";
-    link.click();
-    URL.revokeObjectURL(url);
+    const blob = await generatedApi.export_transactions(params);
+    downloadBlob(blob, "kakeibo-export.xlsx");
   },
   async list_uploads() {
-    return api_fetch<UploadJobDto[]>("/api/uploads");
+    return generatedApi.list_uploads();
   },
-  async upload_pdf(file) {
+  async upload_pdf(file, options) {
     const formData = new FormData();
     formData.append("file", file);
-    return api_mutation<UploadJobDto>("/api/uploads", {
-      method: "POST",
-      body: formData,
-    });
+    return uploadPdfWithProgress(formData, options);
   },
-  async list_category_summaries() {
-    return api_fetch<CategorySummaryDto[]>("/api/reports/categories");
+  async list_category_summaries(params = {}) {
+    return generatedApi.list_category_summaries(params);
   },
-  async get_monthly_report() {
-    return api_fetch<MonthlyReportDto>("/api/reports/monthly");
+  async get_monthly_report(params = {}) {
+    return generatedApi.get_monthly_report(params) as Promise<ReportResponse>;
+  },
+  async get_dashboard_summary(params = {}) {
+    return generatedApi.get_dashboard_summary(params) as Promise<DashboardSummaryResponse>;
+  },
+  async get_recent_transactions(params = {}) {
+    const rows = await generatedApi.get_recent_transactions(params);
+    return rows.map((row) => ({
+      ...row,
+      display_category_id: row.category_id,
+      category_color: undefined,
+      transaction_type: row.transaction_type as TransactionDto["transaction_type"],
+      card_user_name: null,
+      source_upload_id: null,
+      source_file_name: null,
+      source_row_number: null,
+      source_page_number: null,
+      source_format: null,
+      source_hash: null,
+    }));
   },
   async login(request) {
-    return api_mutation<UserDto>("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.login(request);
+  },
+  async get_settings() {
+    return generatedApi.get_settings() as Promise<SettingsResponse>;
   },
   async update_settings(request) {
-    return api_mutation<SettingsDto>("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.update_settings(request) as Promise<SettingsResponse>;
   },
-  async delete_all_data(confirmationText) {
-    return api_mutation<{ status: string }>("/api/settings/data", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ confirmation_text: confirmationText }),
-    });
+  async delete_all_data(confirmationText, password) {
+    const body: DeleteDataRequest = {
+      confirmation_text: confirmationText || undefined,
+      password: password || undefined,
+    };
+    return generatedApi.delete_all_data(body) as Promise<{ status: string }>;
+  },
+  async export_user_data() {
+    const blob = await generatedApi.export_user_data();
+    downloadBlob(blob, "kakeibo-export.xlsx");
   },
   async create_category(request) {
-    return api_mutation<CategoryDto>("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.create_category(request);
   },
   async update_category(categoryId, request) {
-    return api_mutation<CategoryDto>(`/api/categories/${categoryId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.update_category({ category_id: categoryId }, request);
   },
   async set_category_active(categoryId, isActive) {
-    return api_mutation<CategoryDto>(`/api/categories/${categoryId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_active: isActive }),
-    });
+    return generatedApi.set_category_active({ category_id: categoryId }, { is_active: isActive });
   },
   async delete_category(categoryId) {
-    return api_mutation<{ status: string }>(`/api/categories/${categoryId}`, { method: "DELETE" });
+    return generatedApi.delete_category({ category_id: categoryId }) as Promise<{ status: string }>;
   },
   async list_income_settings() {
-    return api_fetch<IncomeSettingDto[]>("/api/income-settings");
+    return generatedApi.list_income_settings();
   },
   async create_income_setting(request) {
-    return api_mutation<IncomeSettingDto>("/api/income-settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.create_income_setting(request);
   },
   async update_income_setting(incomeSettingId, request) {
-    return api_mutation<IncomeSettingDto>(`/api/income-settings/${incomeSettingId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.update_income_setting({ income_setting_id: incomeSettingId }, request);
   },
   async delete_income_setting(incomeSettingId) {
-    return api_mutation<{ status: string }>(`/api/income-settings/${incomeSettingId}`, { method: "DELETE" });
+    return generatedApi.delete_income_setting({ income_setting_id: incomeSettingId }) as Promise<{ status: string }>;
   },
   async upsert_income_override(incomeSettingId, targetMonth, request) {
-    return api_mutation<IncomeSettingDto>(`/api/income-settings/${incomeSettingId}/overrides/${targetMonth}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
+    return generatedApi.upsert_income_override({ income_setting_id: incomeSettingId, target_month: targetMonth }, request);
   },
   async delete_income_override(incomeSettingId, targetMonth) {
-    return api_mutation<IncomeSettingDto>(`/api/income-settings/${incomeSettingId}/overrides/${targetMonth}`, { method: "DELETE" });
+    return generatedApi.delete_income_override({ income_setting_id: incomeSettingId, target_month: targetMonth });
+  },
+  async list_audit_logs(params = {}) {
+    return generatedApi.list_audit_logs(params);
   },
 };
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function uploadPdfWithProgress(formData: FormData, options?: UploadPdfOptions): Promise<UploadResponse> {
+  return retryAfterUploadAuthRefresh("/api/uploads", async () => {
+    const csrfToken = await get_csrf_token();
+    return new Promise<UploadResponse>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${get_api_base_url()}/api/uploads`);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable || !options?.onProgress) {
+          return;
+        }
+        options.onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      };
+      xhr.onload = () => {
+        try {
+          const contentType = xhr.getResponseHeader("content-type") || "";
+          const body = contentType.includes("application/json") && xhr.responseText ? JSON.parse(xhr.responseText) : null;
+          if (xhr.status >= 200 && xhr.status < 300) {
+            options?.onProgress?.(100);
+            resolve(body as UploadResponse);
+            return;
+          }
+          reject(new ApiError(xhr.status, body?.error ?? { message: xhr.statusText }));
+        } catch (error) {
+          reject(error);
+        }
+      };
+      xhr.onerror = () => reject(new Error("アップロードに失敗しました。"));
+      xhr.send(formData);
+    });
+  });
+}
+
+async function retryAfterUploadAuthRefresh(path: string, request: () => Promise<UploadResponse>): Promise<UploadResponse> {
+  try {
+    return await request();
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 401 || skips_auth_redirect(path)) {
+      throw error;
+    }
+  }
+
+  const refreshed = await refresh_auth_session();
+  if (!refreshed) {
+    redirect_to_login();
+    throw new ApiError(401, { message: "認証が必要です。" });
+  }
+  return request();
+}

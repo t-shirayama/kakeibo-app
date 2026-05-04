@@ -146,10 +146,17 @@ docker compose run --rm --no-deps frontend npm run lint
 docker compose run --rm --no-deps frontend npm run typecheck
 docker compose run --rm --no-deps secret-scan git /repo --no-banner --redact
 docker compose run --rm --no-deps frontend npm run build
+docker compose run --rm backend python scripts/generate_openapi_client.py --check
 docker compose run --rm backend python -m alembic upgrade head
 docker compose run --rm backend python -m pytest
 docker compose run --rm e2e
 if rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"; then exit 1; fi
+```
+
+OpenAPI生成クライアントを更新したい場合は、次を実行します。
+
+```powershell
+docker compose run --rm backend python scripts/generate_openapi_client.py
 ```
 
 未確定事項チェックは、CIではこのコマンドをベースにしつつ、ルール文書に記載されたコマンド自体の説明行だけ除外して判定します。

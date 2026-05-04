@@ -1,6 +1,6 @@
 "use client";
 
-import { FileUp } from "lucide-react";
+import { FileUp, RotateCcw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
@@ -17,14 +17,43 @@ const statusLabel = {
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const retryInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentFileName, setCurrentFileName] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [lastFailedFile, setLastFailedFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
   const uploadsQuery = useQuery({ queryKey: ["uploads"], queryFn: api.list_uploads });
   const uploadMutation = useMutation({
-    mutationFn: api.upload_pdf,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["uploads"] }),
+    mutationFn: (file: File) =>
+      api.upload_pdf(file, {
+        onProgress: (progress) => setUploadProgress(progress),
+      }),
+    onMutate: (file) => {
+      setCurrentFileName(file.name);
+      setUploadProgress(0);
+    },
+    onSuccess: (job, file) => {
+      if (job.status === "failed") {
+        setLastFailedFile(file);
+      } else {
+        setLastFailedFile(null);
+      }
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+    },
+    onError: (_, file) => {
+      setLastFailedFile(file);
+    },
+    onSettled: () => {
+      setUploadProgress(100);
+      setTimeout(() => {
+        setCurrentFileName(null);
+        setUploadProgress(0);
+      }, 600);
+    },
   });
   const uploadJobs = uploadsQuery.data ?? [];
+
   const uploadFile = (file: File | undefined) => {
     if (!file || uploadMutation.isPending) {
       return;
@@ -33,7 +62,12 @@ export default function UploadPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    if (retryInputRef.current) {
+      retryInputRef.current.value = "";
+    }
   };
+
+  const latestFailedJob = uploadJobs.find((job) => job.status === "failed");
 
   return (
     <>
@@ -81,6 +115,50 @@ export default function UploadPage() {
             </button>
           </div>
         </div>
+
+        {currentFileName ? (
+          <div className="upload-progress-card" aria-label="アップロード進捗">
+            <div className="upload-progress-header">
+              <strong>{currentFileName}</strong>
+              <span>{uploadMutation.isPending ? `${uploadProgress}%` : "処理完了"}</span>
+            </div>
+            <div className="upload-progress-bar" aria-hidden="true">
+              <div className="upload-progress-value" style={{ width: `${uploadProgress}%` }} />
+            </div>
+            <p className="muted">
+              {uploadMutation.isPending
+                ? "サーバーへ送信しています。送信後は自動で取り込み履歴を更新します。"
+                : "送信が完了しました。取り込み履歴を更新しています。"}
+            </p>
+          </div>
+        ) : null}
+
+        {latestFailedJob ? (
+          <div className="upload-retry-card">
+            <div>
+              <strong>直近の失敗: {latestFailedJob.file_name}</strong>
+              <p>{latestFailedJob.error_message ?? "PDFの取り込みに失敗しました。"}</p>
+            </div>
+            <div className="toolbar">
+              {lastFailedFile ? (
+                <button className="button secondary" type="button" onClick={() => uploadFile(lastFailedFile)} disabled={uploadMutation.isPending}>
+                  <RotateCcw size={15} aria-hidden="true" />
+                  同じファイルで再試行
+                </button>
+              ) : null}
+              <input
+                ref={retryInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="sr-only"
+                onChange={(event) => uploadFile(event.target.files?.[0])}
+              />
+              <button className="button secondary" type="button" onClick={() => retryInputRef.current?.click()} disabled={uploadMutation.isPending}>
+                ファイルを選び直して再試行
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="card panel section-gap">

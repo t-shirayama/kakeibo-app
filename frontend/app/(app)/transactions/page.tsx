@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Edit3, Plus, Search, Trash2, X } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
@@ -14,7 +14,6 @@ import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
-type DateRange = { date_from?: string; date_to?: string };
 type SortField = "date" | "amount";
 type SortDirection = "asc" | "desc";
 type SaveTransactionInput = {
@@ -30,32 +29,56 @@ type MessageDialogState = {
 };
 
 export default function TransactionsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
   const [isPreparingSave, setIsPreparingSave] = useState(false);
   const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
-  const [query, setQuery] = useState("");
-  const initialDateRange = useMemo(() => parseInitialDateRange(searchParams), [searchParams]);
-  const [dateFrom, setDateFrom] = useState(initialDateRange.date_from ?? "");
-  const [dateTo, setDateTo] = useState(initialDateRange.date_to ?? "");
-  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category_id") ?? "");
-  const [sortField, setSortField] = useState<SortField>("date");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const queryClient = useQueryClient();
-  const periodRange = useMemo(
-    () => ({
-      keyword: query.trim() || undefined,
-      date_from: dateFrom || undefined,
-      date_to: dateTo || undefined,
-    }),
-    [dateFrom, dateTo, query],
-  );
-  const transactionsQuery = useQuery({
-    queryKey: ["transactions", periodRange, categoryFilter],
-    queryFn: () => api.list_transactions({ ...periodRange, category_id: categoryFilter || undefined }),
-  });
+  const settingsQuery = useQuery({ queryKey: ["settings"], queryFn: api.get_settings });
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => api.list_categories() });
+
+  const defaultDateRange = useMemo(() => resolveDefaultDateRange(searchParams), [searchParams]);
+  const defaultPageSize = settingsQuery.data?.page_size ?? 10;
+  const currentParams = useMemo(
+    () => parseSearchParams(searchParams, defaultDateRange, defaultPageSize),
+    [defaultDateRange, defaultPageSize, searchParams],
+  );
+  const currentParamsRef = useRef(currentParams);
+
+  useEffect(() => {
+    currentParamsRef.current = currentParams;
+  }, [currentParams]);
+
+  useEffect(() => {
+    if (settingsQuery.isLoading) {
+      return;
+    }
+    const normalized = buildNormalizedSearchParams(searchParams, defaultDateRange, defaultPageSize);
+    if (normalized.toString() === searchParams.toString()) {
+      return;
+    }
+    router.replace(`${pathname}?${normalized.toString()}`, { scroll: false });
+  }, [defaultDateRange, defaultPageSize, pathname, router, searchParams, settingsQuery.isLoading]);
+
+  const transactionsQuery = useQuery({
+    queryKey: ["transactions", currentParams],
+    queryFn: () =>
+      api.list_transactions({
+        keyword: currentParams.keyword || undefined,
+        date_from: currentParams.dateFrom || undefined,
+        date_to: currentParams.dateTo || undefined,
+        category_id: currentParams.categoryFilter || undefined,
+        page: currentParams.page,
+        page_size: currentParams.pageSize,
+        sort_field: currentParams.sortField,
+        sort_direction: currentParams.sortDirection,
+      }),
+    enabled: !settingsQuery.isLoading,
+  });
+
   const saveMutation = useMutation({
     mutationFn: async ({ request, updateSameShop }: SaveTransactionInput) => {
       if (!editingTransaction) {
@@ -81,18 +104,16 @@ export default function TransactionsPage() {
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
   const categories = categoriesQuery.data ?? [];
-  // カテゴリ名や色を明細表示・検索で再利用するため、IDで引ける形にしておく。
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.category_id, category])),
     [categories],
   );
-  const transactions = useMemo(() => {
-    const rows = transactionsQuery.data ?? [];
-    return [...rows].sort((a, b) => compareTransactions(a, b, sortField, sortDirection));
-  }, [sortDirection, sortField, transactionsQuery.data]);
+  const transactions = transactionsQuery.data?.items ?? [];
+  const total = transactionsQuery.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / currentParams.pageSize));
   const searchSuggestions = useMemo(() => {
     const suggestions = new Set<string>();
-    for (const transaction of transactionsQuery.data ?? []) {
+    for (const transaction of transactions) {
       suggestions.add(transaction.shop_name);
       suggestions.add(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name);
       if (transaction.memo) {
@@ -100,34 +121,97 @@ export default function TransactionsPage() {
       }
     }
     return Array.from(suggestions).filter(Boolean).sort((a, b) => a.localeCompare(b, "ja")).slice(0, 12);
-  }, [categoryById, transactionsQuery.data]);
+  }, [categoryById, transactions]);
   const activeFilterChips = useMemo(
-    () => buildFilterChips({
-      dateFrom,
-      dateTo,
-      categoryName: categoryFilter ? categoryById.get(categoryFilter)?.name : undefined,
-      query,
-    }),
-    [categoryById, categoryFilter, dateFrom, dateTo, query],
+    () =>
+      buildFilterChips({
+        dateFrom: currentParams.dateFrom,
+        dateTo: currentParams.dateTo,
+        categoryName: currentParams.categoryFilter ? categoryById.get(currentParams.categoryFilter)?.name : undefined,
+        query: currentParams.keyword,
+      }),
+    [categoryById, currentParams.categoryFilter, currentParams.dateFrom, currentParams.dateTo, currentParams.keyword],
   );
-  const apiError = transactionsQuery.error || categoriesQuery.error || deleteMutation.error || exportMutation.error;
+  const apiError = transactionsQuery.error || categoriesQuery.error || settingsQuery.error || deleteMutation.error || exportMutation.error;
   const isSaving = saveMutation.isPending || isPreparingSave;
-  const hasActiveFilters = Boolean(query.trim() || categoryFilter || dateFrom || dateTo);
+  const hasActiveFilters = Boolean(
+    currentParams.keyword.trim() ||
+      currentParams.categoryFilter ||
+      currentParams.dateFrom !== defaultDateRange.date_from ||
+      currentParams.dateTo !== defaultDateRange.date_to,
+  );
+
+  function updateParams(
+    updates: Partial<{
+      keyword: string;
+      dateFrom: string;
+      dateTo: string;
+      categoryFilter: string;
+      page: number;
+      pageSize: number;
+      sortField: SortField;
+      sortDirection: SortDirection;
+    }>,
+    options: { resetPage?: boolean } = {},
+  ) {
+    const next = new URLSearchParams(searchParams.toString());
+    const resetPage = options.resetPage ?? false;
+    const baseParams = currentParamsRef.current;
+    const values = {
+      keyword: updates.keyword ?? baseParams.keyword,
+      dateFrom: updates.dateFrom ?? baseParams.dateFrom,
+      dateTo: updates.dateTo ?? baseParams.dateTo,
+      categoryFilter: updates.categoryFilter ?? baseParams.categoryFilter,
+      page: updates.page ?? (resetPage ? 1 : baseParams.page),
+      pageSize: updates.pageSize ?? baseParams.pageSize,
+      sortField: updates.sortField ?? baseParams.sortField,
+      sortDirection: updates.sortDirection ?? baseParams.sortDirection,
+    };
+    currentParamsRef.current = values;
+
+    setOrDelete(next, "keyword", values.keyword);
+    setOrDelete(next, "date_from", values.dateFrom);
+    setOrDelete(next, "date_to", values.dateTo);
+    setOrDelete(next, "category_id", values.categoryFilter);
+    next.set("page", String(Math.max(1, values.page)));
+    next.set("page_size", String(values.pageSize));
+    next.set("sort_field", values.sortField);
+    next.set("sort_direction", values.sortDirection);
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }
 
   function handleSort(nextField: SortField) {
-    if (sortField === nextField) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+    if (currentParams.sortField === nextField) {
+      updateParams({ sortDirection: currentParams.sortDirection === "asc" ? "desc" : "asc" }, { resetPage: true });
       return;
     }
-    setSortField(nextField);
-    setSortDirection(nextField === "date" ? "desc" : "asc");
+    updateParams({
+      sortField: nextField,
+      sortDirection: nextField === "date" ? "desc" : "asc",
+    }, { resetPage: true });
   }
 
   function clearFilters() {
-    setQuery("");
-    setDateFrom("");
-    setDateTo("");
-    setCategoryFilter("");
+    const next = new URLSearchParams(searchParams.toString());
+    currentParamsRef.current = {
+      keyword: "",
+      dateFrom: defaultDateRange.date_from,
+      dateTo: defaultDateRange.date_to,
+      categoryFilter: "",
+      page: 1,
+      pageSize: defaultPageSize,
+      sortField: "date",
+      sortDirection: "desc",
+    };
+    next.delete("keyword");
+    next.delete("category_id");
+    next.set("date_from", defaultDateRange.date_from);
+    next.set("date_to", defaultDateRange.date_to);
+    next.set("page", "1");
+    next.set("page_size", String(defaultPageSize));
+    next.set("sort_field", "date");
+    next.set("sort_direction", "desc");
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }
 
   function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
@@ -212,10 +296,10 @@ export default function TransactionsPage() {
               type="button"
               onClick={() =>
                 exportMutation.mutate({
-                  keyword: query.trim() || undefined,
-                  date_from: dateFrom || undefined,
-                  date_to: dateTo || undefined,
-                  category_id: categoryFilter || undefined,
+                  keyword: currentParams.keyword.trim() || undefined,
+                  date_from: currentParams.dateFrom || undefined,
+                  date_to: currentParams.dateTo || undefined,
+                  category_id: currentParams.categoryFilter || undefined,
                 })
               }
               disabled={exportMutation.isPending}
@@ -251,8 +335,8 @@ export default function TransactionsPage() {
                 aria-label="明細検索"
                 list="transaction-search-suggestions"
                 placeholder="店名、メモ、カテゴリで検索"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                value={currentParams.keyword}
+                onChange={(event) => updateParams({ keyword: event.target.value }, { resetPage: true })}
               />
             </div>
             <datalist id="transaction-search-suggestions">
@@ -264,15 +348,35 @@ export default function TransactionsPage() {
           </div>
           <div className="filter-field">
             <label htmlFor="date-from">開始日</label>
-            <input id="date-from" className="input wide" aria-label="開始日" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+            <input
+              id="date-from"
+              className="input wide"
+              aria-label="開始日"
+              type="date"
+              value={currentParams.dateFrom}
+              onChange={(event) => updateParams({ dateFrom: event.target.value }, { resetPage: true })}
+            />
           </div>
           <div className="filter-field">
             <label htmlFor="date-to">終了日</label>
-            <input id="date-to" className="input wide" aria-label="終了日" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+            <input
+              id="date-to"
+              className="input wide"
+              aria-label="終了日"
+              type="date"
+              value={currentParams.dateTo}
+              onChange={(event) => updateParams({ dateTo: event.target.value }, { resetPage: true })}
+            />
           </div>
           <div className="filter-field">
             <label htmlFor="category-filter">カテゴリ</label>
-            <select id="category-filter" className="select wide" aria-label="カテゴリ絞り込み" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <select
+              id="category-filter"
+              className="select wide"
+              aria-label="カテゴリ絞り込み"
+              value={currentParams.categoryFilter}
+              onChange={(event) => updateParams({ categoryFilter: event.target.value }, { resetPage: true })}
+            >
               <option value="">すべてのカテゴリ</option>
               {categories.map((category) => (
                 <option key={category.category_id} value={category.category_id}>
@@ -294,78 +398,107 @@ export default function TransactionsPage() {
       </section>
 
       <div className="result-summary" aria-live="polite">
-        {transactions.length}件ヒット
-        <span>ソート: {sortLabel(sortField, sortDirection)}</span>
+        {total}件ヒット
+        <span>ソート: {sortLabel(currentParams.sortField, currentParams.sortDirection)}</span>
+        <span>1ページ {currentParams.pageSize}件</span>
       </div>
 
       <section className="card table-wrap">
-        {transactionsQuery.isLoading || categoriesQuery.isLoading ? (
+        {transactionsQuery.isLoading || categoriesQuery.isLoading || settingsQuery.isLoading ? (
           <LoadingState />
         ) : transactions.length === 0 ? (
           <EmptyState title="明細がありません" description="検索条件を変更するか、手動で明細を追加してください。" />
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>
-                  <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${sortField === "date" ? sortDirectionLabel(sortDirection) : ""}`.trim()}>
-                    日付
-                    <SortIcon active={sortField === "date"} direction={sortDirection} />
-                  </button>
-                </th>
-                <th>店名</th>
-                <th>カテゴリ</th>
-                <th className="amount-column">
-                  <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${sortField === "amount" ? sortDirectionLabel(sortDirection) : ""}`.trim()}>
-                    金額
-                    <SortIcon active={sortField === "amount"} direction={sortDirection} />
-                  </button>
-                </th>
-                <th>支払い方法</th>
-                <th>メモ</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction) => (
-                <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
-                  <td>{transaction.transaction_date}</td>
-                  <td>{transaction.shop_name}</td>
-                  <td>
-                    <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
-                      {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
-                    </span>
-                  </td>
-                  <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
-                  <td>{transaction.payment_method ?? "-"}</td>
-                  <td>{transaction.memo ?? "-"}</td>
-                  <td>
-                    <div className="row-actions">
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label="明細を編集"
-                        onClick={() => {
-                          setEditingTransaction(transaction);
-                          setIsEditorOpen(true);
-                        }}
-                      >
-                        <Edit3 size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label="明細を削除"
-                        onClick={() => void handleDelete(transaction.transaction_id)}
-                      >
-                        <Trash2 size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </td>
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>
+                    <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${currentParams.sortField === "date" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
+                      日付
+                      <SortIcon active={currentParams.sortField === "date"} direction={currentParams.sortDirection} />
+                    </button>
+                  </th>
+                  <th>店名</th>
+                  <th>カテゴリ</th>
+                  <th className="amount-column">
+                    <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${currentParams.sortField === "amount" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
+                      金額
+                      <SortIcon active={currentParams.sortField === "amount"} direction={currentParams.sortDirection} />
+                    </button>
+                  </th>
+                  <th>支払い方法</th>
+                  <th>メモ</th>
+                  <th>操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
+                    <td>{transaction.transaction_date}</td>
+                    <td>{transaction.shop_name}</td>
+                    <td>
+                      <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
+                        {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
+                      </span>
+                    </td>
+                    <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
+                    <td>{transaction.payment_method ?? "-"}</td>
+                    <td>{transaction.memo ?? "-"}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          className="icon-button"
+                          type="button"
+                          aria-label="明細を編集"
+                          onClick={() => {
+                            setEditingTransaction(transaction);
+                            setIsEditorOpen(true);
+                          }}
+                        >
+                          <Edit3 size={15} aria-hidden="true" />
+                        </button>
+                        <button
+                          className="icon-button"
+                          type="button"
+                          aria-label="明細を削除"
+                          onClick={() => void handleDelete(transaction.transaction_id)}
+                        >
+                          <Trash2 size={15} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="pagination-bar" aria-label="ページネーション">
+              <button className="button secondary compact" type="button" onClick={() => updateParams({ page: currentParams.page - 1 })} disabled={currentParams.page <= 1}>
+                <ChevronLeft size={14} aria-hidden="true" />
+                前へ
+              </button>
+              <div className="pagination-pages">
+                {buildPageNumbers(currentParams.page, totalPages).map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    className={`pagination-page${pageNumber === currentParams.page ? " active" : ""}`}
+                    type="button"
+                    onClick={() => updateParams({ page: pageNumber })}
+                    aria-current={pageNumber === currentParams.page ? "page" : undefined}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+              </div>
+              <span className="pagination-summary">
+                {currentParams.page} / {totalPages} ページ
+              </span>
+              <button className="button secondary compact" type="button" onClick={() => updateParams({ page: currentParams.page + 1 })} disabled={currentParams.page >= totalPages}>
+                次へ
+                <ChevronRight size={14} aria-hidden="true" />
+              </button>
+            </div>
+          </>
         )}
       </section>
 
@@ -402,18 +535,67 @@ export default function TransactionsPage() {
   );
 }
 
-function parseInitialDateRange(searchParams: ReturnType<typeof useSearchParams>): DateRange {
-  const dateRange = parseDateRange(searchParams);
-  if (dateRange.date_from || dateRange.date_to) {
-    return dateRange;
+function parseSearchParams(
+  searchParams: ReturnType<typeof useSearchParams>,
+  defaultDateRange: { date_from: string; date_to: string },
+  defaultPageSize: number,
+) {
+  const sortField = searchParams.get("sort_field") === "amount" ? "amount" : "date";
+  const sortDirection = searchParams.get("sort_direction") === "asc" ? "asc" : "desc";
+  const parsedPage = Number(searchParams.get("page") ?? "1");
+  const parsedPageSize = Number(searchParams.get("page_size") ?? String(defaultPageSize));
+  return {
+    keyword: searchParams.get("keyword") ?? "",
+    dateFrom: searchParams.get("date_from") ?? defaultDateRange.date_from,
+    dateTo: searchParams.get("date_to") ?? defaultDateRange.date_to,
+    categoryFilter: searchParams.get("category_id") ?? "",
+    page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
+    pageSize: [10, 20, 50].includes(parsedPageSize) ? parsedPageSize : defaultPageSize,
+    sortField: sortField as SortField,
+    sortDirection: sortDirection as SortDirection,
+  };
+}
+
+function buildNormalizedSearchParams(
+  searchParams: ReturnType<typeof useSearchParams>,
+  defaultDateRange: { date_from: string; date_to: string },
+  defaultPageSize: number,
+) {
+  const normalized = new URLSearchParams(searchParams.toString());
+  if (!normalized.get("date_from")) {
+    normalized.set("date_from", defaultDateRange.date_from);
   }
+  if (!normalized.get("date_to")) {
+    normalized.set("date_to", defaultDateRange.date_to);
+  }
+  if (!normalized.get("page")) {
+    normalized.set("page", "1");
+  }
+  const pageSize = Number(normalized.get("page_size") ?? String(defaultPageSize));
+  normalized.set("page_size", String([10, 20, 50].includes(pageSize) ? pageSize : defaultPageSize));
+  if (!normalized.get("sort_field") || !["date", "amount"].includes(normalized.get("sort_field") ?? "")) {
+    normalized.set("sort_field", "date");
+  }
+  if (!normalized.get("sort_direction") || !["asc", "desc"].includes(normalized.get("sort_direction") ?? "")) {
+    normalized.set("sort_direction", "desc");
+  }
+  return normalized;
+}
+
+function resolveDefaultDateRange(searchParams: ReturnType<typeof useSearchParams>) {
+  const explicitFrom = searchParams.get("date_from");
+  const explicitTo = searchParams.get("date_to");
+  if (isDateParam(explicitFrom) && isDateParam(explicitTo)) {
+    return { date_from: explicitFrom, date_to: explicitTo };
+  }
+
   const period = searchParams.get("period");
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
 
   if (period === "all") {
-    return {};
+    return { date_from: "", date_to: "" };
   }
   if (period === "previous_month") {
     const previousMonth = new Date(year, month - 1, 1);
@@ -422,7 +604,6 @@ function parseInitialDateRange(searchParams: ReturnType<typeof useSearchParams>)
       date_to: formatDateParam(new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0)),
     };
   }
-
   if (period === "current_year") {
     return {
       date_from: formatDateParam(new Date(year, 0, 1)),
@@ -436,18 +617,15 @@ function parseInitialDateRange(searchParams: ReturnType<typeof useSearchParams>)
   };
 }
 
-function parseDateRange(searchParams: ReturnType<typeof useSearchParams>): DateRange {
-  const date_from = searchParams.get("date_from") ?? undefined;
-  const date_to = searchParams.get("date_to") ?? undefined;
-
-  if (!isDateParam(date_from) || !isDateParam(date_to)) {
-    return {};
+function setOrDelete(searchParams: URLSearchParams, key: string, value: string) {
+  if (!value) {
+    searchParams.delete(key);
+    return;
   }
-
-  return { date_from, date_to };
+  searchParams.set(key, value);
 }
 
-function isDateParam(value: string | undefined): value is string {
+function isDateParam(value: string | null): value is string {
   return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
 }
 
@@ -456,23 +634,6 @@ function formatDateParam(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-function compareTransactions(a: TransactionDto, b: TransactionDto, sortField: SortField, sortDirection: SortDirection): number {
-  const direction = sortDirection === "asc" ? 1 : -1;
-  if (sortField === "amount") {
-    const diff = a.amount - b.amount;
-    if (diff !== 0) {
-      return diff * direction;
-    }
-  } else {
-    const diff = a.transaction_date.localeCompare(b.transaction_date);
-    if (diff !== 0) {
-      return diff * direction;
-    }
-  }
-
-  return b.transaction_id.localeCompare(a.transaction_id);
 }
 
 function SortIcon({ active, direction }: { active: boolean; direction: SortDirection }) {
@@ -522,6 +683,16 @@ function getCurrentMonthRange() {
   };
 }
 
+function buildPageNumbers(currentPage: number, totalPages: number) {
+  const start = Math.max(1, currentPage - 2);
+  const end = Math.min(totalPages, currentPage + 2);
+  const pages: number[] = [];
+  for (let page = start; page <= end; page += 1) {
+    pages.push(page);
+  }
+  return pages;
+}
+
 function getCategoryBadgeStyle(backgroundColor: string): React.CSSProperties {
   return {
     backgroundColor,
@@ -536,7 +707,6 @@ function getReadableTextColor(hexColor: string): "#17233c" | "#ffffff" {
     return "#17233c";
   }
 
-  // 背景色の明るさから、バッジ文字が読みやすい色を選ぶ。
   const red = parseInt(normalized.slice(0, 2), 16);
   const green = parseInt(normalized.slice(2, 4), 16);
   const blue = parseInt(normalized.slice(4, 6), 16);

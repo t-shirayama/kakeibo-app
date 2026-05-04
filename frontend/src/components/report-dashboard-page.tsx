@@ -1,15 +1,15 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
 import { DashboardBars } from "@/components/dashboard-bars";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
-import { api, api_fetch } from "@/lib/api";
+import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
 type DashboardSummary = {
@@ -27,18 +27,34 @@ type DashboardSummary = {
 
 export function ReportDashboardPage() {
   const router = useRouter();
-  const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [selectedYearMonth, setSelectedYearMonth] = useState(() => normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth());
   const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
   const previousYearMonth = useMemo(() => addMonths(selectedYearMonth, -1), [selectedYearMonth]);
+  useEffect(() => {
+    const normalized = normalizeYearMonth(searchParams.get("month"));
+    if (normalized && normalized !== selectedYearMonth) {
+      setSelectedYearMonth(normalized);
+    }
+  }, [searchParams, selectedYearMonth]);
+  useEffect(() => {
+    if (normalizeYearMonth(searchParams.get("month"))) {
+      return;
+    }
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("month", selectedYearMonth);
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams, selectedYearMonth]);
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary", selectedPeriod.year, selectedPeriod.month],
-    queryFn: () => api_fetch<DashboardSummary>(`/api/dashboard/summary?year=${selectedPeriod.year}&month=${selectedPeriod.month}`),
+    queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
   });
   const previousSummaryQuery = useQuery({
     queryKey: ["dashboard-summary", previousYearMonth],
     queryFn: () => {
       const previous = parseYearMonth(previousYearMonth);
-      return api_fetch<DashboardSummary>(`/api/dashboard/summary?year=${previous.year}&month=${previous.month}`);
+      return api.get_dashboard_summary({ year: previous.year, month: previous.month }) as Promise<DashboardSummary>;
     },
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
@@ -71,6 +87,14 @@ export function ReportDashboardPage() {
     router.push(`/transactions?${params.toString()}`);
   }
 
+  function updateSelectedYearMonth(nextValue: string) {
+    const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
+    setSelectedYearMonth(normalized);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("month", normalized);
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }
+
   return (
     <div className="report-dashboard-page">
       <PageHeader
@@ -79,14 +103,14 @@ export function ReportDashboardPage() {
         actions={
           <div className="toolbar report-toolbar">
             <div className="month-switcher" aria-label="対象月の切り替え">
-              <button className="icon-button" type="button" aria-label="前月" onClick={() => setSelectedYearMonth((value) => addMonths(value, -1))}>
+              <button className="icon-button" type="button" aria-label="前月" onClick={() => updateSelectedYearMonth(addMonths(selectedYearMonth, -1))}>
                 <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <label className="month-input-label">
                 <span className="sr-only">表示月</span>
-                <input aria-label="表示月" className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => setSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
+                <input aria-label="表示月" className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => updateSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
               </label>
-              <button className="icon-button" type="button" aria-label="翌月" onClick={() => setSelectedYearMonth((value) => addMonths(value, 1))}>
+              <button className="icon-button" type="button" aria-label="翌月" onClick={() => updateSelectedYearMonth(addMonths(selectedYearMonth, 1))}>
                 <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
@@ -389,6 +413,13 @@ function parseYearMonth(value: string) {
     year: Number.isInteger(year) ? year : Number(getCurrentYearMonth().slice(0, 4)),
     month: Number.isInteger(month) ? month : Number(getCurrentYearMonth().slice(5, 7)),
   };
+}
+
+function normalizeYearMonth(value: string | null) {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) {
+    return null;
+  }
+  return value;
 }
 
 function addMonths(value: string, amount: number) {
