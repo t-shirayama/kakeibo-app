@@ -1,12 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 const routes = [
-  ["ダッシュボード", "/dashboard"],
+  ["レポート", "/dashboard"],
   ["明細一覧", "/transactions"],
   ["収入設定", "/income-settings"],
   ["アップロード", "/upload"],
   ["カテゴリ管理", "/categories"],
-  ["レポート", "/reports"],
   ["設定", "/settings"],
 ] as const;
 
@@ -39,7 +38,7 @@ test("places settings at the bottom of the desktop sidebar", async ({ page }) =>
 
 test("keeps initial app page scroll inside the main content area", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
 
   // 初期表示でbody側に少しだけ縦スクロールが出る退行を検知する。
   const documentScroll = await page.evaluate(() => {

@@ -6,7 +6,6 @@ import {
   BarChart3,
   FileText,
   FileUp,
-  LayoutDashboard,
   ListTree,
   type LucideIcon,
   NotebookText,
@@ -15,12 +14,11 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
+  { href: "/dashboard", label: "レポート", icon: BarChart3 },
   { href: "/transactions", label: "明細一覧", icon: FileText },
   { href: "/income-settings", label: "収入設定", icon: WalletCards },
   { href: "/upload", label: "アップロード", icon: FileUp },
   { href: "/categories", label: "カテゴリ管理", icon: ListTree },
-  { href: "/reports", label: "レポート", icon: BarChart3 },
 ];
 
 const utilityNavItems = [
@@ -45,7 +43,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           <nav className="sidebar-nav">
             <div className="nav-list">
               {navItems.map((item) => (
-                <NavLinkItem href={item.href} icon={item.icon} isActive={pathname === item.href} key={item.href} label={item.label} />
+                <NavLinkItem href={item.href} icon={item.icon} isActive={isNavItemActive(pathname, item.href)} key={item.href} label={item.label} />
               ))}
             </div>
             <div className="nav-list nav-list-utility">
@@ -59,6 +57,13 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
       </div>
     </div>
   );
+}
+
+function isNavItemActive(pathname: string, href: string) {
+  if (href === "/dashboard") {
+    return pathname === "/dashboard" || pathname === "/reports";
+  }
+  return pathname === href;
 }
 
 function NavLinkItem({ href, icon: Icon, isActive, label }: { href: string; icon: LucideIcon; isActive: boolean; label: string }) {

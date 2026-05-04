@@ -25,9 +25,10 @@ npm run dev
 - `/transactions`
 - `/categories`
 - `/upload`
-- `/reports`
 - `/settings`
 - `/login`
+
+`/reports` is kept only as a compatibility redirect to `/dashboard`.
 
 ## Notes For API Integration
 

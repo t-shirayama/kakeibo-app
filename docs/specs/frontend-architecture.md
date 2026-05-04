@@ -21,8 +21,9 @@ APIクライアントはOpenAPIから自動生成する。
 - `/income-settings`
 - `/categories`
 - `/upload`
-- `/reports`
 - `/settings`
+
+`/reports` は互換導線として残し、`/dashboard` へリダイレクトする。
 
 ## ナビゲーション
 

@@ -1,26 +1,30 @@
 import { expect, test } from "@playwright/test";
 
-test("shows dashboard metrics, category summary, and recent transactions", async ({ page }) => {
+test("shows integrated report dashboard metrics, charts, and export action", async ({ page }) => {
   await page.goto("/dashboard");
 
-  await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
   await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
   await expect(page.locator(".month-input-label span", { hasText: "表示月" })).toHaveClass(/sr-only/);
-  await expect(page.getByText("今月の支出合計")).toBeVisible();
-  await expect(page.getByText("今月の収入合計")).toBeVisible();
-  await expect(page.getByText("今月の残高")).toBeVisible();
-  await expect(page.getByText("取引件数")).toBeVisible();
-  await expect(page.getByLabel(/前月比 (上昇|下降|変化なし)/).first()).toBeVisible();
-  await expect(page.locator(".metric-delta-icon").first()).toBeVisible();
-  await expect(page.locator(".metric-delta.good, .metric-delta.bad").first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "カテゴリ別支出割合" })).toBeVisible();
+  const summarySection = page.getByLabel("家計サマリー");
+  await expect(summarySection.getByText("収入", { exact: true })).toBeVisible();
+  await expect(summarySection.getByText("支出", { exact: true })).toBeVisible();
+  await expect(summarySection.getByText("収支", { exact: true })).toBeVisible();
+  await expect(summarySection.getByText("貯蓄率", { exact: true })).toBeVisible();
+  await expect(page.locator(".summary-card-delta.good, .summary-card-delta.bad, .summary-card-delta.neutral").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Excel" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "期間をカスタマイズ" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "カテゴリ別支出の割合" })).toBeVisible();
   await expect(page.getByRole("img", { name: "カテゴリ別支出割合の円グラフ" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "支出の推移" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "直近6ヶ月の月別収入支出グラフ" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "直近6ヶ月の支出推移グラフ" })).toBeVisible();
   await expect(page.getByLabel("グラフ凡例").getByText("収入", { exact: true })).toBeVisible();
   await expect(page.getByLabel("グラフ凡例").getByText("支出", { exact: true })).toBeVisible();
   await expect(page.getByLabel("グラフ凡例").getByText("平均支出", { exact: true })).toBeVisible();
   await expect(page.locator(".chart-average-line")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "今月の気づき" })).toBeVisible();
+  await expect(page.locator(".insight-card")).toHaveCount(3);
+  await expect(page.getByRole("heading", { name: "カテゴリ別支出（前月比）" })).toBeVisible();
   await expectCategoryAmountsToBeDescending(page);
   const foodLegend = page.locator(".category-pie-legend-row").filter({ hasText: "食費" });
   await expect(foodLegend).toBeVisible();
@@ -28,8 +32,13 @@ test("shows dashboard metrics, category summary, and recent transactions", async
   await expect(foodLegend).toHaveClass(/active/);
   await expect(foodLegend).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".category-pie-highlight")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "最近の明細" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "食費" })).toBeVisible();
+
+  const exportRequest = page.waitForRequest((request) =>
+    request.url().includes("/api/transactions/export") && request.method() === "GET",
+  );
+  await page.getByRole("button", { name: "Excel" }).click();
+  await exportRequest;
 });
 
 test("changes dashboard month with month picker and arrow buttons", async ({ page }) => {
@@ -44,7 +53,7 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   await pickerRequest;
 
   await expect(monthInput).toHaveValue(pickerMonth.value);
-  await expect(page.getByText(`${pickerMonth.label}の支出合計`)).toBeVisible();
+  await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
 
   const nextMonth = addMonths(pickerMonth.value, 1);
   const nextRequest = page.waitForRequest((request) => matchesDashboardSummaryRequest(request.url(), nextMonth));
@@ -53,12 +62,12 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   await nextRequest;
 
   await expect(monthInput).toHaveValue(nextMonth.value);
-  await expect(page.getByText(`${nextMonth.label}の支出合計`)).toBeVisible();
+  await expect(page.getByText(`${nextMonth.label}までの直近6ヶ月`)).toBeVisible();
 
   await page.getByRole("button", { name: "前月" }).click();
 
   await expect(monthInput).toHaveValue(pickerMonth.value);
-  await expect(page.getByText(`${pickerMonth.label}の支出合計`)).toBeVisible();
+  await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
 });
 
 test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {

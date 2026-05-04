@@ -24,14 +24,14 @@ test.describe("authentication", () => {
     await page.getByRole("button", { name: "ログイン" }).click();
 
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "レポート" })).toBeVisible();
 
     await context.close();
   });
 
   test("returns to login when an authenticated API call receives 401", async ({ page }) => {
     // アクセストークン期限切れとリフレッシュ失敗を同時に再現し、ログインへ戻る導線を守る。
-    await page.route("**/api/dashboard/summary", async (route) => {
+    await page.route("**/api/dashboard/summary?**", async (route) => {
       await route.fulfill({
         status: 401,
         contentType: "application/json",
