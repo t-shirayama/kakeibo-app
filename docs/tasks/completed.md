@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] CSRFトークンをセッションまたはユーザーに紐づけて強化する
+  - 対応: `GET /api/auth/csrf` でトークン本体とは別に HttpOnly のCSRFセッションCookieを発行し、CSRFトークンにはそのセッション識別子のダイジェストを埋め込むようにした。変更系APIではヘッダートークンと同じセッションCookieの組み合わせだけを受け付けるようにし、関連するセキュリティ仕様、API仕様、フロント/バックエンド設計文書、CSRFテストを更新した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 57 件すべて通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度A「CSRFトークンがセッション/ユーザーに強く紐づいていない可能性」。
+
 - [x] パスワードリセットAPIを本番安全化する
   - 対応: `POST /api/auth/password-reset` を本番相当環境では常に `status="ok"` と `reset_token=null` を返す形へ変更し、`local` / `test` 環境だけ検証用トークンを返すようにした。あわせて `docs/specs/api-specs.md`、`docs/specs/security.md`、OpenAPI生成クライアント、APIテストを更新した。
   - 確認: `docker compose run --rm backend python scripts/generate_openapi_client.py` で生成物を同期し、`docker compose run --rm backend python -m pytest` が 56 件すべて通過した。

@@ -34,7 +34,9 @@
 - ログアウト時はリフレッシュトークンを失効させる。
 - CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
-- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
+- CSRFトークン自体はCookieへ保存せず、レスポンスボディのみで返す。
+- `GET /api/auth/csrf` では、トークン本体とは別に、セッション紐づけ用の HttpOnly CSRF Cookie を発行または再利用する。
+- 変更系APIでは、CSRFトークンヘッダーとCSRFセッションCookieの組み合わせが一致した場合だけ受け付ける。
 - CSRFトークンの有効期限は30分とする。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
@@ -63,6 +65,7 @@
 ## UIとクライアント連携
 
 - CSRFトークンはフロントエンドのメモリに保持し、期限切れまたは403時に再取得する。
+- フロントエンドは `credentials: "include"` でCSRF取得APIを呼び、ブラウザに保存されたHttpOnlyのCSRFセッションCookieを自動送信する。
 
 ## セキュリティスキャン
 

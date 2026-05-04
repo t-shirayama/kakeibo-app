@@ -34,7 +34,9 @@ def test_health_and_csrf_endpoints() -> None:
     assert response.json() == {"status": "ok"}
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["cross-origin-resource-policy"] == "same-origin"
-    assert client.get("/api/auth/csrf").json()["csrf_token"]
+    csrf_response = client.get("/api/auth/csrf")
+    assert csrf_response.json()["csrf_token"]
+    assert "kakeibo_csrf_session=" in csrf_response.headers["set-cookie"]
 
 
 def test_password_reset_start_hides_token_in_production(monkeypatch) -> None:
@@ -161,6 +163,45 @@ def test_malformed_upload_multipart_returns_api_error_without_internal_error() -
     assert payload["error"]["code"] == "http_400"
     assert payload["error"]["message"]
     assert "Internal server error" not in response.text
+
+
+def test_password_reset_rejects_csrf_token_from_different_session(monkeypatch) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+
+    def override_session() -> Iterator[Session]:
+        with SessionLocal() as session:
+            yield session
+
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-32-bytes-minimum!!")
+    get_settings.cache_clear()
+    app.dependency_overrides[get_db_session] = override_session
+    client_a = TestClient(app)
+    client_b = TestClient(app)
+    token_a = client_a.get("/api/auth/csrf").json()["csrf_token"]
+    client_b.get("/api/auth/csrf")
+    try:
+        response = client_b.post(
+            "/api/auth/password-reset",
+            headers={"X-CSRF-Token": token_a},
+            json={"email": "missing@example.com"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+        get_settings.cache_clear()
+        Base.metadata.drop_all(engine)
+
+    assert response.status_code == 403
+    payload = response.json()
+    assert payload["error"]["code"] == "http_403"
+    assert payload["error"]["message"] == "CSRF token does not match this session."
 
 
 def test_settings_endpoint_with_overridden_user() -> None:

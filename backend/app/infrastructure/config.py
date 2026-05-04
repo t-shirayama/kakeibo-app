@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     refresh_token_days: int = Field(default=5, validation_alias="JWT_REFRESH_TOKEN_EXPIRE_DAYS")
     access_cookie_name: str = "kakeibo_access"
     refresh_cookie_name: str = "kakeibo_refresh"
+    csrf_session_cookie_name: str = "kakeibo_csrf_session"
     csrf_header_name: str = "X-CSRF-Token"
     csrf_token_minutes: int = Field(default=30, validation_alias="CSRF_TOKEN_EXPIRE_MINUTES")
     cookie_secure: bool = Field(default=True, validation_alias="COOKIE_SECURE")

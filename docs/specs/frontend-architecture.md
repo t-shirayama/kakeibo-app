@@ -73,7 +73,8 @@ APIクライアントはOpenAPIから自動生成する。
 - Cookieは `SameSite=Lax` を使う。
 - CSRFトークンヘッダーをAPIリクエストに付与する。
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
-- CSRFトークンはCookieには持たせず、レスポンスボディのみで受け取る。
+- CSRFトークン自体はCookieには持たせず、レスポンスボディのみで受け取る。
+- ブラウザにはトークン本体と別に HttpOnly のCSRFセッションCookieを保持し、`credentials: "include"` で自動送信する。
 - CSRFトークンはフロントエンドのメモリに保持し、期限切れまたは403時に再取得する。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 - 認証が必要な画面は未ログイン時にログイン画面へ誘導する。

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response
+from secrets import token_urlsafe
+
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 from jwt import PyJWTError
 from sqlalchemy.orm import Session
@@ -10,7 +12,7 @@ from app.application.auth.use_cases import AuthError, AuthTokens, AuthUseCases
 from app.bootstrap.container import build_auth_use_cases
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.presentation.api.cookies import delete_auth_cookie, set_auth_cookie
+from app.presentation.api.cookies import delete_auth_cookie, set_auth_cookie, set_session_cookie
 from app.presentation.api.dependencies import get_current_user, require_admin_user, validate_csrf_token
 
 router = APIRouter()
@@ -52,10 +54,14 @@ class PasswordResetConfirmRequest(BaseModel):
 
 
 @router.get("/csrf", response_model=CsrfTokenResponse)
-def get_csrf_token() -> CsrfTokenResponse:
+def get_csrf_token(request: Request, response: Response) -> CsrfTokenResponse:
     settings = get_settings()
+    csrf_session = request.cookies.get(settings.csrf_session_cookie_name)
+    if not csrf_session:
+        csrf_session = token_urlsafe(32)
+        set_session_cookie(response, settings.csrf_session_cookie_name, csrf_session, settings)
     service = CsrfTokenService(secret_key=settings.jwt_secret, ttl_minutes=settings.csrf_token_minutes)
-    return CsrfTokenResponse(csrf_token=service.issue_token())
+    return CsrfTokenResponse(csrf_token=service.issue_token(session_binding=csrf_session))
 
 
 @router.post("/bootstrap-admin", response_model=UserResponse, dependencies=[Depends(validate_csrf_token)])

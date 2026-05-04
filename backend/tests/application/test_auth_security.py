@@ -28,16 +28,18 @@ def test_password_hasher_verifies_password() -> None:
 
 def test_csrf_token_can_be_validated() -> None:
     service = CsrfTokenService(secret_key="secret", ttl_minutes=30)
+    session_binding = "session-binding"
 
-    token = service.issue_token()
+    token = service.issue_token(session_binding=session_binding)
 
-    service.validate_token(token)
+    service.validate_token(token, session_binding=session_binding)
 
 
 def test_csrf_token_rejects_tampering() -> None:
     service = CsrfTokenService(secret_key="secret", ttl_minutes=30)
+    session_binding = "session-binding"
 
-    token = service.issue_token() + "x"
+    token = service.issue_token(session_binding=session_binding) + "x"
 
     with pytest.raises(CsrfTokenError):
-        service.validate_token(token)
+        service.validate_token(token, session_binding=session_binding)

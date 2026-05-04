@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import Cookie, Depends, Header, HTTPException
+from fastapi import Cookie, Depends, Header, HTTPException, Request
 from jwt import PyJWTError
 from sqlalchemy.orm import Session
 
@@ -14,14 +14,20 @@ from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.auth import AuthRepository
 
 
-def validate_csrf_token(x_csrf_token: str | None = Header(default=None, alias="X-CSRF-Token")) -> None:
+def validate_csrf_token(
+    request: Request,
+    x_csrf_token: str | None = Header(default=None, alias="X-CSRF-Token"),
+) -> None:
     if not x_csrf_token:
         raise HTTPException(status_code=403, detail="CSRF token is required.")
 
     settings = get_settings()
+    csrf_session = request.cookies.get(settings.csrf_session_cookie_name)
+    if not csrf_session:
+        raise HTTPException(status_code=403, detail="CSRF session is required.")
     service = CsrfTokenService(secret_key=settings.jwt_secret, ttl_minutes=settings.csrf_token_minutes)
     try:
-        service.validate_token(x_csrf_token)
+        service.validate_token(x_csrf_token, session_binding=csrf_session)
     except CsrfTokenError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
 

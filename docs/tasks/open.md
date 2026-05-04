@@ -8,13 +8,6 @@
 
 ## 優先度A
 
-- [ ] CSRFトークンをセッションまたはユーザーに紐づけて強化する
-  - 目的: CSRFトークンの使い回しやセッション跨ぎ利用の余地を減らし、本番運用時の防御を強める。
-  - 対象: `backend/app/application/auth/csrf_service.py`、`backend/app/presentation/api/dependencies.py`、認証周辺の設定/テスト、`docs/specs/security.md`
-  - 対応: CSRFトークンをユーザーID、セッションID、またはrefresh token系の識別子と結び付けて検証できるようにする。必要なら認証更新時のCSRF再発行や Origin / Referer チェックも合わせて整理する。
-  - 完了条件: 別セッションや別ユーザー相当でのCSRFトークン再利用が拒否され、認証/CSRFのAPIテストで検証される。
-  - 根拠: `kakeibo-app-review.md` の優先度A「CSRFトークンがセッション/ユーザーに強く紐づいていない可能性」。
-
 ## 優先度B
 
 - [ ] バックエンド依存のlock運用を導入する
