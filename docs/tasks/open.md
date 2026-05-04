@@ -8,12 +8,12 @@
 
 ## 優先度A
 
-- [ ] フロントエンドをfeatures構成へ段階的に移行する
-  - 目的: 画面・業務機能ごとの変更範囲を明確にし、Codexが対象ファイルを絞りやすくする。
-  - 対象: `frontend/src/components/`, `frontend/app/(app)/transactions`, `frontend/app/(app)/dashboard`, `frontend/app/(app)/upload`, `frontend/app/(app)/income-settings`
-  - 対応: 複雑な画面から `frontend/src/features/*` へ移し、共通UIだけを `src/components/` に残す。
-  - 完了条件: 主要な業務画面の実体がfeature配下に分かれ、既存のtypecheckと関連E2Eが通る。
-  - 根拠: `docs/tasks/kakeibo-app-repository-review.md` の優先度A-2。
+- [ ] features移行後の関連E2Eをデスクトップ環境で確認する
+  - 目的: mac環境ではE2EのNext dev起動と初回コンパイルが重く、features移行後の画面挙動を安定した環境で確認する。
+  - 対象: `frontend/e2e/dashboard.spec.ts`, `frontend/e2e/transactions.spec.ts`, `frontend/e2e/upload.spec.ts`, `frontend/e2e/income-settings.spec.ts`
+  - 対応: デスクトップ環境で `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts` を実行する。特にダッシュボードの月入力、前月/翌月ボタン、カテゴリクリックから明細一覧への遷移を確認する。
+  - 完了条件: 対象E2Eが通り、失敗があれば原因を切り分けて修正する。通過後、このタスクを `completed.md` へ移す。
+  - 根拠: features移行作業の残確認。mac環境では `typecheck` と `build` は通過したが、E2EはNext dev起動待ちが重く完了確認をデスクトップ環境へ持ち越す。
 
 - [ ] Codex向けに変更パターン別の参照順を追加する
   - 目的: API、DB、UI、E2E、PDF取込などの変更時に参照先を迷いにくくする。

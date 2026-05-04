@@ -2,6 +2,13 @@
 
 このファイルは、`docs/tasks/open.md` から退避した完了済みタスクの一覧です。
 
+## 最近の完了タスク
+
+- [x] フロントエンドをfeatures構成へ段階的に移行する
+  - 対応: dashboard / transactions / upload / income-settings の画面実体を `frontend/src/features/*` へ移し、`frontend/app/(app)/*/page.tsx` はルーティング入口へ整理した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` が通過。関連E2Eはmac環境で重いため、残確認タスクとして `open.md` に追加。
+  - 根拠: `docs/tasks/kakeibo-app-repository-review.md` の優先度A-2。
+
 ## 0. プロジェクト基盤
 
 - [x] ルートに `backend/` と `frontend/` を作成する。

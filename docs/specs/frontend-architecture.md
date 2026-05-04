@@ -41,6 +41,15 @@ APIクライアントはOpenAPIから自動生成する。
 - ローディング、エラー、空状態の表示
 - APIエラーは `error.code`, `error.message`, `error.details`, `error.request_id` の共通形式として扱う。
 
+## ディレクトリ構成
+
+- `frontend/app/(app)/*/page.tsx` はルーティング入口に限定し、主要な業務画面の実体は `frontend/src/features/*` 配下に置く。
+- `frontend/src/features/reports` はダッシュボード・レポート系の画面実装と、その画面専用コンポーネントを持つ。
+- `frontend/src/features/transactions` は明細一覧画面の実装を持つ。
+- `frontend/src/features/uploads` はPDFアップロード画面の実装を持つ。
+- `frontend/src/features/income-settings` は収入設定画面の実装を持つ。
+- `frontend/src/components` には複数画面で再利用する共通UIだけを置く。
+
 ## API連携
 
 - API契約はFastAPIのOpenAPIを正とする。

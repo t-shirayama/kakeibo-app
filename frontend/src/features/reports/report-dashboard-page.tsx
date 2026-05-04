@@ -1,12 +1,12 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
-import { DashboardBars } from "@/components/dashboard-bars";
+import { DashboardBars } from "@/features/reports/components/dashboard-bars";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
@@ -30,6 +30,7 @@ export function ReportDashboardPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
+  const [displayYearMonth, setDisplayYearMonth] = useState(selectedYearMonth);
   const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
   const previousYearMonth = useMemo(() => addMonths(selectedYearMonth, -1), [selectedYearMonth]);
   const previousPeriod = useMemo(() => parseYearMonth(previousYearMonth), [previousYearMonth]);
@@ -41,6 +42,12 @@ export function ReportDashboardPage() {
     next.set("month", selectedYearMonth);
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }, [pathname, router, searchParams, selectedYearMonth]);
+  useEffect(() => {
+    router.prefetch("/transactions");
+  }, [router]);
+  useEffect(() => {
+    setDisplayYearMonth(selectedYearMonth);
+  }, [selectedYearMonth]);
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary", selectedPeriod.year, selectedPeriod.month],
     queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
@@ -82,10 +89,21 @@ export function ReportDashboardPage() {
   }
 
   function updateSelectedYearMonth(nextValue: string) {
-    const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
+    const normalized = normalizeYearMonth(nextValue);
+    if (!normalized) {
+      return;
+    }
+    setDisplayYearMonth(normalized);
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }
+
+  function handleSelectedYearMonthInput(value: string) {
+    setDisplayYearMonth(value);
+    if (normalizeYearMonth(value)) {
+      updateSelectedYearMonth(value);
+    }
   }
 
   return (
@@ -101,7 +119,18 @@ export function ReportDashboardPage() {
               </button>
               <label className="month-input-label">
                 <span className="sr-only">表示月</span>
-                <input aria-label="表示月" className="input month-input" type="month" min="1900-01" max="9999-12" value={selectedYearMonth} onChange={(event) => updateSelectedYearMonth(event.target.value || getCurrentYearMonth())} />
+                <input
+                  aria-label="表示月"
+                  className="input month-input"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{4}-\d{2}"
+                  placeholder="YYYY-MM"
+                  value={displayYearMonth}
+                  onInput={(event) => handleSelectedYearMonthInput(event.currentTarget.value)}
+                  onChange={(event) => handleSelectedYearMonthInput(event.target.value)}
+                  onBlur={() => setDisplayYearMonth(normalizeYearMonth(displayYearMonth) ?? selectedYearMonth)}
+                />
               </label>
               <button className="icon-button" type="button" aria-label="翌月" onClick={() => updateSelectedYearMonth(addMonths(selectedYearMonth, 1))}>
                 <ChevronRight size={16} aria-hidden="true" />
