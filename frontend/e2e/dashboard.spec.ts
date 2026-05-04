@@ -14,7 +14,7 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
   await expect(summarySection.getByText("貯蓄率", { exact: true })).toBeVisible();
   await expect(page.locator(".summary-card-delta.good, .summary-card-delta.bad, .summary-card-delta.neutral").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Excel" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "期間をカスタマイズ" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "期間をカスタマイズ" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "カテゴリ別支出の割合" })).toBeVisible();
   await expect(page.getByRole("img", { name: "カテゴリ別支出割合の円グラフ" })).toBeVisible();
   const categoryLegend = page.getByLabel("カテゴリ別支出割合のカテゴリ一覧");
@@ -66,12 +66,22 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   await expect(monthInput).toHaveValue(pickerMonth.value);
   await expect(page).toHaveURL(new RegExp(`month=${pickerMonth.value}`));
   await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
+  await expect(page.getByRole("img", { name: "直近6ヶ月の支出推移グラフ" })).toBeVisible();
 
   const nextMonth = addMonths(pickerMonth.value, 1);
+  await page.route("**/api/dashboard/summary?**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("month") === String(nextMonth.month)) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    await route.continue();
+  });
 
   await page.getByRole("button", { name: "翌月" }).click();
 
   await expect(monthInput).toHaveValue(nextMonth.value);
+  await expect(page.getByRole("img", { name: "直近6ヶ月の支出推移グラフ" })).toBeVisible();
+  await expect(page.getByText("データを取得しています。")).toHaveCount(0);
   await expect(page).toHaveURL(new RegExp(`month=${nextMonth.value}`));
   await expect(page.getByText(`${nextMonth.label}までの直近6ヶ月`)).toBeVisible();
 

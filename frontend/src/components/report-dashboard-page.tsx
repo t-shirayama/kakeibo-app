@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { type ReactNode, useEffect, useMemo } from "react";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
@@ -29,15 +29,10 @@ export function ReportDashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [selectedYearMonth, setSelectedYearMonth] = useState(() => normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth());
+  const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
   const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
   const previousYearMonth = useMemo(() => addMonths(selectedYearMonth, -1), [selectedYearMonth]);
-  useEffect(() => {
-    const normalized = normalizeYearMonth(searchParams.get("month"));
-    if (normalized && normalized !== selectedYearMonth) {
-      setSelectedYearMonth(normalized);
-    }
-  }, [searchParams, selectedYearMonth]);
+  const previousPeriod = useMemo(() => parseYearMonth(previousYearMonth), [previousYearMonth]);
   useEffect(() => {
     if (normalizeYearMonth(searchParams.get("month"))) {
       return;
@@ -49,13 +44,12 @@ export function ReportDashboardPage() {
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary", selectedPeriod.year, selectedPeriod.month],
     queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
+    placeholderData: keepPreviousData,
   });
   const previousSummaryQuery = useQuery({
-    queryKey: ["dashboard-summary", previousYearMonth],
-    queryFn: () => {
-      const previous = parseYearMonth(previousYearMonth);
-      return api.get_dashboard_summary({ year: previous.year, month: previous.month }) as Promise<DashboardSummary>;
-    },
+    queryKey: ["dashboard-summary", previousPeriod.year, previousPeriod.month],
+    queryFn: () => api.get_dashboard_summary({ year: previousPeriod.year, month: previousPeriod.month }) as Promise<DashboardSummary>,
+    placeholderData: keepPreviousData,
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
@@ -81,7 +75,7 @@ export function ReportDashboardPage() {
     router.push(`/transactions?${params.toString()}`);
   }
 
-  function openCustomizedPeriod() {
+  function openSelectedMonthTransactions() {
     const range = getMonthDateRange(selectedYearMonth);
     const params = new URLSearchParams(range);
     router.push(`/transactions?${params.toString()}`);
@@ -89,14 +83,13 @@ export function ReportDashboardPage() {
 
   function updateSelectedYearMonth(nextValue: string) {
     const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
-    setSelectedYearMonth(normalized);
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }
 
   return (
-    <div className="report-dashboard-page">
+    <div className="report-dashboard-page" aria-busy={summaryQuery.isFetching || previousSummaryQuery.isFetching}>
       <PageHeader
         title="レポート"
         subtitle="お金の流れを振り返り、より良い家計管理に役立てましょう。"
@@ -114,9 +107,6 @@ export function ReportDashboardPage() {
                 <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
-            <button className="button secondary" type="button" onClick={openCustomizedPeriod}>
-              期間をカスタマイズ
-            </button>
             <button className="button secondary" type="button" onClick={() => exportMutation.mutate(undefined)} disabled={exportMutation.isPending}>
               <Download size={14} aria-hidden="true" />
               {exportMutation.isPending ? "出力中" : "Excel"}
@@ -205,7 +195,7 @@ export function ReportDashboardPage() {
         <div className="card panel">
           <div className="panel-header">
             <h2 className="panel-title">カテゴリ別支出（前月比）</h2>
-            <button className="text-link-button" type="button" onClick={openCustomizedPeriod}>
+            <button className="text-link-button" type="button" onClick={openSelectedMonthTransactions}>
               明細を詳しく見る
             </button>
           </div>
