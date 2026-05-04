@@ -354,3 +354,12 @@
 ## 38. 明細一覧の検索結果行フォーカス時ハイライト追加
 
 - [x] 明細一覧の検索結果行にキーボードフォーカスしたとき、視認しやすいハイライトを表示する。
+
+## 19. GitHub Actions CIで自動化
+
+- [x] GitHub Actionsで `quality` と `test` のCIを追加する。
+- [x] `backend` の `pytest` と `e2e` を自動実行する。
+- [x] `frontend` の `lint` / `typecheck` / `build` を自動実行する。
+- [x] `backend` の Alembic 適用確認を自動実行する。
+- [x] `docker compose run --rm --no-deps` 経由でシークレットスキャンをコンテナ内で実行する。
+- [x] `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` による未確定事項チェックをCIへ組み込む。

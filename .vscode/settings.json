@@ -1,4 +1,10 @@
 {
+  "files.exclude": {
+    "storage/uploads": true
+  },
+  "search.exclude": {
+    "storage/uploads": true
+  },
   "cSpell.words": [
     "adrs",
     "healthcheck",
