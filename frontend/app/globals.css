@@ -1779,6 +1779,8 @@ button:not(:disabled) {
 
 .calendar-transaction-list {
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 8px;
   min-height: 0;
   overflow-y: auto;
@@ -1789,6 +1791,7 @@ button:not(:disabled) {
 .calendar-transaction-row {
   display: grid;
   gap: 5px;
+  min-height: 72px;
   padding: 9px 10px;
   border: 1px solid #edf2f7;
   border-radius: 8px;
