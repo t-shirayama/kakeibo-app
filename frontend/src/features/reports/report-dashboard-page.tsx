@@ -13,37 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
 import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { formatCurrency } from "@/lib/format";
-
-type DashboardSummary = {
-  total_expense: number;
-  total_income: number;
-  balance: number;
-  transaction_count: number;
-  expense_change: number;
-  income_change: number;
-  balance_change: number;
-  transaction_count_change: number;
-  budget_summary: {
-    total_budget: number;
-    actual_expense: number;
-    remaining_amount: number;
-    progress_ratio: number;
-    is_over_budget: boolean;
-    configured_category_count: number;
-  };
-  category_budget_summaries: Array<{
-    category_id: string;
-    name: string;
-    color: string;
-    budget_amount: number;
-    actual_amount: number;
-    remaining_amount: number;
-    progress_ratio: number;
-    is_over_budget: boolean;
-  }>;
-  category_summaries: Array<{ category_id: string; name: string; color: string; amount: number; ratio: number }>;
-  monthly_summaries: Array<{ period: string; total_expense: number; total_income: number; balance: number; transaction_count: number }>;
-};
+import type { DashboardSummaryDto } from "@/lib/types";
 
 export function ReportDashboardPage() {
   const pathname = usePathname();
@@ -63,12 +33,12 @@ export function ReportDashboardPage() {
   }, [pathname, router, searchParams, selectedYearMonth]);
   const summaryQuery = useQuery({
     queryKey: reportsQueryKeys.dashboardSummary(selectedPeriod.year, selectedPeriod.month),
-    queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
+    queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummaryDto>,
     placeholderData: keepPreviousData,
   });
   const previousSummaryQuery = useQuery({
     queryKey: reportsQueryKeys.dashboardSummary(previousPeriod.year, previousPeriod.month),
-    queryFn: () => api.get_dashboard_summary({ year: previousPeriod.year, month: previousPeriod.month }) as Promise<DashboardSummary>,
+    queryFn: () => api.get_dashboard_summary({ year: previousPeriod.year, month: previousPeriod.month }) as Promise<DashboardSummaryDto>,
     placeholderData: keepPreviousData,
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
@@ -79,8 +49,6 @@ export function ReportDashboardPage() {
   const monthlySummary = summary?.monthly_summaries ?? [];
   const comparisonRows = useMemo(() => buildCategoryComparisonRows(categorySummary, previousSummary?.category_summaries ?? []), [categorySummary, previousSummary?.category_summaries]);
   const insightItems = useMemo(() => buildInsights(summary), [summary]);
-  const budgetSummary = summary?.budget_summary;
-  const budgetItems = summary?.category_budget_summaries ?? [];
   const savingsRate = calculateSavingsRate(summary?.total_income ?? 0, summary?.balance ?? 0);
   const previousSavingsRate = calculateSavingsRate(previousSummary?.total_income ?? 0, previousSummary?.balance ?? 0);
   const hasChartData = monthlySummary.some((month) => month.total_expense > 0 || month.total_income > 0);
@@ -204,53 +172,6 @@ export function ReportDashboardPage() {
             <LoadingState />
           ) : (
             <div className="dashboard-side-stack">
-              <section className={`budget-overview-card ${budgetSummary?.is_over_budget ? "is-over" : ""}`} aria-label="予算進捗">
-                <div className="budget-overview-header">
-                  <div>
-                    <strong>予算進捗</strong>
-                    <p>{describeBudgetStatus(budgetSummary)}</p>
-                  </div>
-                  <span className={`badge ${budgetSummary?.is_over_budget ? "budget-over" : "inactive"}`}>
-                    {formatProgressRatio(budgetSummary?.progress_ratio ?? 0)}
-                  </span>
-                </div>
-                <dl className="budget-overview-metrics">
-                  <div>
-                    <dt>予算合計</dt>
-                    <dd>{formatCurrency(budgetSummary?.total_budget ?? 0)}</dd>
-                  </div>
-                  <div>
-                    <dt>支出実績</dt>
-                    <dd>{formatCurrency(budgetSummary?.actual_expense ?? 0)}</dd>
-                  </div>
-                  <div>
-                    <dt>{(budgetSummary?.remaining_amount ?? 0) >= 0 ? "残り" : "超過"}</dt>
-                    <dd className={(budgetSummary?.remaining_amount ?? 0) < 0 ? "expense-worse" : "expense-improved"}>
-                      {formatCurrency(Math.abs(budgetSummary?.remaining_amount ?? 0))}
-                    </dd>
-                  </div>
-                </dl>
-                <div className="budget-progress-list" aria-label="カテゴリ別予算進捗">
-                  {budgetItems.length === 0 ? (
-                    <p className="budget-empty-text">カテゴリ管理で月次予算を設定すると、ここに進捗を表示します。</p>
-                  ) : (
-                    budgetItems.map((item) => (
-                      <article className="budget-progress-row" key={item.category_id}>
-                        <div className="budget-progress-title">
-                          <span className="swatch" style={{ background: item.color }} />
-                          <strong>{item.name}</strong>
-                        </div>
-                        <div className="budget-progress-values">
-                          <span>{formatCurrency(item.actual_amount)} / {formatCurrency(item.budget_amount)}</span>
-                          <span className={item.is_over_budget ? "expense-worse" : "expense-improved"}>
-                            {item.is_over_budget ? `超過 ${formatCurrency(Math.abs(item.remaining_amount))}` : `残り ${formatCurrency(item.remaining_amount)}`}
-                          </span>
-                        </div>
-                      </article>
-                    ))
-                  )}
-                </div>
-              </section>
               {insightItems.length === 0 ? (
                 <EmptyState title="気づきを表示できません" description="明細が登録されると、この月の傾向をここに表示します。" />
               ) : (
@@ -361,7 +282,7 @@ function SummaryCard({
   );
 }
 
-function buildCategoryComparisonRows(current: DashboardSummary["category_summaries"], previous: DashboardSummary["category_summaries"]) {
+function buildCategoryComparisonRows(current: DashboardSummaryDto["category_summaries"], previous: DashboardSummaryDto["category_summaries"]) {
   const previousMap = new Map(previous.map((item) => [item.category_id, item]));
   return [...current]
     .sort((a, b) => b.amount - a.amount)
@@ -379,7 +300,7 @@ function buildCategoryComparisonRows(current: DashboardSummary["category_summari
     });
 }
 
-function buildInsights(summary?: DashboardSummary) {
+function buildInsights(summary?: DashboardSummaryDto) {
   if (!summary) {
     return [];
   }
@@ -415,16 +336,6 @@ function buildInsights(summary?: DashboardSummary) {
   });
 
   return insights;
-}
-
-function describeBudgetStatus(summary?: DashboardSummary["budget_summary"]) {
-  if (!summary || summary.configured_category_count === 0 || summary.total_budget <= 0) {
-    return "月次予算が未設定です。";
-  }
-  if (summary.is_over_budget) {
-    return `予算は${formatCurrency(Math.abs(summary.remaining_amount))}超過しています`;
-  }
-  return `予算内です。残り${formatCurrency(summary.remaining_amount)}です`;
 }
 
 function calculateSavingsRate(income: number, balance: number) {
@@ -464,10 +375,6 @@ function formatPointDelta(value: number) {
     return `${value.toFixed(1)}pt`;
   }
   return "0.0pt";
-}
-
-function formatProgressRatio(value: number) {
-  return `${Math.round(value * 100)}%`;
 }
 
 function getDeltaClassName(value: number) {

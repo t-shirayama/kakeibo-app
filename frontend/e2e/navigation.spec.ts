@@ -6,6 +6,7 @@ const routes = [
   ["カレンダー", "/calendar"],
   ["明細一覧", "/transactions"],
   ["収入設定", "/income-settings"],
+  ["予算管理", "/budgets"],
   ["アップロード", "/upload"],
   ["カテゴリ管理", "/categories"],
   ["設定", "/settings"],

@@ -1145,6 +1145,119 @@ textarea {
   line-height: 1.6;
 }
 
+.budget-tab-list {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  background: #f4f8ff;
+  border: 1px solid #dbe7f6;
+  border-radius: 10px;
+}
+
+.budget-tab-button {
+  min-height: 34px;
+  padding: 0 14px;
+  color: var(--muted-strong);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.budget-tab-button.active {
+  color: var(--primary);
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgb(47 125 246 / 18%);
+}
+
+.budget-setting-list {
+  display: grid;
+  gap: 12px;
+}
+
+.budget-setting-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #edf2f7;
+  border-radius: 10px;
+}
+
+.budget-setting-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.budget-setting-title strong,
+.budget-setting-title p {
+  margin: 0;
+}
+
+.budget-setting-title p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.budget-setting-values {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.budget-setting-values strong {
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-summary-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.budget-stat-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f6;
+  border-radius: 12px;
+}
+
+.budget-stat-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.budget-stat-card strong {
+  font-size: 18px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.inset-panel {
+  padding: 16px;
+  background: #fbfcff;
+}
+
+.read-only-field {
+  display: inline-flex;
+  align-items: center;
+}
+
+.modal-note {
+  margin: 0;
+  font-size: 12px;
+}
+
 .insight-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -2122,6 +2235,23 @@ textarea {
   .calendar-selected-day-summary,
   .budget-overview-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .budget-tab-list {
+    width: 100%;
+  }
+
+  .budget-tab-button {
+    flex: 1;
+  }
+
+  .budget-setting-row {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-setting-values,
+  .budget-setting-row .row-actions {
+    justify-items: start;
   }
 
   .category-pie-layout {

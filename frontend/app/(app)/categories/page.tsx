@@ -59,7 +59,7 @@ export default function CategoriesPage() {
     <>
       <PageHeader
         title="カテゴリ管理"
-        subtitle="自動分類に使うカテゴリ、色、月次予算を管理します。"
+        subtitle="自動分類に使うカテゴリ名、色、説明を管理します。"
         actions={
           <button
             className="button"
@@ -92,9 +92,6 @@ export default function CategoriesPage() {
                   <div>
                     <strong>{category.name}</strong>
                     <div className="muted">{category.description ?? "説明なし"}</div>
-                    <div className="muted">
-                      月次予算: {category.monthly_budget == null ? "未設定" : `${category.monthly_budget.toLocaleString("ja-JP")}円`}
-                    </div>
                   </div>
                   <div className="row-actions">
                     <span className={`badge ${category.is_active ? "" : "inactive"}`}>
@@ -191,6 +188,7 @@ export default function CategoriesPage() {
             setEditingCategory(null);
           }
         }}
+        showMonthlyBudget={false}
         onSubmit={async (request) => {
           if (editingCategory) {
             await updateMutation.mutateAsync({ categoryId: editingCategory.category_id, request });

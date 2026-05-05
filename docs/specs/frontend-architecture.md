@@ -20,6 +20,7 @@ APIクライアントはOpenAPIから自動生成する。
 - `/calendar`
 - `/transactions`
 - `/income-settings`
+- `/budgets`
 - `/categories`
 - `/upload`
 - `/settings`
@@ -29,7 +30,7 @@ APIクライアントはOpenAPIから自動生成する。
 ## ナビゲーション
 
 - サイドナビでは現在ページのリンクを背景と左線で強調し、`aria-current="page"` を付与する。
-- サイドナビにはダッシュボード、カレンダー、明細一覧、収入設定、アップロード、カテゴリ管理、設定を並べる。
+- サイドナビにはダッシュボード、カレンダー、明細一覧、収入設定、予算管理、アップロード、カテゴリ管理、設定を並べる。
 - デスクトップ表示では、設定リンクを主要画面リンク群から分離してサイドバー下部に配置する。
 
 ## 責務
@@ -49,6 +50,7 @@ APIクライアントはOpenAPIから自動生成する。
 - `frontend/src/features/transactions` は明細一覧画面の実装を持つ。
 - `frontend/src/features/uploads` はPDFアップロード画面の実装を持つ。
 - `frontend/src/features/income-settings` は収入設定画面の実装を持つ。
+- `frontend/src/features/budgets` は予算管理画面の実装を持つ。
 - `frontend/src/features/settings` は設定画面で使う server state の key 定義など、設定画面に閉じた要素を持つ。
 - TanStack Query の query key 定義は、原則として各 feature 配下の `queryKeys.ts` へ置き、画面側で配列を直書きしない。
 - `frontend/src/components` には複数画面で再利用する共通UIだけを置く。

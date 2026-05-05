@@ -5,7 +5,6 @@ test("shows category colors and creates a category", async ({ page }) => {
   await gotoAppPage(page, "/categories", "カテゴリ管理");
 
   await expect(page.getByText("食費")).toBeVisible();
-  await expect(page.getByText("月次予算: 45,000円")).toBeVisible();
 
   const foodRow = page.locator(".category-row").filter({ hasText: "食費" });
   await expect(foodRow.locator(".swatch")).toHaveCSS("background-color", "rgb(255, 107, 122)");
@@ -14,22 +13,18 @@ test("shows category colors and creates a category", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "カテゴリを追加" })).toBeVisible();
   await page.getByLabel("カテゴリ名").fill("E2Eカテゴリ");
   await page.getByLabel("説明").fill("E2Eで追加したカテゴリ");
-  await page.getByLabel("月次予算").fill("12345");
   await page.getByRole("button", { name: "追加" }).click();
 
   await expect(page.getByText("E2Eカテゴリ")).toBeVisible();
-  await expect(page.getByText("月次予算: 12,345円")).toBeVisible();
 
   const e2eRow = page.locator(".category-row").filter({ hasText: "E2Eカテゴリ" });
   await e2eRow.getByRole("button", { name: "E2Eカテゴリを編集" }).click();
   await expect(page.getByRole("heading", { name: "カテゴリを編集" })).toBeVisible();
   await page.getByLabel("カテゴリ名").fill("E2Eカテゴリ 編集済み");
   await page.getByLabel("説明").fill("編集後の説明");
-  await page.getByLabel("月次予算").fill("20000");
   await page.getByRole("button", { name: "保存" }).click();
 
   await expect(page.getByText("E2Eカテゴリ 編集済み")).toBeVisible();
-  await expect(page.getByText("月次予算: 20,000円")).toBeVisible();
 
   const editedRow = page.locator(".category-row").filter({ hasText: "E2Eカテゴリ 編集済み" });
   await editedRow.getByRole("button", { name: "無効化" }).click();

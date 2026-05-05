@@ -11,6 +11,7 @@
 - [カレンダー](requirements/calendar.md)
 - [明細一覧](requirements/transactions.md)
 - [収入設定](requirements/income-settings.md)
+- [予算管理](requirements/budgets.md)
 - [明細詳細（編集モーダル）](requirements/transaction-edit-modal.md)
 - [カテゴリ管理](requirements/categories.md)
 - [アップロード](requirements/upload.md)
