@@ -918,6 +918,26 @@ textarea {
   margin-top: 16px;
 }
 
+.budget-management-page {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.budget-management-page .page-header,
+.budget-management-page .section-gap {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.budget-management-page > .grid,
+.budget-management-page > .section-gap {
+  min-height: 0;
+}
+
 .category-list {
   display: grid;
   gap: 12px;
@@ -1115,6 +1135,10 @@ textarea {
 .budget-progress-list {
   display: grid;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
 }
 
 .budget-progress-row {
@@ -1133,11 +1157,25 @@ textarea {
 .budget-progress-values {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 
+.budget-progress-title {
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.budget-progress-title strong {
+  display: block;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
 .budget-progress-values {
+  justify-content: space-between;
   color: var(--muted-strong);
   font-size: 12px;
   font-weight: 800;
@@ -1251,6 +1289,29 @@ textarea {
 .inset-panel {
   padding: 16px;
   background: #fbfcff;
+}
+
+.budget-actuals-panel,
+.budget-actuals-content,
+.budget-progress-panel {
+  min-height: 0;
+}
+
+.budget-actuals-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.budget-actuals-content {
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.budget-progress-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .read-only-field {

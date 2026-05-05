@@ -94,7 +94,7 @@ export function BudgetManagementPage() {
   }
 
   return (
-    <>
+    <div className="budget-management-page">
       <PageHeader
         title="予算管理"
         subtitle="カテゴリごとの月次予算を設定し、対象月の予実をまとめて確認できます。"
@@ -187,7 +187,7 @@ export function BudgetManagementPage() {
         </section>
       ) : (
         <section className="grid section-gap">
-          <div className="card panel">
+          <div className="card panel budget-actuals-panel">
             <div className="panel-header">
               <div>
                 <h2 className="panel-title">対象月の予実確認</h2>
@@ -220,7 +220,7 @@ export function BudgetManagementPage() {
             ) : !budgetSummary || budgetSummary.configured_category_count === 0 ? (
               <EmptyState title="月次予算が未設定です" description="予算設定タブでカテゴリごとの月次予算を登録すると、ここに予実を表示します。" />
             ) : (
-              <div className="grid">
+              <div className="grid budget-actuals-content">
                 <section className={`budget-overview-card ${budgetSummary.is_over_budget ? "is-over" : ""}`} aria-label="予算進捗">
                   <div className="budget-overview-header">
                     <div>
@@ -249,7 +249,7 @@ export function BudgetManagementPage() {
                   </dl>
                 </section>
 
-                <div className="card inset-panel">
+                <div className="card inset-panel budget-progress-panel">
                   <h3 className="panel-title">カテゴリ別の予実</h3>
                   <div className="budget-progress-list" aria-label="カテゴリ別予算進捗">
                     {budgetItems.map((item) => (
@@ -291,7 +291,7 @@ export function BudgetManagementPage() {
           }}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
