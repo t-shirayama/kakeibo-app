@@ -149,8 +149,12 @@ export function CalendarPage() {
                     onClick={() => setSelectedDate(day.date)}
                   >
                     <span className="calendar-day-number">{day.day}</span>
-                    <span className="calendar-day-expense-label">支出</span>
-                    <strong className="calendar-day-expense">{day.expense_total === 0 ? "¥0" : formatCurrency(day.expense_total)}</strong>
+                    {day.expense_total > 0 ? (
+                      <>
+                        <span className="calendar-day-expense-label">支出</span>
+                        <strong className="calendar-day-expense">{formatCurrency(day.expense_total)}</strong>
+                      </>
+                    ) : null}
                     <span className="calendar-day-meta">{formatCalendarDayMeta(day)}</span>
                   </button>
                 ) : (
@@ -398,7 +402,7 @@ function formatDateParam(date: Date) {
 
 function formatCalendarDayMeta(day: DailyCalendarSummary) {
   if (day.transaction_count === 0) {
-    return day.income_total > 0 ? "- / 収入あり" : "-";
+    return day.income_total > 0 ? "収入あり" : "";
   }
 
   return `${day.transaction_count}件${day.income_total > 0 ? " / 収入あり" : ""}`;
