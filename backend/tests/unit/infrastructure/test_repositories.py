@@ -12,6 +12,7 @@ from app.application.common import Page
 from app.application.settings import SettingsUseCases
 from app.domain.entities import Category, Transaction, TransactionType, UploadStatus
 from app.domain.value_objects import MoneyJPY
+from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.upload import UploadModel
