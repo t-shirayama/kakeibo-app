@@ -781,12 +781,15 @@ textarea {
 .chart-shell {
   display: grid;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
 .chart-plot {
   display: grid;
   grid-template-columns: 44px 1fr;
-  min-height: 192px;
+  height: clamp(208px, 26vh, 236px);
+  min-height: 0;
 }
 
 .chart-y-axis {
@@ -807,7 +810,8 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
-  min-height: 192px;
+  height: 100%;
+  min-height: 0;
   padding: 0 8px;
   border-left: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -856,7 +860,8 @@ textarea {
   justify-content: center;
   gap: 5px;
   width: 100%;
-  min-height: 148px;
+  height: 100%;
+  min-height: 0;
   padding-top: 6px;
 }
 
@@ -982,7 +987,7 @@ textarea {
   grid-template-columns: minmax(180px, 0.76fr) minmax(220px, 1fr);
   align-items: center;
   gap: 16px;
-  min-height: 208px;
+  min-height: 232px;
   min-width: 0;
 }
 
@@ -990,7 +995,7 @@ textarea {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(188px, 100%);
+  width: min(204px, 100%);
   min-width: 0;
   aspect-ratio: 1;
   justify-self: center;
@@ -1056,7 +1061,7 @@ textarea {
   gap: 8px;
   align-content: start;
   min-height: 0;
-  max-height: 208px;
+  max-height: 232px;
   padding-right: 6px;
   overflow-y: auto;
   overscroll-behavior: none;
@@ -1454,7 +1459,7 @@ textarea {
 
 .report-dashboard-page .dashboard-comparison-table-wrap {
   flex: 1;
-  max-height: 208px;
+  max-height: 236px;
   overflow-y: auto;
   overscroll-behavior: none;
 }
@@ -1465,7 +1470,7 @@ textarea {
 
 .report-dashboard-page .data-table th,
 .report-dashboard-page .data-table td {
-  padding: 10px 12px;
+  padding: 12px 12px;
 }
 
 .report-dashboard-page .month-input {
