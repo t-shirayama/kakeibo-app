@@ -1138,13 +1138,14 @@ textarea {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 6px;
+  padding-right: 12px;
 }
 
 .budget-progress-row {
   display: grid;
   gap: 6px;
   padding-top: 10px;
+  padding-right: 4px;
   border-top: 1px solid #e5edf7;
 }
 
@@ -1176,6 +1177,7 @@ textarea {
 
 .budget-progress-values {
   justify-content: space-between;
+  padding-right: 4px;
   color: var(--muted-strong);
   font-size: 12px;
   font-weight: 800;

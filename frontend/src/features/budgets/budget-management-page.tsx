@@ -73,7 +73,13 @@ export function BudgetManagementPage() {
   );
   const totalConfiguredBudget = configuredCategories.reduce((sum, category) => sum + (category.monthly_budget ?? 0), 0);
   const budgetSummary = summaryQuery.data?.budget_summary;
-  const budgetItems = summaryQuery.data?.category_budget_summaries ?? [];
+  const budgetItems = useMemo(
+    () =>
+      [...(summaryQuery.data?.category_budget_summaries ?? [])].sort(
+        (a, b) => b.budget_amount - a.budget_amount || b.actual_amount - a.actual_amount || a.name.localeCompare(b.name, "ja"),
+      ),
+    [summaryQuery.data?.category_budget_summaries],
+  );
   const apiError = categoriesQuery.error || summaryQuery.error || updateBudgetMutation.error;
 
   function updateSelectedYearMonth(nextValue: string) {
