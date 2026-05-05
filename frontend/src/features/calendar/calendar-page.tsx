@@ -30,7 +30,7 @@ export function CalendarPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [selectedYearMonth, setSelectedYearMonth] = useState(() => normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth());
+  const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
   const range = useMemo(() => getMonthDateRange(selectedYearMonth), [selectedYearMonth]);
   const transactionsQuery = useQuery({
@@ -38,12 +38,16 @@ export function CalendarPage() {
     queryFn: () => api.list_all_transactions(range),
   });
 
-  const transactions = transactionsQuery.data ?? [];
+  const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
   const calendarDays = useMemo(() => buildCalendarDays(selectedYearMonth, transactions), [selectedYearMonth, transactions]);
   const monthlySummary = useMemo(() => buildMonthlySummary(transactions), [transactions]);
+  const effectiveSelectedDate = useMemo(
+    () => (isDateInYearMonth(selectedDate, selectedYearMonth) ? selectedDate : getDefaultSelectedDate(selectedYearMonth, transactions)),
+    [selectedDate, selectedYearMonth, transactions],
+  );
   const selectedDaySummary = useMemo(
-    () => calendarDays.find((day) => day.date === selectedDate) ?? calendarDays.find((day) => day.date.startsWith(selectedYearMonth)) ?? null,
-    [calendarDays, selectedDate, selectedYearMonth],
+    () => calendarDays.find((day) => day.date === effectiveSelectedDate) ?? calendarDays.find((day) => day.date.startsWith(selectedYearMonth)) ?? null,
+    [calendarDays, effectiveSelectedDate, selectedYearMonth],
   );
   const selectedDayTransactions = useMemo(
     () =>
@@ -59,13 +63,6 @@ export function CalendarPage() {
   );
 
   useEffect(() => {
-    const normalized = normalizeYearMonth(searchParams.get("month"));
-    if (normalized && normalized !== selectedYearMonth) {
-      setSelectedYearMonth(normalized);
-    }
-  }, [searchParams, selectedYearMonth]);
-
-  useEffect(() => {
     if (normalizeYearMonth(searchParams.get("month"))) {
       return;
     }
@@ -74,16 +71,9 @@ export function CalendarPage() {
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }, [pathname, router, searchParams, selectedYearMonth]);
 
-  useEffect(() => {
-    if (isDateInYearMonth(selectedDate, selectedYearMonth)) {
-      return;
-    }
-    setSelectedDate(getDefaultSelectedDate(selectedYearMonth, transactions));
-  }, [selectedDate, selectedYearMonth, transactions]);
-
   function updateSelectedYearMonth(nextValue: string) {
     const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
-    setSelectedYearMonth(normalized);
+    setSelectedDate(getDefaultSelectedDate(normalized, transactions));
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });

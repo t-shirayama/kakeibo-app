@@ -3,7 +3,7 @@ import { getLoginPath, hasSessionCookie, isAuthGuardEnabled } from "./src/lib/au
 
 const protectedRoutes = ["/dashboard", "/calendar", "/transactions", "/upload", "/categories", "/reports", "/settings"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   if (!isAuthGuardEnabled()) {
     return NextResponse.next();
   }

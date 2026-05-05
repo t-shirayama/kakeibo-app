@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Download, Save, Trash2 } from "lucide-react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
@@ -11,29 +11,26 @@ import { api } from "@/lib/api";
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({ queryKey: ["settings"], queryFn: api.get_settings });
-  const [pageSize, setPageSize] = useState("10");
-  const [dateFormat, setDateFormat] = useState("yyyy/MM/dd");
-  const [darkMode, setDarkMode] = useState(false);
+  const [draftSettings, setDraftSettings] = useState<{
+    pageSize?: string;
+    dateFormat?: string;
+    darkMode?: boolean;
+  }>({});
   const [confirmationText, setConfirmationText] = useState("");
   const [auditAction, setAuditAction] = useState("");
   const [auditResourceType, setAuditResourceType] = useState("");
   const [auditDateFrom, setAuditDateFrom] = useState("");
   const [auditDateTo, setAuditDateTo] = useState("");
   const [auditPage, setAuditPage] = useState(1);
-
-  useEffect(() => {
-    if (!settingsQuery.data) {
-      return;
-    }
-    setPageSize(String(settingsQuery.data.page_size));
-    setDateFormat(settingsQuery.data.date_format);
-    setDarkMode(settingsQuery.data.dark_mode);
-  }, [settingsQuery.data]);
+  const pageSize = draftSettings.pageSize ?? String(settingsQuery.data?.page_size ?? 10);
+  const dateFormat = draftSettings.dateFormat ?? settingsQuery.data?.date_format ?? "yyyy/MM/dd";
+  const darkMode = draftSettings.darkMode ?? settingsQuery.data?.dark_mode ?? false;
 
   const saveMutation = useMutation({
     mutationFn: () => api.update_settings({ page_size: Number(pageSize), date_format: dateFormat, dark_mode: darkMode }),
     onSuccess: (settings) => {
       queryClient.setQueryData(["settings"], settings);
+      setDraftSettings({});
     },
   });
   const deleteMutation = useMutation({
@@ -97,7 +94,7 @@ export default function SettingsPage() {
               <h2>1ページあたりの件数</h2>
               <p>明細一覧の初期表示件数を選択します。</p>
             </div>
-            <select className="select" aria-label="1ページあたりの件数" value={pageSize} onChange={(event) => setPageSize(event.target.value)}>
+            <select className="select" aria-label="1ページあたりの件数" value={pageSize} onChange={(event) => setDraftSettings((current) => ({ ...current, pageSize: event.target.value }))}>
               <option value="10">10件</option>
               <option value="20">20件</option>
               <option value="50">50件</option>
@@ -108,7 +105,7 @@ export default function SettingsPage() {
               <h2>日付形式</h2>
               <p>画面表示で使う日付フォーマットです。</p>
             </div>
-            <select className="select" aria-label="日付形式" value={dateFormat} onChange={(event) => setDateFormat(event.target.value)}>
+            <select className="select" aria-label="日付形式" value={dateFormat} onChange={(event) => setDraftSettings((current) => ({ ...current, dateFormat: event.target.value }))}>
               <option value="yyyy/MM/dd">YYYY/MM/DD</option>
               <option value="yyyy-MM-dd">YYYY-MM-DD</option>
             </select>
@@ -119,7 +116,7 @@ export default function SettingsPage() {
               <p>初期リリースでは設定値のみ保持し、表示切り替えは後続で対応します。</p>
             </div>
             <label className="toggle-row">
-              <input type="checkbox" checked={darkMode} onChange={(event) => setDarkMode(event.target.checked)} />
+              <input type="checkbox" checked={darkMode} onChange={(event) => setDraftSettings((current) => ({ ...current, darkMode: event.target.checked }))} />
               <span>設定を保存</span>
             </label>
           </div>

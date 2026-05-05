@@ -78,5 +78,5 @@ APIクライアントはOpenAPIから自動生成する。
 - CSRFトークンはフロントエンドのメモリに保持し、期限切れまたは403時に再取得する。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 - 認証が必要な画面は未ログイン時にログイン画面へ誘導する。
-- 未ログイン誘導は `NEXT_PUBLIC_AUTH_GUARD_ENABLED=true` の場合にmiddlewareで有効化する。
-- middlewareの判定はバックエンドのアクセストークンCookie `kakeibo_access` を見る。
+- 未ログイン誘導は `NEXT_PUBLIC_AUTH_GUARD_ENABLED=true` の場合にproxyで有効化する。
+- proxyの判定はバックエンドのアクセストークンCookie `kakeibo_access` を見る。

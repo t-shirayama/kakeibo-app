@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -31,7 +31,6 @@ export function ReportDashboardPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
-  const [displayYearMonth, setDisplayYearMonth] = useState(selectedYearMonth);
   const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
   const previousYearMonth = useMemo(() => addMonths(selectedYearMonth, -1), [selectedYearMonth]);
   const previousPeriod = useMemo(() => parseYearMonth(previousYearMonth), [previousYearMonth]);
@@ -46,9 +45,6 @@ export function ReportDashboardPage() {
   useEffect(() => {
     router.prefetch("/transactions");
   }, [router]);
-  useEffect(() => {
-    setDisplayYearMonth(selectedYearMonth);
-  }, [selectedYearMonth]);
   const summaryQuery = useQuery({
     queryKey: reportsQueryKeys.dashboardSummary(selectedPeriod.year, selectedPeriod.month),
     queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
@@ -94,17 +90,9 @@ export function ReportDashboardPage() {
     if (!normalized) {
       return;
     }
-    setDisplayYearMonth(normalized);
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  }
-
-  function handleSelectedYearMonthInput(value: string) {
-    setDisplayYearMonth(value);
-    if (normalizeYearMonth(value)) {
-      updateSelectedYearMonth(value);
-    }
   }
 
   return (
@@ -124,9 +112,8 @@ export function ReportDashboardPage() {
                   aria-label="表示月"
                   className="input month-input"
                   type="month"
-                  value={displayYearMonth}
-                  onChange={(event) => handleSelectedYearMonthInput(event.target.value)}
-                  onBlur={() => setDisplayYearMonth(normalizeYearMonth(displayYearMonth) ?? selectedYearMonth)}
+                  value={selectedYearMonth}
+                  onChange={(event) => updateSelectedYearMonth(event.target.value)}
                 />
               </label>
               <button className="icon-button" type="button" aria-label="翌月" onClick={() => updateSelectedYearMonth(addMonths(selectedYearMonth, 1))}>
