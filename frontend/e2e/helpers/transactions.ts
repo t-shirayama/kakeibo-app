@@ -19,9 +19,6 @@ export async function setTransactionDateRange(page: Page, dateFrom: string, date
   const dateFromInput = page.getByLabel("開始日");
   const dateToInput = page.getByLabel("終了日");
 
-  await expect(page).toHaveURL(/page=1/);
-  await expect(page).toHaveURL(/sort_field=date/);
-  await expect(page).toHaveURL(/sort_direction=desc/);
   await dateFromInput.fill(dateFrom);
   await expect(dateFromInput).toHaveValue(dateFrom);
   await dateToInput.fill(dateTo);

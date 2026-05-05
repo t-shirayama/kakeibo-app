@@ -43,6 +43,7 @@
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。
 - Alembic適用確認は `docker compose run --rm backend python -m alembic upgrade head` を使う。
 - `frontend/Dockerfile.e2e`、`frontend/package.json`、`frontend/package-lock.json`、`docker-compose.yml` を変更した場合は、CIへ出す前に `docker compose build e2e` でE2E実行環境の build を確認する。
+- GitHub Actions の実行ログを直接調べる場合は、`GITHUB_TOKEN` または `GH_TOKEN` を設定し、`scripts/show-github-actions-run.ps1 -LatestFailure` で直近失敗 run と失敗 job を確認する。`-RunId <id>` を指定すると特定 run の job 一覧を確認できる。
 
 ## CI と自動化
 

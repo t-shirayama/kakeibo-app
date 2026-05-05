@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, CreditCard, ReceiptText, Wallet } from "lucide-react";
@@ -68,15 +67,27 @@ export function CalendarPage() {
     }
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", selectedYearMonth);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  }, [pathname, router, searchParams, selectedYearMonth]);
+    replaceCurrentUrl(pathname, next);
+  }, [pathname, searchParams, selectedYearMonth]);
+
+  useEffect(() => {
+    router.prefetch("/transactions");
+  }, [router]);
 
   function updateSelectedYearMonth(nextValue: string) {
     const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
     setSelectedDate(getDefaultSelectedDate(normalized, transactions));
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    replaceCurrentUrl(pathname, next);
+  }
+
+  function openTransactions(dateFrom: string, dateTo: string) {
+    const next = new URLSearchParams({
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
+    router.push(`/transactions?${next.toString()}`);
   }
 
   return (
@@ -116,9 +127,9 @@ export function CalendarPage() {
                 <h2 className="panel-title">日別の支出カレンダー</h2>
                 <p className="panel-caption">{formatYearMonthLabel(selectedYearMonth)}の支出合計を日ごとに表示します</p>
               </div>
-              <Link className="text-link-button" href={`/transactions?date_from=${range.date_from}&date_to=${range.date_to}`}>
+              <button className="text-link-button" type="button" onClick={() => openTransactions(range.date_from, range.date_to)}>
                 この月の明細一覧へ
-              </Link>
+              </button>
             </div>
 
             <div className="calendar-weekdays" aria-hidden="true">
@@ -169,9 +180,9 @@ export function CalendarPage() {
                   <p className="panel-caption">{selectedDaySummary ? formatDateLabel(selectedDaySummary.date) : "日付を選択してください"}</p>
                 </div>
                 {selectedDaySummary ? (
-                  <Link className="text-link-button" href={`/transactions?date_from=${selectedDaySummary.date}&date_to=${selectedDaySummary.date}`}>
+                  <button className="text-link-button" type="button" onClick={() => openTransactions(selectedDaySummary.date, selectedDaySummary.date)}>
                     明細一覧で確認
-                  </Link>
+                  </button>
                 ) : null}
               </div>
 
@@ -600,4 +611,8 @@ function addDays(date: string, days: number) {
   const base = new Date(`${date}T00:00:00`);
   base.setDate(base.getDate() + days);
   return formatDateParam(base);
+}
+
+function replaceCurrentUrl(pathname: string, searchParams: URLSearchParams) {
+  window.history.replaceState(null, "", `${pathname}?${searchParams.toString()}`);
 }

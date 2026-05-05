@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
@@ -32,7 +32,6 @@ type MessageDialogState = {
 };
 
 export default function TransactionsPage() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -63,8 +62,8 @@ export default function TransactionsPage() {
     if (normalized.toString() === searchParams.toString()) {
       return;
     }
-    router.replace(`${pathname}?${normalized.toString()}`, { scroll: false });
-  }, [defaultDateRange, defaultPageSize, pathname, router, searchParams, settingsQuery.isLoading]);
+    replaceCurrentUrl(pathname, normalized);
+  }, [defaultDateRange, defaultPageSize, pathname, searchParams, settingsQuery.isLoading]);
 
   const transactionsQuery = useQuery({
     queryKey: transactionsQueryKeys.list({
@@ -189,7 +188,7 @@ export default function TransactionsPage() {
     next.set("page_size", String(values.pageSize));
     next.set("sort_field", values.sortField);
     next.set("sort_direction", values.sortDirection);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    replaceCurrentUrl(pathname, next);
   }
 
   function handleSort(nextField: SortField) {
@@ -223,7 +222,7 @@ export default function TransactionsPage() {
     next.set("page_size", String(defaultPageSize));
     next.set("sort_field", "date");
     next.set("sort_direction", "desc");
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    replaceCurrentUrl(pathname, next);
   }
 
   function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
@@ -725,4 +724,8 @@ function getReadableTextColor(hexColor: string): "#17233c" | "#ffffff" {
   const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
 
   return luminance > 0.62 ? "#17233c" : "#ffffff";
+}
+
+function replaceCurrentUrl(pathname: string, searchParams: URLSearchParams) {
+  window.history.replaceState(null, "", `${pathname}?${searchParams.toString()}`);
 }

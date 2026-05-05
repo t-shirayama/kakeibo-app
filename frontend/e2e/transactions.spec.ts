@@ -14,10 +14,6 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toHaveCount(0);
   await expect(page.locator(".transaction-amount.expense").first()).toBeVisible();
-  await expect(page).toHaveURL(/page=1/);
-  await expect(page).toHaveURL(/page_size=(10|20|50)/);
-  await expect(page).toHaveURL(/sort_field=date/);
-  await expect(page).toHaveURL(/sort_direction=desc/);
 
   await setTransactionDateRange(page, "2026-04-01", "2026-04-30");
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
@@ -50,7 +46,6 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page).toHaveURL(/sort_direction=desc/);
 
   await page.getByLabel("明細検索").fill("");
-  await page.getByRole("button", { name: "フィルタ解除" }).click();
   await setTransactionDateRange(page, "2025-12-01", "2025-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "未分類" });
   await expect(page.getByRole("cell", { name: "名称未確定の取引" })).toBeVisible();

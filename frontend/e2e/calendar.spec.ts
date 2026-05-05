@@ -16,11 +16,13 @@ test("shows monthly calendar and summaries", async ({ page }) => {
 
 test("shows selected day details and opens filtered transactions", async ({ page }) => {
   await gotoAppPage(page, "/calendar", "カレンダー");
-  await page.getByLabel("表示月").fill("2026-04");
+  await page.getByRole("button", { name: "前月" }).click();
+  await expect(page.getByLabel("表示月")).toHaveValue("2026-04");
   await expect(page).toHaveURL(/month=2026-04/);
   await page.reload();
   await expect(page.getByLabel("表示月")).toHaveValue("2026-04");
-  await page.getByLabel("表示月").fill("2026-05");
+  await page.getByRole("button", { name: "翌月" }).click();
+  await expect(page.getByLabel("表示月")).toHaveValue("2026-05");
 
   const mayFirstCell = page.getByRole("gridcell", { name: /2026-05-01/ });
   await mayFirstCell.click();
@@ -28,7 +30,7 @@ test("shows selected day details and opens filtered transactions", async ({ page
   await expect(page.getByRole("heading", { name: "選択日の明細" })).toBeVisible();
   await expect(page.getByLabel("選択日の明細一覧").getByText("成城石井")).toBeVisible();
 
-  await page.getByRole("link", { name: "明細一覧で確認" }).click();
+  await page.getByRole("button", { name: "明細一覧で確認" }).click();
 
   await expect(page).toHaveURL(/\/transactions\?date_from=2026-05-01&date_to=2026-05-01(&.*)?$/);
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();

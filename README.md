@@ -111,6 +111,17 @@ macOS / Linux:
 ./scripts/install-git-hooks.sh
 ```
 
+GitHub Actions の実行結果をローカルから追いたい場合は、`GITHUB_TOKEN` または `GH_TOKEN` を設定して PowerShell スクリプトを使います。
+
+Windows PowerShell:
+
+```powershell
+$env:GITHUB_TOKEN = "ghp_xxx"
+.\scripts\show-github-actions-run.ps1 -LatestFailure
+```
+
+`-LatestFailure` を外すと直近 run 一覧を表示し、`-RunId <id>` を付けると特定 run の job 情報を表示します。
+
 確認先:
 
 - フロントエンド: http://localhost:3000
@@ -261,6 +272,20 @@ docker compose run --rm backend python scripts/generate_requirements_lock.py
 
 ```powershell
 docker compose build e2e
+```
+
+GitHub Actions の最新失敗 run を確認したい場合は、次を実行します。
+
+```powershell
+$env:GITHUB_TOKEN = "ghp_xxx"
+.\scripts\show-github-actions-run.ps1 -LatestFailure
+```
+
+workflow 一覧だけ見たい場合:
+
+```powershell
+$env:GITHUB_TOKEN = "ghp_xxx"
+.\scripts\show-github-actions-run.ps1
 ```
 
 未確定事項チェックは、CIではこのコマンドをベースにしつつ、ルール文書に記載されたコマンド自体の説明行だけ除外して判定します。
