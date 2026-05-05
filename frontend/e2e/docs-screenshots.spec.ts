@@ -17,7 +17,7 @@ test("captures current application screenshots for docs", async ({ page }) => {
       .map((value) => value.trim())
       .filter(Boolean),
   );
-  const pageTargets = [
+  const allPageTargets = [
     { fileName: "dashboard.png", path: "/dashboard?month=2026-04", heading: "ダッシュボード" },
     { fileName: "budgets.png", path: "/budgets?month=2026-04&tab=actuals", heading: "予算管理" },
     { fileName: "calendar.png", path: "/calendar?month=2026-04", heading: "カレンダー" },
@@ -31,7 +31,8 @@ test("captures current application screenshots for docs", async ({ page }) => {
     { fileName: "categories.png", path: "/categories", heading: "カテゴリ管理" },
     { fileName: "audit-logs.png", path: "/audit-logs", heading: "監査ログ" },
     { fileName: "settings.png", path: "/settings", heading: "設定" },
-  ].filter((target) => requestedTargets.size === 0 || requestedTargets.has(target.fileName.replace(".png", ""))) as const;
+  ] as const;
+  const pageTargets = allPageTargets.filter((target) => requestedTargets.size === 0 || requestedTargets.has(target.fileName.replace(".png", "")));
 
   await page.setViewportSize({ width: 1440, height: 900 });
 

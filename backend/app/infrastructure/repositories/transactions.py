@@ -446,6 +446,25 @@ class CategoryRepository:
         return bool(count)
 
     def create_category(self, category: Category) -> Category:
+        restored = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.user_id == str(category.user_id),
+                func.lower(CategoryModel.name) == category.name.casefold(),
+                CategoryModel.deleted_at.is_not(None),
+            )
+        )
+        if restored is not None:
+            restored.name = category.name
+            restored.color = category.color
+            restored.description = category.description
+            restored.monthly_budget = category.monthly_budget.amount if category.monthly_budget else None
+            restored.is_active = category.is_active
+            restored.deleted_at = None
+            restored.updated_at = datetime.now(UTC)
+            self._session.commit()
+            self._session.refresh(restored)
+            return _to_category(restored)
+
         model = CategoryModel(
             id=str(category.id),
             user_id=str(category.user_id),

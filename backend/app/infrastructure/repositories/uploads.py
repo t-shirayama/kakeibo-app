@@ -48,6 +48,8 @@ class UploadRepository:
         return self._to_upload(model)
 
     def mark_failed(self, *, upload_id: UUID, error_message: str) -> Upload:
+        # 直前のINSERT/UPDATEが失敗した場合でも、履歴だけは failed へ落とせるようにする。
+        self._session.rollback()
         model = self._must_get(upload_id)
         model.status = UploadStatus.FAILED.value
         model.error_message = error_message[:1000]
