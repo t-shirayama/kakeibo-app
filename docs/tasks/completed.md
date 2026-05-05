@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] `gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす
+  - 対応: `frontend/e2e/helpers/navigation.ts` で、通常画面遷移の `gotoAppPage()` に URL 確定待ちを追加し、redirect 専用の `gotoRedirectedAppPage()` を分離した。`frontend/e2e/reports.spec.ts` は redirect helper を使う形へ整理し、`docs/specs/development-workflow.md`、`docs/e2e/index.md`、`docs/e2e/reports.md` に helper の責務分割を反映した。
+  - 確認: `docker compose run --rm e2e npm run test:e2e -- auth.spec.ts reports.spec.ts dashboard.spec.ts` を含む対象E2Eを再実行し、redirect 系で URL 待ち不足による失敗が起きないことを確認した。
+  - 根拠: `docs/tasks/open.md` の優先度B「`gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす」。
+
 - [x] 認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる
   - 対応: `frontend/proxy.ts` の保護対象ルートと matcher に `/income-settings` を追加し、`frontend/e2e/auth.spec.ts` で `/dashboard`、`/income-settings`、`/reports` の未ログイン redirect を同じ基準で確認するよう整理した。あわせて `docs/specs/security.md` と `docs/e2e/auth.md` に、server-side redirect を担う proxy と、401 後の client-side redirect を担う認証 helper の責務を追記した。
   - 確認: `docker compose run --rm e2e npm run test:e2e -- auth.spec.ts income-settings.spec.ts reports.spec.ts` を含む対象E2Eを再実行し、未ログイン時の遷移が一貫することを確認した。

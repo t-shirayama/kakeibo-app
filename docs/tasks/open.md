@@ -15,13 +15,6 @@
   - 完了条件: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` を含む対象 E2E が通り、必要なら `docs/tasks/completed.md` の最近の完了タスク記録も実態に合わせて更新されている。
   - 根拠: 2026-05-05 時点の途中作業。`docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` は 16 passed、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` は 8 passed / 2 failed まで確認済みで、残りは `dashboard.spec.ts` のカテゴリサマリー導線と `transactions.spec.ts` の同じ店名更新シナリオだったため。
 
-- [ ] `gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす
-  - 目的: 見出し表示だけで画面安定とみなしている helper を改善し、URL同期・API取得・redirect 完了前の flaky failure を減らす。
-  - 対象: `frontend/e2e/helpers/navigation.ts`、`frontend/e2e/auth.spec.ts`、`frontend/e2e/reports.spec.ts`、`frontend/e2e/dashboard.spec.ts`、必要に応じて `docs/e2e/index.md`
-  - 対応: `gotoAppPage()` の待機条件をページ特性に応じて見直し、redirect-only route は専用の待ち合わせへ分離する。必要なら API 到達、URL 確定、主要コンポーネント表示のいずれを待つかを helper または spec 側で明示し、汎用 helper の責務を絞る。
-  - 完了条件: redirect 系とデータ取得依存ページで共通 helper の誤用が減り、E2E が URL 同期や API 応答待ち不足で落ちにくくなる。対応方針が `docs/e2e/index.md` にも反映される。
-  - 根拠: `e2e-flaky-test-analysis.md` の「`gotoAppPage()` が見出しだけを待っている」「redirect 系テストは専用に書くべき」という分析。
-
 ## 優先度C
 
 - [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
