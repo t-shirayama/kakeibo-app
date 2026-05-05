@@ -18,7 +18,7 @@ describe("LoginPage integration", () => {
     await user.click(screen.getByRole("button", { name: "ログイン" }));
 
     await waitFor(() => expect(getMockRouter().push).toHaveBeenCalledWith("/transactions"));
-    expect(getMockRouter().refresh).toHaveBeenCalledTimes(1);
+    expect(getMockRouter().refresh).not.toHaveBeenCalled();
   });
 
   it("ログインAPIのエラーを画面に表示する", async () => {
