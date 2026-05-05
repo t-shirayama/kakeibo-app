@@ -1,15 +1,15 @@
-import { fireEvent, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import TransactionsPage from "@/features/transactions/transactions-page";
 import type { TransactionRequest } from "@/lib/api";
+import { setupIntegrationUser } from "@/test/integration/helpers";
+import { fillTransactionForm, openTransactionCreateDialog } from "@/test/integration/transactions/helpers";
+import { apiUrl, jsonError } from "@/test/msw/http";
 import { setMockUrl } from "@/test/navigation";
 import { renderWithClient } from "@/test/render";
 import { server } from "@/test/msw/server";
 import { mockCategories, mockTransactions, transactionList } from "@/test/msw/fixtures";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 describe("TransactionsPage integration", () => {
   it("設定・カテゴリ・明細APIを結合し、明細一覧を表示する", async () => {
@@ -23,13 +23,9 @@ describe("TransactionsPage integration", () => {
   });
 
   it("明細APIのエラーを表示する", async () => {
-    server.use(
-      http.get(`${API_BASE_URL}/api/transactions`, () =>
-        HttpResponse.json({ error: { message: "明細一覧の取得に失敗しました。" } }, { status: 500 }),
-      ),
-    );
-    setMockUrl("/transactions?date_from=2026-05-01&date_to=2026-05-31&page=1&page_size=10");
+    server.use(http.get(apiUrl("/api/transactions"), () => jsonError("明細一覧の取得に失敗しました。")));
 
+    setMockUrl("/transactions?date_from=2026-05-01&date_to=2026-05-31&page=1&page_size=10");
     renderWithClient(<TransactionsPage />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("明細一覧の取得に失敗しました。");
@@ -38,7 +34,7 @@ describe("TransactionsPage integration", () => {
   it("検索条件が変わったURLで再描画すると、APIへ条件付きで再取得する", async () => {
     const requestedKeywords: string[] = [];
     server.use(
-      http.get(`${API_BASE_URL}/api/transactions`, ({ request }) => {
+      http.get(apiUrl("/api/transactions"), ({ request }) => {
         const url = new URL(request.url);
         requestedKeywords.push(url.searchParams.get("keyword") ?? "");
         const keyword = url.searchParams.get("keyword");
@@ -58,13 +54,13 @@ describe("TransactionsPage integration", () => {
   });
 
   it("手動追加フォームから明細を登録し、一覧へ反映する", async () => {
-    const user = userEvent.setup();
+    const user = setupIntegrationUser();
     const transactions = [...mockTransactions];
     let submittedRequest: TransactionRequest | null = null;
 
     server.use(
-      http.get(`${API_BASE_URL}/api/transactions`, () => HttpResponse.json(transactionList(transactions))),
-      http.post(`${API_BASE_URL}/api/transactions`, async ({ request }) => {
+      http.get(apiUrl("/api/transactions"), () => HttpResponse.json(transactionList(transactions))),
+      http.post(apiUrl("/api/transactions"), async ({ request }) => {
         submittedRequest = await request.json() as TransactionRequest;
         const category = mockCategories.find((item) => item.category_id === submittedRequest?.category_id) ?? mockCategories[0];
         const created = {
@@ -92,19 +88,18 @@ describe("TransactionsPage integration", () => {
       }),
     );
     setMockUrl("/transactions?date_from=2026-01-01&date_to=2026-12-31&page=1&page_size=10");
-
     renderWithClient(<TransactionsPage />);
 
     expect(await screen.findByText("スーパー青空")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "手動で追加" }));
-    const dialog = within(await screen.findByRole("dialog"));
-    fireEvent.change(dialog.getByLabelText("日付"), { target: { value: "2026-05-12" } });
-    await user.type(dialog.getByLabelText("店名"), "IT追加店舗");
-    await user.selectOptions(dialog.getByLabelText("カテゴリ"), "cat-transport");
-    await user.clear(dialog.getByLabelText("金額"));
-    await user.type(dialog.getByLabelText("金額"), "1980");
-    await user.type(dialog.getByLabelText("支払い方法"), "モバイル決済");
-    await user.type(dialog.getByLabelText("メモ"), "Integration Test");
+    const dialog = await openTransactionCreateDialog(user);
+    await fillTransactionForm(dialog, user, {
+      date: "2026-05-12",
+      shopName: "IT追加店舗",
+      categoryId: "cat-transport",
+      amount: "1980",
+      paymentMethod: "モバイル決済",
+      memo: "Integration Test",
+    });
     await user.click(dialog.getByRole("button", { name: "追加" }));
 
     expect(await screen.findByText("IT追加店舗")).toBeInTheDocument();
@@ -119,7 +114,7 @@ describe("TransactionsPage integration", () => {
   });
 
   it("同じ店名のカテゴリ一括更新を選ぶと、保存後に関連明細も更新する", async () => {
-    const user = userEvent.setup();
+    const user = setupIntegrationUser();
     const transactions = [
       createTransactionRecord({ transaction_id: "tx-bulk-1", shop_name: "一括更新対象", category_id: "cat-food", category_name: "食費", category_color: "#f97316" }),
       createTransactionRecord({ transaction_id: "tx-bulk-2", shop_name: "一括更新対象", category_id: "cat-food", category_name: "食費", category_color: "#f97316" }),
@@ -127,8 +122,8 @@ describe("TransactionsPage integration", () => {
     let sameShopUpdateRequest: { shop_name: string; category_id: string } | null = null;
 
     server.use(
-      http.get(`${API_BASE_URL}/api/transactions`, () => HttpResponse.json(transactionList(transactions))),
-      http.put(`${API_BASE_URL}/api/transactions/:transactionId`, async ({ params, request }) => {
+      http.get(apiUrl("/api/transactions"), () => HttpResponse.json(transactionList(transactions))),
+      http.put(apiUrl("/api/transactions/:transactionId"), async ({ params, request }) => {
         const body = await request.json() as TransactionRequest;
         const category = mockCategories.find((item) => item.category_id === body.category_id) ?? mockCategories[0];
         const index = transactions.findIndex((transaction) => transaction.transaction_id === params.transactionId);
@@ -146,8 +141,8 @@ describe("TransactionsPage integration", () => {
         };
         return HttpResponse.json(transactions[index]);
       }),
-      http.get(`${API_BASE_URL}/api/transactions/:transactionId/same-shop-count`, () => HttpResponse.json({ count: 1 })),
-      http.patch(`${API_BASE_URL}/api/transactions/:transactionId/same-shop-category`, async ({ request }) => {
+      http.get(apiUrl("/api/transactions/:transactionId/same-shop-count"), () => HttpResponse.json({ count: 1 })),
+      http.patch(apiUrl("/api/transactions/:transactionId/same-shop-category"), async ({ request }) => {
         sameShopUpdateRequest = await request.json() as { shop_name: string; category_id: string };
         const category = mockCategories.find((item) => item.category_id === sameShopUpdateRequest?.category_id) ?? mockCategories[0];
         for (const transaction of transactions) {
@@ -162,7 +157,6 @@ describe("TransactionsPage integration", () => {
       }),
     );
     setMockUrl("/transactions?date_from=2026-01-01&date_to=2026-12-31&page=1&page_size=10");
-
     renderWithClient(<TransactionsPage />);
 
     expect(await screen.findAllByText("一括更新対象")).toHaveLength(2);

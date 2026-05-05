@@ -17,13 +17,6 @@
 
 ## 優先度B
 
-- [ ] Integration Test の共通fixtureとAPI/画面helperを整備する
-  - 目的: 結合テスト追加時の準備処理を共通化し、シナリオごとの差分だけを読みやすくする。
-  - 対象: `backend/tests/integration/`、`frontend/src/test/integration/`、`frontend/src/test/msw/`、必要に応じて `docs/specs/development-workflow.md`
-  - 対応: バックエンドは認証、CSRF、テストユーザー、DB後片付け、API呼び出しhelperを整理する。フロントエンドは MSW handler、React Query render helper、画面操作helper、エラー応答fixtureを整理し、既存ITへ適用する。
-  - 完了条件: 既存の Backend / Frontend Integration Test が共通helper経由で読みやすくなり、新規ITを追加する際の標準パターンが明確になっている。
-  - 根拠: Integration Test の拡充前に、重複した準備処理とfixtureを減らして保守しやすくするため。
-
 - [ ] E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる
   - 目的: E2Eを実ブラウザ・実バックエンド・MySQLを含む代表導線に集中させ、実行時間と保守コストを抑える。
   - 対象: `frontend/e2e/`、`frontend/e2e/helpers/`、`frontend/scripts/reset-e2e-db.mjs`、`docs/e2e/index.md`、該当する `docs/e2e/*.md`

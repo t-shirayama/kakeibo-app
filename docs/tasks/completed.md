@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Integration Test の共通fixtureとAPI/画面helperを整備する
+  - 対応: バックエンドは `backend/tests/integration/conftest.py` に認証済み API helper を追加し、`backend/tests/integration/test_api_critical_paths.py` で CSRF ヘッダー付与の重複を減らした。あわせて PDF アップロードITは parser の細部を unit test に任せ、integration では fake parser を使って保存・重複排除・削除導線を安定して検証する形へ整理した。フロントエンドは `frontend/src/test/integration/helpers.tsx` に route-aware render / user helper、`frontend/src/test/msw/http.ts` に API URL / エラーレスポンス helper、`frontend/src/test/integration/transactions/helpers.ts` に明細フォーム helper を追加し、既存の login / reports / transactions / uploads / csrf-retry IT へ適用した。`docs/specs/development-workflow.md` にも Integration Test helper の利用方針を追記した。
+  - 確認: `docker compose run --rm backend python -m pytest -m integration` が 6 件通過し、`docker compose run --rm --no-deps frontend npm run test:integration -- transactions-page.it.test.tsx` を含む Frontend Integration Test 全体が 15 件通過した。フロント側では既存の DialogContent 警告が出るが、テスト失敗はないことを確認した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Integration Test の共通fixtureとAPI/画面helperを整備する」。
+
 - [x] Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する
   - 対応: `backend/tests/unit/application/test_auth_security.py` にパスワードポリシーの失敗理由、トークンハッシュ、CSRF のセッション不一致、refresh rotation の unit test を追加し、`backend/tests/unit/domain/test_money_jpy.py` に `UtcDateTime` の検証を追加した。`backend/tests/unit/conftest.py` に in-memory SQLite の `sqlite_session_factory` fixture を追加して、`backend/tests/unit/presentation/test_api.py` の重複していたDB準備処理を helper と共通 fixture に寄せた。フロントエンドでは `frontend/src/test/unit/lib/format.test.ts` と `frontend/src/test/unit/lib/transaction-category.test.ts` を拡充し、カテゴリ表示入力の小さな helper へ重複を寄せた。
   - 確認: `docker compose run --rm --no-deps backend python -m pytest tests/unit` が 63 件通過し、`docker compose run --rm --no-deps frontend npm run test:unit` が 6 件通過した。フロントエンドは初回に `vitest: not found` となったため、`docker compose run --rm --no-deps frontend npm install` を実行して `frontend-node-modules` を更新後に再実行した。

@@ -1,16 +1,15 @@
 import { http, HttpResponse } from "msw";
 import { dashboardSummary, mockCategories, mockSettings, mockUploadJobs, mockUser, transactionList } from "./fixtures";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+import { apiUrl } from "./http";
 
 export const handlers = [
-  http.get(`${API_BASE_URL}/api/auth/csrf`, () => HttpResponse.json({ csrf_token: "test-csrf-token" })),
-  http.post(`${API_BASE_URL}/api/auth/login`, () => HttpResponse.json(mockUser)),
-  http.get(`${API_BASE_URL}/api/settings`, () => HttpResponse.json(mockSettings)),
-  http.get(`${API_BASE_URL}/api/categories`, () => HttpResponse.json(mockCategories)),
-  http.get(`${API_BASE_URL}/api/transactions`, () => HttpResponse.json(transactionList())),
-  http.get(`${API_BASE_URL}/api/uploads`, () => HttpResponse.json(mockUploadJobs)),
-  http.get(`${API_BASE_URL}/api/dashboard/summary`, ({ request }) => {
+  http.get(apiUrl("/api/auth/csrf"), () => HttpResponse.json({ csrf_token: "test-csrf-token" })),
+  http.post(apiUrl("/api/auth/login"), () => HttpResponse.json(mockUser)),
+  http.get(apiUrl("/api/settings"), () => HttpResponse.json(mockSettings)),
+  http.get(apiUrl("/api/categories"), () => HttpResponse.json(mockCategories)),
+  http.get(apiUrl("/api/transactions"), () => HttpResponse.json(transactionList())),
+  http.get(apiUrl("/api/uploads"), () => HttpResponse.json(mockUploadJobs)),
+  http.get(apiUrl("/api/dashboard/summary"), ({ request }) => {
     const url = new URL(request.url);
     const year = url.searchParams.get("year") ?? "2026";
     const month = (url.searchParams.get("month") ?? "5").padStart(2, "0");

@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import UploadPage from "@/features/uploads/upload-page";
 import { api } from "@/lib/api";
 import type { UploadJobDto } from "@/lib/types";
-import { renderWithClient } from "@/test/render";
+import { renderWithRoute, setupIntegrationUser } from "@/test/integration/helpers";
 import { mockUploadJobs } from "@/test/msw/fixtures";
 
 describe("UploadPage integration", () => {
@@ -13,7 +12,7 @@ describe("UploadPage integration", () => {
   });
 
   it("アップロード履歴と失敗時の再試行導線を表示する", async () => {
-    renderWithClient(<UploadPage />);
+    renderWithRoute(<UploadPage />, "/upload");
 
     expect(await screen.findByRole("heading", { name: "PDF明細をアップロード" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "取り込み履歴" })).toBeInTheDocument();
@@ -43,7 +42,7 @@ describe("UploadPage integration", () => {
       return uploadedJob;
     });
 
-    renderWithClient(<UploadPage />);
+    renderWithRoute(<UploadPage />, "/upload");
 
     expect(await screen.findByText("2026_04_楽天カード.pdf")).toBeInTheDocument();
     fireEvent.drop(screen.getByLabelText("PDFファイルのドロップゾーン"), {
@@ -61,7 +60,7 @@ describe("UploadPage integration", () => {
   });
 
   it("同じファイルで再試行を押すと直前に失敗したPDFを再送する", async () => {
-    const user = userEvent.setup();
+    const user = setupIntegrationUser();
     const uploadCalls: string[] = [];
     const failedUploadError = new Error("アップロードに失敗しました。");
 
@@ -85,7 +84,7 @@ describe("UploadPage integration", () => {
         };
       });
 
-    renderWithClient(<UploadPage />);
+    renderWithRoute(<UploadPage />, "/upload");
 
     expect(await screen.findByText("2026_05_読み取り不可.pdf")).toBeInTheDocument();
     fireEvent.drop(screen.getByLabelText("PDFファイルのドロップゾーン"), {

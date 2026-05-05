@@ -65,6 +65,33 @@ class IntegrationUser:
     password: str
 
 
+@dataclass
+class AuthenticatedApiClient:
+    client: TestClient
+    csrf_token: str
+
+    def get(self, url: str, **kwargs):
+        return self.client.get(url, **kwargs)
+
+    def post(self, url: str, **kwargs):
+        return self.client.post(url, headers=self._merge_headers(kwargs.pop("headers", None)), **kwargs)
+
+    def put(self, url: str, **kwargs):
+        return self.client.put(url, headers=self._merge_headers(kwargs.pop("headers", None)), **kwargs)
+
+    def patch(self, url: str, **kwargs):
+        return self.client.patch(url, headers=self._merge_headers(kwargs.pop("headers", None)), **kwargs)
+
+    def delete(self, url: str, **kwargs):
+        return self.client.delete(url, headers=self._merge_headers(kwargs.pop("headers", None)), **kwargs)
+
+    def _merge_headers(self, headers: dict[str, str] | None) -> dict[str, str]:
+        merged = {"X-CSRF-Token": self.csrf_token}
+        if headers:
+            merged.update(headers)
+        return merged
+
+
 @pytest.fixture
 def integration_user() -> Iterator[IntegrationUser]:
     user = IntegrationUser(
@@ -100,14 +127,18 @@ def client() -> TestClient:
 
 @pytest.fixture
 def authenticated_client(client: TestClient, integration_user: IntegrationUser) -> TestClient:
-    csrf_token = fetch_csrf_token(client)
     response = client.post(
         "/api/auth/login",
-        headers={"X-CSRF-Token": csrf_token},
+        headers={"X-CSRF-Token": fetch_csrf_token(client)},
         json={"email": integration_user.email, "password": integration_user.password},
     )
     assert response.status_code == 200
     return client
+
+
+@pytest.fixture
+def authenticated_api_client(authenticated_client: TestClient) -> AuthenticatedApiClient:
+    return AuthenticatedApiClient(client=authenticated_client, csrf_token=fetch_csrf_token(authenticated_client))
 
 
 def fetch_csrf_token(client: TestClient) -> str:

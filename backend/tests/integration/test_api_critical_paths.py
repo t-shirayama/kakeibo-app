@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
@@ -7,6 +8,10 @@ from zipfile import ZipFile
 import fitz
 import pytest
 from fastapi.testclient import TestClient
+
+import app.bootstrap.container as bootstrap_container
+from app.application.importing.pdf_importer import ImportedCardTransaction
+from app.domain.value_objects import MoneyJPY
 
 
 pytestmark = pytest.mark.integration
@@ -39,19 +44,16 @@ def test_auth_login_refresh_and_csrf_session(client: TestClient, integration_use
     assert refresh_response.json() == {"status": "ok"}
 
 
-def test_transaction_create_list_update_delete_through_api_and_mysql(authenticated_client: TestClient) -> None:
-    csrf_token = fetch_csrf_token(authenticated_client)
-    category_response = authenticated_client.post(
+def test_transaction_create_list_update_delete_through_api_and_mysql(authenticated_api_client) -> None:
+    category_response = authenticated_api_client.post(
         "/api/categories",
-        headers={"X-CSRF-Token": csrf_token},
         json={"name": "食費IT", "color": "#ef4444", "description": "Backend IT"},
     )
     assert category_response.status_code == 200
     category_id = category_response.json()["category_id"]
 
-    create_response = authenticated_client.post(
+    create_response = authenticated_api_client.post(
         "/api/transactions",
-        headers={"X-CSRF-Token": csrf_token},
         json={
             "transaction_date": "2026-05-10",
             "shop_name": "統合テストスーパー",
@@ -65,7 +67,7 @@ def test_transaction_create_list_update_delete_through_api_and_mysql(authenticat
     assert create_response.status_code == 200
     transaction_id = create_response.json()["transaction_id"]
 
-    list_response = authenticated_client.get(
+    list_response = authenticated_api_client.get(
         "/api/transactions",
         params={"keyword": "統合テスト", "date_from": "2026-05-01", "date_to": "2026-05-31"},
     )
@@ -75,9 +77,8 @@ def test_transaction_create_list_update_delete_through_api_and_mysql(authenticat
     assert list_payload["items"][0]["shop_name"] == "統合テストスーパー"
     assert list_payload["items"][0]["category_name"] == "食費IT"
 
-    update_response = authenticated_client.put(
+    update_response = authenticated_api_client.put(
         f"/api/transactions/{transaction_id}",
-        headers={"X-CSRF-Token": csrf_token},
         json={
             "transaction_date": "2026-05-11",
             "shop_name": "統合テストスーパー改",
@@ -92,23 +93,20 @@ def test_transaction_create_list_update_delete_through_api_and_mysql(authenticat
     assert update_response.json()["amount"] == 3000
     assert update_response.json()["shop_name"] == "統合テストスーパー改"
 
-    delete_response = authenticated_client.delete(
+    delete_response = authenticated_api_client.delete(
         f"/api/transactions/{transaction_id}",
-        headers={"X-CSRF-Token": csrf_token},
     )
     assert delete_response.status_code == 200
     assert delete_response.json() == {"status": "ok"}
 
-    after_delete_response = authenticated_client.get("/api/transactions", params={"keyword": "統合テストスーパー改"})
+    after_delete_response = authenticated_api_client.get("/api/transactions", params={"keyword": "統合テストスーパー改"})
     assert after_delete_response.status_code == 200
     assert after_delete_response.json()["total"] == 0
 
 
-def test_monthly_report_aggregates_transactions_through_api_and_mysql(authenticated_client: TestClient) -> None:
-    csrf_token = fetch_csrf_token(authenticated_client)
-    category_response = authenticated_client.post(
+def test_monthly_report_aggregates_transactions_through_api_and_mysql(authenticated_api_client) -> None:
+    category_response = authenticated_api_client.post(
         "/api/categories",
-        headers={"X-CSRF-Token": csrf_token},
         json={"name": "月次IT", "color": "#0ea5e9"},
     )
     assert category_response.status_code == 200
@@ -137,10 +135,10 @@ def test_monthly_report_aggregates_transactions_through_api_and_mysql(authentica
             "category_id": category_id,
         },
     ):
-        response = authenticated_client.post("/api/transactions", headers={"X-CSRF-Token": csrf_token}, json=payload)
+        response = authenticated_api_client.post("/api/transactions", json=payload)
         assert response.status_code == 200
 
-    monthly_response = authenticated_client.get("/api/reports/monthly", params={"year": 2026, "month": 5})
+    monthly_response = authenticated_api_client.get("/api/reports/monthly", params={"year": 2026, "month": 5})
     assert monthly_response.status_code == 200
     monthly_payload = monthly_response.json()
     assert monthly_payload["period"] == "2026-05"
@@ -149,7 +147,7 @@ def test_monthly_report_aggregates_transactions_through_api_and_mysql(authentica
         {"category_id": category_id, "name": "月次IT", "color": "#0ea5e9", "amount": 1200, "ratio": 1.0}
     ]
 
-    dashboard_response = authenticated_client.get("/api/dashboard/summary", params={"year": 2026, "month": 5})
+    dashboard_response = authenticated_api_client.get("/api/dashboard/summary", params={"year": 2026, "month": 5})
     assert dashboard_response.status_code == 200
     dashboard_payload = dashboard_response.json()
     assert dashboard_payload["total_expense"] == 1200
@@ -158,20 +156,17 @@ def test_monthly_report_aggregates_transactions_through_api_and_mysql(authentica
     assert dashboard_payload["expense_change"] == -8799
 
 
-def test_category_status_change_normalizes_existing_transactions_to_uncategorized(authenticated_client: TestClient) -> None:
-    csrf_token = fetch_csrf_token(authenticated_client)
-    category_response = authenticated_client.post(
+def test_category_status_change_normalizes_existing_transactions_to_uncategorized(authenticated_api_client) -> None:
+    category_response = authenticated_api_client.post(
         "/api/categories",
-        headers={"X-CSRF-Token": csrf_token},
         json={"name": "分類確認IT", "color": "#22c55e", "description": "無効化確認"},
     )
     assert category_response.status_code == 200
     category_payload = category_response.json()
     category_id = category_payload["category_id"]
 
-    create_response = authenticated_client.post(
+    create_response = authenticated_api_client.post(
         "/api/transactions",
-        headers={"X-CSRF-Token": csrf_token},
         json={
             "transaction_date": "2026-05-12",
             "shop_name": "無効化対象店舗",
@@ -182,33 +177,31 @@ def test_category_status_change_normalizes_existing_transactions_to_uncategorize
     )
     assert create_response.status_code == 200
 
-    disable_response = authenticated_client.patch(
+    disable_response = authenticated_api_client.patch(
         f"/api/categories/{category_id}/status",
-        headers={"X-CSRF-Token": csrf_token},
         json={"is_active": False},
     )
     assert disable_response.status_code == 200
     assert disable_response.json()["is_active"] is False
 
-    active_categories_response = authenticated_client.get("/api/categories")
+    active_categories_response = authenticated_api_client.get("/api/categories")
     assert active_categories_response.status_code == 200
     assert [item["category_id"] for item in active_categories_response.json()] == []
 
-    all_categories_response = authenticated_client.get("/api/categories", params={"include_inactive": "true"})
+    all_categories_response = authenticated_api_client.get("/api/categories", params={"include_inactive": "true"})
     assert all_categories_response.status_code == 200
     assert all_categories_response.json()[0]["category_id"] == category_id
     assert all_categories_response.json()[0]["is_active"] is False
 
-    list_response = authenticated_client.get("/api/transactions", params={"keyword": "未分類"})
+    list_response = authenticated_api_client.get("/api/transactions", params={"keyword": "未分類"})
     assert list_response.status_code == 200
     item = list_response.json()["items"][0]
     assert item["category_id"] == category_id
     assert item["category_name"] == "未分類"
     assert item["category_color"] == "#6B7280"
 
-    rejected_response = authenticated_client.post(
+    rejected_response = authenticated_api_client.post(
         "/api/transactions",
-        headers={"X-CSRF-Token": csrf_token},
         json={
             "transaction_date": "2026-05-13",
             "shop_name": "無効カテゴリ新規",
@@ -218,16 +211,53 @@ def test_category_status_change_normalizes_existing_transactions_to_uncategorize
         },
     )
     assert rejected_response.status_code == 400
-    assert rejected_response.json()["error"]["message"] == "Category is inactive."
+    assert rejected_response.json()["error"]["message"] == "Category not found or inactive."
 
 
-def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_upload(authenticated_client: TestClient, tmp_path: Path) -> None:
-    csrf_token = fetch_csrf_token(authenticated_client)
+def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_upload(authenticated_api_client, monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeParser:
+        def parse(self, pdf_bytes: bytes) -> list[ImportedCardTransaction]:
+            return [
+                ImportedCardTransaction(
+                    transaction_date=date(2026, 4, 28),
+                    shop_name="セブン-イレブン",
+                    card_user_name="本人",
+                    payment_method="1回払い",
+                    amount=MoneyJPY(842),
+                    source_row_number=1,
+                    source_page_number=1,
+                    source_format="rakuten_card_pdf",
+                    source_hash="row-1",
+                ),
+                ImportedCardTransaction(
+                    transaction_date=date(2026, 4, 27),
+                    shop_name="Amazon.co.jp",
+                    card_user_name="家族",
+                    payment_method="1回払い",
+                    amount=MoneyJPY(3200),
+                    source_row_number=2,
+                    source_page_number=1,
+                    source_format="rakuten_card_pdf",
+                    source_hash="row-2",
+                ),
+                ImportedCardTransaction(
+                    transaction_date=date(2026, 4, 26),
+                    shop_name="取消 サンプルストア",
+                    card_user_name="本人",
+                    payment_method="1回払い",
+                    amount=MoneyJPY(-1518),
+                    source_row_number=3,
+                    source_page_number=1,
+                    source_format="rakuten_card_pdf",
+                    source_hash="row-3",
+                ),
+            ]
+
+    monkeypatch.setattr(bootstrap_container, "RakutenCardPdfParser", FakeParser)
     pdf_bytes = _build_rakuten_statement_pdf()
 
-    first_upload_response = authenticated_client.post(
+    first_upload_response = authenticated_api_client.post(
         "/api/uploads",
-        headers={"X-CSRF-Token": csrf_token},
         files={"file": ("rakuten-statement.pdf", pdf_bytes, "application/pdf")},
     )
     assert first_upload_response.status_code == 200
@@ -236,7 +266,7 @@ def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_u
     assert first_payload["imported_count"] == 3
     assert Path(first_payload["stored_file_path"]).exists()
 
-    transactions_response = authenticated_client.get("/api/transactions", params={"page_size": 10})
+    transactions_response = authenticated_api_client.get("/api/transactions", params={"page_size": 10})
     assert transactions_response.status_code == 200
     transactions_payload = transactions_response.json()
     assert transactions_payload["total"] == 3
@@ -245,44 +275,40 @@ def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_u
     assert all(item["category_name"] == "未分類" for item in transactions_payload["items"])
     assert all(item["source_format"] == "rakuten_card_pdf" for item in transactions_payload["items"])
 
-    categories_response = authenticated_client.get("/api/categories")
+    categories_response = authenticated_api_client.get("/api/categories")
     assert categories_response.status_code == 200
     assert categories_response.json()[0]["name"] == "未分類"
 
-    second_upload_response = authenticated_client.post(
+    second_upload_response = authenticated_api_client.post(
         "/api/uploads",
-        headers={"X-CSRF-Token": csrf_token},
         files={"file": ("rakuten-statement.pdf", pdf_bytes, "application/pdf")},
     )
     assert second_upload_response.status_code == 200
     assert second_upload_response.json()["imported_count"] == 0
 
-    after_duplicate_response = authenticated_client.get("/api/transactions", params={"page_size": 10})
+    after_duplicate_response = authenticated_api_client.get("/api/transactions", params={"page_size": 10})
     assert after_duplicate_response.status_code == 200
     assert after_duplicate_response.json()["total"] == 3
 
-    uploads_response = authenticated_client.get("/api/uploads")
+    uploads_response = authenticated_api_client.get("/api/uploads")
     assert uploads_response.status_code == 200
     assert len(uploads_response.json()) == 2
 
-    delete_response = authenticated_client.delete(
+    delete_response = authenticated_api_client.delete(
         f"/api/uploads/{first_payload['upload_id']}",
-        headers={"X-CSRF-Token": csrf_token},
     )
     assert delete_response.status_code == 200
     assert delete_response.json() == {"status": "ok"}
     assert not Path(first_payload["stored_file_path"]).exists()
 
-    after_delete_uploads = authenticated_client.get("/api/uploads")
+    after_delete_uploads = authenticated_api_client.get("/api/uploads")
     assert after_delete_uploads.status_code == 200
     assert [item["upload_id"] for item in after_delete_uploads.json()] == [second_upload_response.json()["upload_id"]]
 
 
-def test_transaction_export_returns_filtered_workbook_with_summary_sheets(authenticated_client: TestClient) -> None:
-    csrf_token = fetch_csrf_token(authenticated_client)
-    category_response = authenticated_client.post(
+def test_transaction_export_returns_filtered_workbook_with_summary_sheets(authenticated_api_client) -> None:
+    category_response = authenticated_api_client.post(
         "/api/categories",
-        headers={"X-CSRF-Token": csrf_token},
         json={"name": "輸出IT", "color": "#f97316"},
     )
     assert category_response.status_code == 200
@@ -313,10 +339,10 @@ def test_transaction_export_returns_filtered_workbook_with_summary_sheets(authen
             "category_id": category_id,
         },
     ):
-        response = authenticated_client.post("/api/transactions", headers={"X-CSRF-Token": csrf_token}, json=payload)
+        response = authenticated_api_client.post("/api/transactions", json=payload)
         assert response.status_code == 200
 
-    export_response = authenticated_client.get(
+    export_response = authenticated_api_client.get(
         "/api/transactions/export",
         params={
             "keyword": "Export",
