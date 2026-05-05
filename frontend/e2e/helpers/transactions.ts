@@ -25,16 +25,27 @@ export async function createTransaction(
   await expect(page.getByRole("cell", { name: values.shopName }).first()).toBeVisible();
 }
 
+export async function createTransactions(
+  page: Page,
+  valuesList: Array<{ shopName: string; amount: string; category: string; transactionDate?: string; paymentMethod?: string }>,
+) {
+  for (const values of valuesList) {
+    await createTransaction(page, values);
+  }
+}
+
 export async function setTransactionDateRange(page: Page, dateFrom: string, dateTo: string) {
   const dateFromInput = page.getByLabel("開始日");
   const dateToInput = page.getByLabel("終了日");
 
   await dateFromInput.fill(dateFrom);
-  await expect(dateFromInput).toHaveValue(dateFrom);
+  await dateFromInput.press("Tab");
   await dateToInput.fill(dateTo);
-  await expect(dateToInput).toHaveValue(dateTo);
+  await dateToInput.press("Tab");
   await expect(page).toHaveURL(new RegExp(`date_from=${dateFrom}`));
   await expect(page).toHaveURL(new RegExp(`date_to=${dateTo}`));
+  await expect(dateFromInput).toHaveValue(dateFrom);
+  await expect(dateToInput).toHaveValue(dateTo);
 }
 
 export async function openTransactionCreateForm(page: Page) {

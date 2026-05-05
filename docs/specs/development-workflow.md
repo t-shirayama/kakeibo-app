@@ -40,7 +40,7 @@
 - Backend Unit Test: `backend/tests/unit/` に 9 ファイル。domain の不変条件、application の認証・取引・Excel出力、infrastructure repository、presentation API の単体寄り検証を置く。
 - Backend Integration Test: `backend/tests/integration/` に 1 ファイル。FastAPI + Cookie認証 + CSRF + MySQL 永続化を通し、認証/refresh、明細 CRUD、月次集計、カテゴリ無効化時の未分類表示をまとめて守る。
 - Frontend Unit Test: `frontend/src/test/unit/` に 2 ファイル。整形関数とカテゴリ表示ルールのような純粋ロジックを置く。
-- Frontend Integration Test: `frontend/src/test/integration/` に 5 ファイル。ログイン、明細一覧、レポート、アップロード、CSRF再試行を MSW と React Testing Library で検証する。
+- Frontend Integration Test: `frontend/src/test/integration/` に 6 ファイル。ログイン、認証 refresh / CSRF 回復、明細一覧、レポート、アップロードを MSW と React Testing Library で検証する。
 - E2E: `frontend/e2e/` に 11 spec。認証、主要画面遷移、ダッシュボード、カレンダー、明細一覧、収入設定、カテゴリ管理、アップロード、設定、レガシー導線、ドキュメント用スクリーンショットを扱う。
 
 各層の責務と、優先して置く観点は次のとおり。
@@ -54,7 +54,7 @@
 
 - 明細一覧、ログイン、アップロードは Frontend Integration Test と E2E の両方に観点があるため、E2E では代表導線、Integration Test では分岐とエラー回復を主に受け持つ。
 - Backend Integration Test は主要導線を一通り持てている一方で、カテゴリ管理、PDF取込、Excel出力、Alembic migration の確認が薄い。
-- Frontend Integration Test は主要画面の読み込みと一部フォームを持てている一方で、明細編集フォーム、PDFアップロード詳細、401/403 回復、カテゴリ管理、設定保存のような操作系が不足している。
+- Frontend Integration Test は主要画面の読み込みと認証/CSRF 回復を持てている一方で、カテゴリ管理、設定保存のような操作系がまだ薄い。
 - E2E helper は `auth.ts`、`date.ts`、`navigation.ts`、`transactions.ts`、`upload.ts` に分かれているが、redirect 専用待ち合わせと画面安定待ちの境界がまだ曖昧で、`gotoAppPage()` の責務見直し余地がある。
 
 今後の拡充順は、次の順番を標準とする。

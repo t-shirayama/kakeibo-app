@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { addMonths, getMonthDateRange } from "./helpers/date";
+import { addMonths, expectDisplayedMonth, getMonthDateRange, moveDisplayedMonth } from "./helpers/date";
 import { gotoAppPage } from "./helpers/navigation";
 
 test("shows integrated report dashboard metrics, charts, and export action", async ({ page }) => {
@@ -64,13 +64,8 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
   const previousMonth = addMonths(currentValue, -1);
   const pickerMonth = addMonths(currentValue, -2);
 
-  await page.getByRole("button", { name: "前月" }).click();
-  await expect(monthInput).toHaveValue(previousMonth.value);
-  await expect(page).toHaveURL(new RegExp(`month=${previousMonth.value}`));
-  await page.getByRole("button", { name: "前月" }).click();
-
-  await expect(monthInput).toHaveValue(pickerMonth.value);
-  await expect(page).toHaveURL(new RegExp(`month=${pickerMonth.value}`));
+  await moveDisplayedMonth(page, "前月", previousMonth.value);
+  await moveDisplayedMonth(page, "前月", pickerMonth.value);
   await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
   await expect(page.getByRole("img", { name: "直近6ヶ月の支出推移グラフ" })).toBeVisible();
 
@@ -83,21 +78,15 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
     await route.continue();
   });
 
-  await page.getByRole("button", { name: "翌月" }).click();
-
-  await expect(monthInput).toHaveValue(nextMonth.value);
+  await moveDisplayedMonth(page, "翌月", nextMonth.value);
   await expect(page.getByRole("img", { name: "直近6ヶ月の支出推移グラフ" })).toBeVisible();
   await expect(page.getByText("データを取得しています。")).toHaveCount(0);
-  await expect(page).toHaveURL(new RegExp(`month=${nextMonth.value}`));
   await expect(page.getByText(`${nextMonth.label}までの直近6ヶ月`)).toBeVisible();
 
-  await page.getByRole("button", { name: "前月" }).click();
-
-  await expect(monthInput).toHaveValue(pickerMonth.value);
-  await expect(page).toHaveURL(new RegExp(`month=${pickerMonth.value}`));
+  await moveDisplayedMonth(page, "前月", pickerMonth.value);
   await expect(page.getByText(`${pickerMonth.label}までの直近6ヶ月`)).toBeVisible();
   await page.reload();
-  await expect(monthInput).toHaveValue(pickerMonth.value);
+  await expectDisplayedMonth(page, pickerMonth.value);
 });
 
 test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {
@@ -116,7 +105,7 @@ test("opens transactions filtered by selected month and category from category s
   expect(url.searchParams.get("date_to")).toBe(expectedRange.date_to);
   expect(url.searchParams.get("category_id")).toBeTruthy();
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "成城石井" })).toBeVisible();
 });
 
 test("keeps category legend scrolling inside the dashboard panel", async ({ page }) => {

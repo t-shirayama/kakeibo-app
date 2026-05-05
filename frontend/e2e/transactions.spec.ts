@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { gotoAppPage } from "./helpers/navigation";
 import {
   createTransaction,
+  createTransactions,
   deleteTransaction,
   fillTransactionForm,
   openTransactionEditForm,
@@ -117,8 +118,10 @@ test("asks whether to update categories for the same shop name", async ({ page }
   await setTransactionDateRange(page, "2026-01-01", "2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
 
-  await createTransaction(page, { shopName: "E2E一括店舗", amount: "1111", category: "食費" });
-  await createTransaction(page, { shopName: "E2E一括店舗", amount: "2222", category: "食費" });
+  await createTransactions(page, [
+    { shopName: "E2E一括店舗", amount: "1111", category: "食費" },
+    { shopName: "E2E一括店舗", amount: "2222", category: "食費" },
+  ]);
 
   const bulkRows = page.getByRole("row").filter({ hasText: "E2E一括店舗" });
   await expect(bulkRows).toHaveCount(2);
@@ -130,8 +133,10 @@ test("asks whether to update categories for the same shop name", async ({ page }
   await bulkDialog.getByRole("button", { name: "一括更新する" }).click();
   await expect(page.getByRole("row").filter({ hasText: "E2E一括店舗" }).filter({ hasText: "日用品" })).toHaveCount(2);
 
-  await createTransaction(page, { shopName: "E2E単独店舗", amount: "3333", category: "食費" });
-  await createTransaction(page, { shopName: "E2E単独店舗", amount: "4444", category: "食費" });
+  await createTransactions(page, [
+    { shopName: "E2E単独店舗", amount: "3333", category: "食費" },
+    { shopName: "E2E単独店舗", amount: "4444", category: "食費" },
+  ]);
 
   const singleRows = page.getByRole("row").filter({ hasText: "E2E単独店舗" });
   await expect(singleRows).toHaveCount(2);

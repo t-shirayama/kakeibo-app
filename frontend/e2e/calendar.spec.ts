@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { getMonthDateRange } from "./helpers/date";
+import { expectDisplayedMonth, moveDisplayedMonth } from "./helpers/date";
 import { gotoAppPage } from "./helpers/navigation";
 
 test("shows monthly calendar and summaries", async ({ page }) => {
@@ -16,13 +16,10 @@ test("shows monthly calendar and summaries", async ({ page }) => {
 
 test("shows selected day details and opens filtered transactions", async ({ page }) => {
   await gotoAppPage(page, "/calendar", "カレンダー");
-  await page.getByRole("button", { name: "前月" }).click();
-  await expect(page.getByLabel("表示月")).toHaveValue("2026-04");
-  await expect(page).toHaveURL(/month=2026-04/);
+  await moveDisplayedMonth(page, "前月", "2026-04");
   await page.reload();
-  await expect(page.getByLabel("表示月")).toHaveValue("2026-04");
-  await page.getByRole("button", { name: "翌月" }).click();
-  await expect(page.getByLabel("表示月")).toHaveValue("2026-05");
+  await expectDisplayedMonth(page, "2026-04");
+  await moveDisplayedMonth(page, "翌月", "2026-05");
 
   const mayFirstCell = page.getByRole("gridcell", { name: /2026-05-01/ });
   await mayFirstCell.click();

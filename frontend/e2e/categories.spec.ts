@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { gotoAppPage } from "./helpers/navigation";
 
 test("shows category colors and creates a category", async ({ page }) => {
-  await page.goto("/categories");
+  await gotoAppPage(page, "/categories", "カテゴリ管理");
 
-  await expect(page.getByRole("heading", { name: "カテゴリ管理" })).toBeVisible();
   await expect(page.getByText("食費")).toBeVisible();
 
   const foodRow = page.locator(".category-row").filter({ hasText: "食費" });

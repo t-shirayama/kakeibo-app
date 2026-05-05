@@ -14,13 +14,23 @@ export async function ensureAuthDirectory() {
 }
 
 export async function loginAsSampleUser(page: Page) {
-  await page.goto("/login");
-  await page.getByLabel("メールアドレス").fill(sampleUser.email);
-  await page.getByLabel("パスワード").fill(sampleUser.password);
-  await page.getByRole("button", { name: "ログイン" }).click();
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await page.goto("/login");
+    await page.getByLabel("メールアドレス").fill(sampleUser.email);
+    await page.getByLabel("パスワード").fill(sampleUser.password);
+    await page.getByRole("button", { name: "ログイン" }).click();
 
-  await expect(page).toHaveURL(/\/dashboard(\?.*)?$/);
-  await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
+    try {
+      // setup project の初回ログインでは、遷移先ページのコンパイルで待ち時間が伸びやすい。
+      await expect(page).toHaveURL(/\/dashboard(\?.*)?$/, { timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "ダッシュボード" })).toBeVisible();
+      return;
+    } catch (error) {
+      if (attempt === 1) {
+        throw error;
+      }
+    }
+  }
 }
 
 export async function newAnonymousContext(browser: Browser): Promise<BrowserContext> {

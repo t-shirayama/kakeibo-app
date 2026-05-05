@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { gotoAppPage } from "./helpers/navigation";
-import { dropPdfOnUploadZone, expectUploadHistoryRow } from "./helpers/upload";
+import { expectUploadHistoryRow, uploadPdfAndWaitForHistory } from "./helpers/upload";
 
 test("shows upload history including completed and failed imports", async ({ page }) => {
   await gotoAppPage(page, "/upload", "アップロード");
@@ -21,15 +21,5 @@ test("shows upload history including completed and failed imports", async ({ pag
 test("uploads a PDF by dropping it onto the upload zone", async ({ page }) => {
   await gotoAppPage(page, "/upload", "アップロード");
   await expect(page.getByRole("heading", { name: "PDF明細をアップロード" })).toBeVisible();
-
-  const uploadResponse = page.waitForResponse((response) =>
-    response.url().includes("/api/uploads") && response.request().method() === "POST",
-  );
-
-  await dropPdfOnUploadZone(page, "e2e-drop-test.pdf");
-
-  await expect(page.getByLabel("アップロード進捗")).toBeVisible();
-  await expect(page.getByText("e2e-drop-test.pdf")).toBeVisible();
-  await uploadResponse;
-  await expectUploadHistoryRow(page, "e2e-drop-test.pdf", { status: "完了" });
+  await uploadPdfAndWaitForHistory(page, "e2e-drop-test.pdf");
 });

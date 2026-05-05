@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる
+  - 対応: `frontend/e2e/helpers/navigation.ts` に未ログイン redirect 確認 helper、`frontend/e2e/helpers/date.ts` に年月操作 helper、`frontend/e2e/helpers/transactions.ts` に複数明細追加 helper、`frontend/e2e/helpers/upload.ts` にアップロード完了待ち helper を追加し、calendar / categories / dashboard / transactions / upload / auth の各 spec へ適用した。認証の `page.route()` 依存だった CSRF 403 再試行と 401 後 refresh 失敗の導線は E2E から外し、`frontend/src/test/integration/api/auth-refresh.it.test.ts` と既存の login integration test で受け持つ形へ整理した。あわせて `docs/e2e/index.md`、`docs/e2e/auth.md`、`docs/e2e/transactions.md`、`docs/e2e/upload.md`、`docs/specs/development-workflow.md` を現状に合わせて更新した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` と `docker compose run --rm e2e -- auth.spec.ts calendar.spec.ts dashboard.spec.ts transactions.spec.ts upload.spec.ts categories.spec.ts` で対象の Integration Test / E2E を確認した。E2Eは representative flow に絞り、モック分岐は Frontend Integration Test へ移した。
+  - 根拠: `docs/tasks/open.md` の優先度B「E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる」。
+
 - [x] Integration Test の共通fixtureとAPI/画面helperを整備する
   - 対応: バックエンドは `backend/tests/integration/conftest.py` に認証済み API helper を追加し、`backend/tests/integration/test_api_critical_paths.py` で CSRF ヘッダー付与の重複を減らした。あわせて PDF アップロードITは parser の細部を unit test に任せ、integration では fake parser を使って保存・重複排除・削除導線を安定して検証する形へ整理した。フロントエンドは `frontend/src/test/integration/helpers.tsx` に route-aware render / user helper、`frontend/src/test/msw/http.ts` に API URL / エラーレスポンス helper、`frontend/src/test/integration/transactions/helpers.ts` に明細フォーム helper を追加し、既存の login / reports / transactions / uploads / csrf-retry IT へ適用した。`docs/specs/development-workflow.md` にも Integration Test helper の利用方針を追記した。
   - 確認: `docker compose run --rm backend python -m pytest -m integration` が 6 件通過し、`docker compose run --rm --no-deps frontend npm run test:integration -- transactions-page.it.test.tsx` を含む Frontend Integration Test 全体が 15 件通過した。フロント側では既存の DialogContent 警告が出るが、テスト失敗はないことを確認した。

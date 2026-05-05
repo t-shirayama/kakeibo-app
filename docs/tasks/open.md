@@ -17,12 +17,12 @@
 
 ## 優先度B
 
-- [ ] E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる
-  - 目的: E2Eを実ブラウザ・実バックエンド・MySQLを含む代表導線に集中させ、実行時間と保守コストを抑える。
-  - 対象: `frontend/e2e/`、`frontend/e2e/helpers/`、`frontend/scripts/reset-e2e-db.mjs`、`docs/e2e/index.md`、該当する `docs/e2e/*.md`
-  - 対応: ログイン、年月操作、明細作成、削除確認、アップロード用データ準備などの重複操作をhelper化する。E2Eで細かく見すぎている表示分岐やAPI異常系は、Frontend Integration Test へ移せるか判断し、必要なタスクまたは実装へ反映する。
-  - 完了条件: E2E spec が代表導線中心に読みやすくなり、共通操作は helper に集約され、移管した検証観点が Integration Test またはタスクとして追跡できる。
-  - 根拠: E2Eの安定性と実行時間を守りながら、unit / integration / e2e の役割分担を明確にするため。
+- [ ] E2E helper整理の残作業を完了し、対象specの再検証を通す
+  - 目的: 途中まで進めた E2E helper 整理を仕上げ、代表導線中心の E2E と Integration Test への役割分担を実際の通過結果まで揃える。
+  - 対象: `frontend/e2e/helpers/auth.ts`、`frontend/e2e/helpers/transactions.ts`、`frontend/e2e/helpers/upload.ts`、`frontend/e2e/dashboard.spec.ts`、`frontend/e2e/transactions.spec.ts`、`frontend/e2e/upload.spec.ts`、必要に応じて `docs/e2e/index.md` と `docs/tasks/completed.md`
+  - 対応: `auth.setup.ts` の初回ログイン揺れを helper 側の再試行で吸収する変更と、PDF ドロップ用の実データ化までは入っているため、そのうえで E2E を再実行し、カテゴリサマリーから明細一覧へ飛ぶ dashboard spec の期待値と、同じ店名更新シナリオの期間入力待ちを見直す。途中の整理で追加した Integration Test と docs の内容が最終的な通過結果と一致するように整える。
+  - 完了条件: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` を含む対象 E2E が通り、必要なら `docs/tasks/completed.md` の最近の完了タスク記録も実態に合わせて更新されている。
+  - 根拠: 2026-05-05 時点の途中作業。`docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` は 16 passed、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` は 8 passed / 2 failed まで確認済みで、残りは `dashboard.spec.ts` のカテゴリサマリー導線と `transactions.spec.ts` の同じ店名更新シナリオだったため。
 
 - [ ] 認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる
   - 目的: proxy とクライアント側401リダイレクトの責務を揃え、ページごとに認証導線が揺れない状態にする。

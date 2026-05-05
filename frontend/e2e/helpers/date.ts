@@ -1,3 +1,5 @@
+import { expect, type Page } from "@playwright/test";
+
 export function addMonths(value: string, amount: number) {
   const { year, month } = parseYearMonth(value);
   const date = new Date(year, month - 1 + amount, 1);
@@ -25,4 +27,14 @@ export function getMonthDateRange(value: string) {
     date_from: `${year}-${paddedMonth}-01`,
     date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
   };
+}
+
+export async function expectDisplayedMonth(page: Page, value: string) {
+  await expect(page.getByLabel("表示月")).toHaveValue(value);
+  await expect(page).toHaveURL(new RegExp(`month=${value}`));
+}
+
+export async function moveDisplayedMonth(page: Page, buttonName: "前月" | "翌月", expectedValue: string) {
+  await page.getByRole("button", { name: buttonName }).click();
+  await expectDisplayedMonth(page, expectedValue);
 }
