@@ -742,6 +742,11 @@ textarea {
   padding: 14px 18px 0;
 }
 
+.transactions-pagination-bar {
+  justify-content: center;
+  padding-bottom: 18px;
+}
+
 .pagination-pages {
   display: inline-flex;
   flex-wrap: wrap;
@@ -2281,6 +2286,11 @@ textarea {
     justify-content: flex-start;
     padding-right: 0;
     padding-left: 0;
+  }
+
+  .transactions-pagination-bar {
+    justify-content: center;
+    padding-bottom: 20px;
   }
 
   .income-override-row {

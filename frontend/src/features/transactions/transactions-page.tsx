@@ -485,7 +485,7 @@ export default function TransactionsPage() {
                 ))}
               </tbody>
             </table>
-            <div className="pagination-bar" aria-label="ページネーション">
+            <div className="pagination-bar transactions-pagination-bar" aria-label="ページネーション">
               <button className="button secondary compact" type="button" onClick={() => updateParams({ page: currentParams.page - 1 })} disabled={currentParams.page <= 1}>
                 <ChevronLeft size={14} aria-hidden="true" />
                 前へ
