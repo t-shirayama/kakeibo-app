@@ -55,7 +55,7 @@ APIクライアントはOpenAPIから自動生成する。
 - `frontend/src/features/settings` は設定画面で使う server state の key 定義など、設定画面に閉じた要素を持つ。
 - TanStack Query の query key 定義は、原則として各 feature 配下の `queryKeys.ts` へ置き、画面側で配列を直書きしない。
 - `frontend/src/components` には複数画面で再利用する共通UIだけを置く。
-- `収入` `支出` `収支` のテーマカラーは `frontend/app/globals.css` の CSS 変数を正とし、画面やコンポーネントで色コードを直書きして増やさない。
+- `収入` `支出` `収支` のテーマカラーは `frontend/app/globals.css` の CSS 変数を正とし、金額表示やアイコンを含めて画面やコンポーネントで色コードを直書きして増やさない。
 
 ## API連携
 

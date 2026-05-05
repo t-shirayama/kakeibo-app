@@ -166,7 +166,7 @@ export function CalendarPage() {
               <div className="calendar-summary-grid" aria-label="月間サマリー">
                 <SummaryTile icon={<Wallet size={16} aria-hidden="true" />} label="収入" value={formatCurrency(monthlySummary.total_income)} tone="income" />
                 <SummaryTile icon={<CreditCard size={16} aria-hidden="true" />} label="支出" value={formatCurrency(monthlySummary.total_expense)} tone="expense" />
-                <SummaryTile icon={<ReceiptText size={16} aria-hidden="true" />} label="収支" value={formatCurrency(monthlySummary.balance)} tone={monthlySummary.balance >= 0 ? "income" : "expense"} />
+                <SummaryTile icon={<ReceiptText size={16} aria-hidden="true" />} label="収支" value={formatCurrency(monthlySummary.balance)} tone="balance" />
               </div>
             </section>
 
@@ -226,11 +226,11 @@ function SummaryTile({
   icon: ReactNode;
   label: string;
   value: string;
-  tone: "income" | "expense";
+  tone: "income" | "expense" | "balance";
 }) {
   return (
     <article className={`calendar-summary-tile ${tone}`}>
-      <div className="calendar-summary-icon" aria-hidden="true">
+      <div className={`calendar-summary-icon ${tone}`} aria-hidden="true">
         {icon}
       </div>
       <div>

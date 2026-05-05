@@ -1702,18 +1702,29 @@ button:not(:disabled) {
   background: #fff5f5;
 }
 
+.calendar-summary-tile.balance {
+  background: #fff8eb;
+}
+
 .calendar-summary-icon {
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
-  color: var(--primary);
   background: #ffffff;
   border-radius: 999px;
 }
 
+.calendar-summary-icon.income {
+  color: var(--theme-income);
+}
+
 .calendar-summary-tile.expense .calendar-summary-icon {
   color: var(--theme-expense-strong);
+}
+
+.calendar-summary-icon.balance {
+  color: var(--theme-balance);
 }
 
 .calendar-summary-tile p,
