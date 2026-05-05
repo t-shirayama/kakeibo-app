@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
+  - 対応: `backend/tests/integration/test_api_critical_paths.py` に、PDF解析失敗時は失敗履歴だけを残して明細を作らないケースと、カテゴリ一覧・アップロード履歴が他ユーザーに漏れないケースを追加した。既存のカテゴリ作成/一覧/状態変更、PDF取込成功/重複排除/原本削除のITと合わせて、カテゴリ管理とPDF取込の主要経路を integration marker で確認できる状態にした。あわせて `docs/specs/development-workflow.md` と `docs/specs/pdf-import.md` を現行カバレッジへ同期した。
+  - 確認: `docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py` が 8 passed で通過した。
+  - 根拠: `docs/tasks/open.md` の優先度C「Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する」。
+
 - [x] E2E helper整理の残作業を完了し、対象specの再検証を通す
   - 対応: `frontend/e2e/transactions.spec.ts` の検索条件保持シナリオに、reload 後の URL と期間フィルタ待ちを追加してから結果行を確認するよう見直した。あわせて `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts auth.spec.ts income-settings.spec.ts reports.spec.ts` を再実行し、dashboard / transactions / upload の代表導線に加えて、認証ガードとレガシー redirect の現行結果もそろえた。
   - 確認: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts auth.spec.ts income-settings.spec.ts reports.spec.ts` が 14 passed で通過した。

@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from io import BytesIO
 from pathlib import Path
+from uuid import uuid4
 from zipfile import ZipFile
 
 import fitz
 import pytest
 from fastapi.testclient import TestClient
-
 import app.bootstrap.container as bootstrap_container
 from app.application.importing.pdf_importer import ImportedCardTransaction
+from app.application.auth.password_hasher import PasswordHasher
+from app.infrastructure.db.session import SessionLocal
+from app.infrastructure.models.category import CategoryModel
+from app.infrastructure.models.upload import UploadModel
+from app.infrastructure.models.user import UserModel
 from app.domain.value_objects import MoneyJPY
 
 
@@ -307,6 +312,73 @@ def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_u
     after_delete_uploads = authenticated_api_client.get("/api/uploads")
     assert after_delete_uploads.status_code == 200
     assert [item["upload_id"] for item in after_delete_uploads.json()] == [second_upload_response.json()["upload_id"]]
+
+
+def test_pdf_upload_records_failed_status_when_parser_raises(authenticated_api_client, monkeypatch: pytest.MonkeyPatch) -> None:
+    class FailingParser:
+        def parse(self, pdf_bytes: bytes) -> list[ImportedCardTransaction]:
+            raise ValueError("PDF解析に失敗しました。")
+
+    monkeypatch.setattr(bootstrap_container, "RakutenCardPdfParser", FailingParser)
+
+    response = authenticated_api_client.post(
+        "/api/uploads",
+        files={"file": ("broken.pdf", _build_rakuten_statement_pdf(), "application/pdf")},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "failed"
+    assert payload["imported_count"] == 0
+    assert payload["error_message"] == "PDF解析に失敗しました。"
+
+    transactions_response = authenticated_api_client.get("/api/transactions", params={"page_size": 10})
+    assert transactions_response.status_code == 200
+    assert transactions_response.json()["total"] == 0
+
+
+def test_category_and_upload_list_are_scoped_to_authenticated_user(authenticated_api_client, integration_user) -> None:
+    other_user_id = uuid4()
+    with SessionLocal() as session:
+        session.add(
+            UserModel(
+                id=str(other_user_id),
+                email=f"other-{other_user_id.hex}@example.com",
+                password_hash=PasswordHasher().hash_password("SamplePassw0rd!"),
+                is_admin=False,
+            )
+        )
+        session.flush()
+        session.add(
+            CategoryModel(
+                id=str(uuid4()),
+                user_id=str(other_user_id),
+                name="他ユーザーカテゴリ",
+                color="#111827",
+                is_active=True,
+            )
+        )
+        session.add(
+            UploadModel(
+                id=str(uuid4()),
+                user_id=str(other_user_id),
+                file_name="other-user.pdf",
+                stored_file_path=f"storage/uploads/{other_user_id}/other/original.pdf",
+                status="failed",
+                imported_count=0,
+                error_message="other user",
+                uploaded_at=datetime.now(UTC),
+            )
+        )
+        session.commit()
+
+    categories_response = authenticated_api_client.get("/api/categories", params={"include_inactive": "true"})
+    uploads_response = authenticated_api_client.get("/api/uploads")
+
+    assert categories_response.status_code == 200
+    assert uploads_response.status_code == 200
+    assert all(item["name"] != "他ユーザーカテゴリ" for item in categories_response.json())
+    assert all(item["file_name"] != "other-user.pdf" for item in uploads_response.json())
 
 
 def test_transaction_export_returns_filtered_workbook_with_summary_sheets(authenticated_api_client) -> None:

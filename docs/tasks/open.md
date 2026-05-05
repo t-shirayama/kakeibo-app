@@ -10,13 +10,6 @@
 
 ## 優先度C
 
-- [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
-  - 目的: 明細周辺の関連機能まで結合テストのカバレッジを広げ、ユーザー分離や PDF 取込の主要失敗ケースを守る。
-  - 対象: `backend/tests/integration/`、必要に応じて PDF fixture、`docs/specs/pdf-import.md`、`docs/specs/development-workflow.md`
-  - 対応: カテゴリ作成・一覧・明細紐づけ・使用中カテゴリの仕様確認と、PDFアップロード〜解析/取込確定または異常系の最小ITを追加する。重いケースを通常PRと定期実行でどう分けるかも整理する。
-  - 完了条件: カテゴリ管理と PDF 取込の主要経路が integration marker で実行でき、通常実行と重いITの運用方針が文書化されている。
-  - 根拠: `integration-test-plan.md` の優先度B「カテゴリ管理」「PDF取込」を一段階下げて導入する方針。
-
 - [ ] Frontend Integration Test を明細フォーム、PDFアップロード、CSRF再試行へ拡張する
   - 目的: 主要操作と最近強化した認証/CSRF自己回復のUI挙動を、ブラウザE2Eに頼りすぎず検証できるようにする。
   - 対象: `frontend/src/test/integration/`、`frontend/src/test/msw/`、`frontend/src/lib/api/`、必要に応じて `docs/specs/frontend-architecture.md`、`docs/specs/development-workflow.md`

@@ -53,7 +53,7 @@
 現時点での重複と未カバーは次の整理を基準に扱う。
 
 - 明細一覧、ログイン、アップロードは Frontend Integration Test と E2E の両方に観点があるため、E2E では代表導線、Integration Test では分岐とエラー回復を主に受け持つ。
-- Backend Integration Test は主要導線を一通り持てている一方で、カテゴリ管理、PDF取込、Excel出力、Alembic migration の確認が薄い。
+- Backend Integration Test は認証、明細CRUD、月次集計、カテゴリ状態変更、カテゴリ一覧のユーザー分離、PDF取込の成功/失敗履歴、Excel出力までは持てている一方で、Alembic migration の自動検証強化が残る。
 - Frontend Integration Test は主要画面の読み込みと認証/CSRF 回復を持てている一方で、カテゴリ管理、設定保存のような操作系がまだ薄い。
 - E2E helper は `auth.ts`、`date.ts`、`navigation.ts`、`transactions.ts`、`upload.ts` に分かれ、`navigation.ts` では通常画面遷移の `gotoAppPage()` と redirect 専用待ち合わせを分ける。
 
