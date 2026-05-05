@@ -125,7 +125,7 @@ export function BudgetManagementPage() {
 
       {activeTab === "settings" ? (
         <section className="grid two-column-grid section-gap">
-          <div className="card panel">
+          <div className="card panel budget-settings-panel">
             <div className="panel-header">
               <div>
                 <h2 className="panel-title">カテゴリ別の予算設定</h2>
@@ -137,7 +137,7 @@ export function BudgetManagementPage() {
             ) : categories.length === 0 ? (
               <EmptyState title="カテゴリがありません" description="カテゴリを追加すると、ここで月次予算を設定できます。" />
             ) : (
-              <div className="budget-setting-list">
+              <div className="budget-setting-list" aria-label="カテゴリ別の予算設定一覧">
                 {categories.map((category) => (
                   <article className="budget-setting-row" key={category.category_id}>
                     <div className="budget-setting-title">

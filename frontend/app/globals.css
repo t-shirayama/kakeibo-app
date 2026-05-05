@@ -1217,6 +1217,10 @@ textarea {
 .budget-setting-list {
   display: grid;
   gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
 }
 
 .budget-setting-row {
@@ -1292,11 +1296,13 @@ textarea {
 }
 
 .budget-actuals-panel,
+.budget-settings-panel,
 .budget-actuals-content,
 .budget-progress-panel {
   min-height: 0;
 }
 
+.budget-settings-panel,
 .budget-actuals-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
