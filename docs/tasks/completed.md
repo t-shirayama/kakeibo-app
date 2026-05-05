@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] E2E helper整理の残作業を完了し、対象specの再検証を通す
+  - 対応: `frontend/e2e/transactions.spec.ts` の検索条件保持シナリオに、reload 後の URL と期間フィルタ待ちを追加してから結果行を確認するよう見直した。あわせて `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts auth.spec.ts income-settings.spec.ts reports.spec.ts` を再実行し、dashboard / transactions / upload の代表導線に加えて、認証ガードとレガシー redirect の現行結果もそろえた。
+  - 確認: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts auth.spec.ts income-settings.spec.ts reports.spec.ts` が 14 passed で通過した。
+  - 根拠: `docs/tasks/open.md` の優先度B「E2E helper整理の残作業を完了し、対象specの再検証を通す」。
+
 - [x] `gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす
   - 対応: `frontend/e2e/helpers/navigation.ts` で、通常画面遷移の `gotoAppPage()` に URL 確定待ちを追加し、redirect 専用の `gotoRedirectedAppPage()` を分離した。`frontend/e2e/reports.spec.ts` は redirect helper を使う形へ整理し、`docs/specs/development-workflow.md`、`docs/e2e/index.md`、`docs/e2e/reports.md` に helper の責務分割を反映した。
   - 確認: `docker compose run --rm e2e npm run test:e2e -- auth.spec.ts reports.spec.ts dashboard.spec.ts` を含む対象E2Eを再実行し、redirect 系で URL 待ち不足による失敗が起きないことを確認した。

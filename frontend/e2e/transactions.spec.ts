@@ -95,7 +95,9 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page).toHaveURL(/keyword=Amazon/);
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   await page.reload();
+  await expect(page).toHaveURL(/keyword=Amazon/);
   await expect(page.getByLabel("明細検索")).toHaveValue("Amazon");
+  await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toBeVisible();
   const downloadResponse = page.waitForResponse((response) =>
     response.url().includes("/api/transactions/export") && response.status() === 200,

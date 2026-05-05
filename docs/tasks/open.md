@@ -8,13 +8,6 @@
 
 ## 優先度B
 
-- [ ] E2E helper整理の残作業を完了し、対象specの再検証を通す
-  - 目的: 途中まで進めた E2E helper 整理を仕上げ、代表導線中心の E2E と Integration Test への役割分担を実際の通過結果まで揃える。
-  - 対象: `frontend/e2e/helpers/auth.ts`、`frontend/e2e/helpers/transactions.ts`、`frontend/e2e/helpers/upload.ts`、`frontend/e2e/dashboard.spec.ts`、`frontend/e2e/transactions.spec.ts`、`frontend/e2e/upload.spec.ts`、必要に応じて `docs/e2e/index.md` と `docs/tasks/completed.md`
-  - 対応: `auth.setup.ts` の初回ログイン揺れを helper 側の再試行で吸収する変更と、PDF ドロップ用の実データ化までは入っているため、そのうえで E2E を再実行し、カテゴリサマリーから明細一覧へ飛ぶ dashboard spec の期待値と、同じ店名更新シナリオの期間入力待ちを見直す。途中の整理で追加した Integration Test と docs の内容が最終的な通過結果と一致するように整える。
-  - 完了条件: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` を含む対象 E2E が通り、必要なら `docs/tasks/completed.md` の最近の完了タスク記録も実態に合わせて更新されている。
-  - 根拠: 2026-05-05 時点の途中作業。`docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` は 16 passed、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` は 8 passed / 2 failed まで確認済みで、残りは `dashboard.spec.ts` のカテゴリサマリー導線と `transactions.spec.ts` の同じ店名更新シナリオだったため。
-
 ## 優先度C
 
 - [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
