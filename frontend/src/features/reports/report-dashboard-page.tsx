@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useMemo } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
 import { reportsQueryKeys } from "@/features/reports/queryKeys";
@@ -11,6 +11,7 @@ import { DashboardBars } from "@/features/reports/components/dashboard-bars";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
+import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { formatCurrency } from "@/lib/format";
 
 type DashboardSummary = {
@@ -46,6 +47,7 @@ type DashboardSummary = {
 
 export function ReportDashboardPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
   const selectedPeriod = useMemo(() => parseYearMonth(selectedYearMonth), [selectedYearMonth]);
@@ -57,8 +59,8 @@ export function ReportDashboardPage() {
     }
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", selectedYearMonth);
-    replaceCurrentUrl(pathname, next);
-  }, [pathname, searchParams, selectedYearMonth]);
+    router.replace(buildAppRouteUrl(pathname, next));
+  }, [pathname, router, searchParams, selectedYearMonth]);
   const summaryQuery = useQuery({
     queryKey: reportsQueryKeys.dashboardSummary(selectedPeriod.year, selectedPeriod.month),
     queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
@@ -108,7 +110,7 @@ export function ReportDashboardPage() {
     }
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
-    replaceCurrentUrl(pathname, next);
+    router.replace(buildAppRouteUrl(pathname, next));
   }
 
   return (
@@ -528,8 +530,4 @@ function getMonthDateRange(value: string) {
     date_from: `${year}-${paddedMonth}-01`,
     date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
   };
-}
-
-function replaceCurrentUrl(pathname: string, searchParams: URLSearchParams) {
-  window.history.replaceState(null, "", `${pathname}?${searchParams.toString()}`);
 }

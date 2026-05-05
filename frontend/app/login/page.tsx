@@ -58,7 +58,6 @@ export default function LoginPage() {
               await submitLogin(email, password);
               const searchParams = new URLSearchParams(window.location.search);
               router.push(searchParams.get("redirect") || "/dashboard");
-              router.refresh();
             } catch (caught) {
               if (mountedRef.current) {
                 setError(caught instanceof Error ? caught : new Error("ログインに失敗しました。"));

@@ -40,7 +40,7 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 
 ## データと環境
 
-- E2Eは `docker compose run --rm e2e` で実行し、`frontend/playwright.config.ts` からコンテナ内のバックエンドとフロントエンドを起動する。
+- E2Eは `docker compose run --rm e2e` で実行し、`frontend/playwright.config.ts` からコンテナ内のバックエンドと production build 済みフロントエンドを起動する。
 - E2E専用DBは既定で `kakeibo_e2e` を使う。
 - 実行前に `frontend/scripts/reset-e2e-db.mjs` がE2E専用DBを作り直し、Alembic `upgrade head` でサンプルユーザーとサンプルデータを投入する。
 - `frontend/scripts/e2e-runtime.mjs` は E2E 用の Python 解決、環境変数組み立て、コマンド実行を共通化し、`reset-e2e-db.mjs` と `start-backend-e2e.mjs` から使う。
@@ -66,9 +66,11 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 
 - E2EはDBを共有するため、Playwrightは `workers: 1` とし、テストは直列に実行する。
 - 実行前にE2E専用DBを作り直し、サンプルデータへ戻す。
+- フロントエンドは `next dev` ではなく `npm run build && next start` で起動し、開発サーバー固有のコンパイル待ちや HMR 起因の揺れを避ける。
 - E2E専用のJWT秘密鍵は32バイト以上の固定値を使い、鍵長警告によるログノイズを避ける。
 - `expect` の既定タイムアウトは10秒、各テストのタイムアウトは60秒とする。
 - 失敗時はtrace、スクリーンショット、動画を保存し、通常成功時には成果物を残さない。
+- 主要操作の前には `frontend/e2e/helpers/navigation.ts` の hydration 待ちを通し、`html[data-hydrated="true"]` を確認してからクリックや入力を行う。`networkidle` や固定 sleep は使わない。
 - テストが作成したデータは同じテスト内で削除するか、次回実行時のDBリセットに依存できるE2E専用DBだけで扱う。
 - 開発サーバーとE2Eを同じポートで同時起動しない。必要な場合は `E2E_BACKEND_PORT` / `E2E_FRONTEND_PORT` を指定する。
 - `frontend/e2e/helpers/` に、ログイン、未ログイン redirect 確認、ページ遷移、年月操作、明細フォーム操作、アップロード履歴確認、アップロード用PDF生成のような共通操作をまとめ、spec側で重複実装しない。

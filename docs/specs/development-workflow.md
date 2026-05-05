@@ -33,6 +33,7 @@
 - Backend Integration Test では `backend/tests/integration/conftest.py` の fixture と認証済み API helper を使い、ログイン、CSRF ヘッダー付与、テストユーザー生成を spec ごとに重複させない。
 - Excel 出力の基本妥当性は `backend/tests/integration/test_api_critical_paths.py` の export API IT で確認し、migration の適用可否は `docker compose run --rm backend python -m alembic upgrade head` を CI の独立 step として pull request ごとに確認する。
 - Frontend Integration Test では `frontend/src/test/integration/helpers.tsx` の route-aware render / user helper と、`frontend/src/test/msw/http.ts` の API URL / エラーレスポンス helper を使い、`setMockUrl`、`userEvent.setup()`、MSW URL 定義の重複を減らす。
+- Next.js App Router を使う E2E では hydration 完了前の操作で flaky failure が起きやすいため、Playwright helper で `html[data-hydrated="true"]` を待ってから操作する。`waitForLoadState("networkidle")` や固定 sleep は hydration 完了の代わりに使わない。
 
 ## テスト棚卸しと拡充順
 
@@ -82,7 +83,7 @@
 - バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。Docker Compose では `INTEGRATION_DATABASE_URL` と `INTEGRATION_ADMIN_DATABASE_URL` を backend service に渡し、テスト起動時に integration 専用DBを自動作成する。CI の `test` workflow では Alembic 適用確認後にバックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを別ステップで実行する。
 - フロントエンドの lint / 型チェック / ビルドは `docker compose run --rm --no-deps frontend npm run lint`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。Next.js 16 以降は `next lint` が廃止されているため、lint は ESLint CLI で実行する。型チェックは `next typegen` で route types を生成してから `tsc --noEmit` を実行する。
 - フロントエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:unit`、Integration Test だけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:integration` を使う。どちらもバックエンドやMySQL起動に依存させない。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
-- E2Eは `docker compose run --rm e2e` を基本コマンドとする。
+- E2Eは `docker compose run --rm e2e` を基本コマンドとし、frontend 側は `npm run build && next start` で production build を起動する。
 - Alembic適用確認は `docker compose run --rm backend python -m alembic upgrade head` を使う。
 - `frontend/Dockerfile.e2e`、`frontend/package.json`、`frontend/package-lock.json`、`docker-compose.yml` を変更した場合は、CIへ出す前に `docker compose build e2e` でE2E実行環境の build を確認する。
 - GitHub Actions の実行ログを直接調べる場合は、`GITHUB_TOKEN` または `GH_TOKEN` を設定し、`scripts/show-github-actions-run.ps1 -LatestFailure` で直近失敗 run と失敗 job を確認する。`-RunId <id>` を指定すると特定 run の job 一覧を確認できる。

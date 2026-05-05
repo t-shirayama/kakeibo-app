@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, X } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
@@ -13,6 +13,7 @@ import { settingsQueryKeys } from "@/features/settings/queryKeys";
 import { transactionsQueryKeys } from "@/features/transactions/queryKeys";
 import { TransactionEditModal } from "@/components/transaction-edit-modal";
 import { api, type TransactionRequest } from "@/lib/api";
+import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
@@ -33,6 +34,7 @@ type MessageDialogState = {
 
 export default function TransactionsPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
@@ -62,8 +64,8 @@ export default function TransactionsPage() {
     if (normalized.toString() === searchParams.toString()) {
       return;
     }
-    replaceCurrentUrl(pathname, normalized);
-  }, [defaultDateRange, defaultPageSize, pathname, searchParams, settingsQuery.isLoading]);
+    router.replace(buildAppRouteUrl(pathname, normalized));
+  }, [defaultDateRange, defaultPageSize, pathname, router, searchParams, settingsQuery.isLoading]);
 
   const transactionsQuery = useQuery({
     queryKey: transactionsQueryKeys.list({
@@ -188,7 +190,7 @@ export default function TransactionsPage() {
     next.set("page_size", String(values.pageSize));
     next.set("sort_field", values.sortField);
     next.set("sort_direction", values.sortDirection);
-    replaceCurrentUrl(pathname, next);
+    router.replace(buildAppRouteUrl(pathname, next));
   }
 
   function handleSort(nextField: SortField) {
@@ -222,7 +224,7 @@ export default function TransactionsPage() {
     next.set("page_size", String(defaultPageSize));
     next.set("sort_field", "date");
     next.set("sort_direction", "desc");
-    replaceCurrentUrl(pathname, next);
+    router.replace(buildAppRouteUrl(pathname, next));
   }
 
   function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
@@ -724,8 +726,4 @@ function getReadableTextColor(hexColor: string): "#17233c" | "#ffffff" {
   const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
 
   return luminance > 0.62 ? "#17233c" : "#ffffff";
-}
-
-function replaceCurrentUrl(pathname: string, searchParams: URLSearchParams) {
-  window.history.replaceState(null, "", `${pathname}?${searchParams.toString()}`);
 }

@@ -1,5 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+import { waitForHydration } from "./navigation";
 
 export const sampleUser = {
   email: "sample@example.com",
@@ -16,6 +17,7 @@ export async function ensureAuthDirectory() {
 export async function loginAsSampleUser(page: Page) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     await page.goto("/login");
+    await waitForHydration(page);
     await page.getByLabel("メールアドレス").fill(sampleUser.email);
     await page.getByLabel("パスワード").fill(sampleUser.password);
     await page.getByRole("button", { name: "ログイン" }).click();

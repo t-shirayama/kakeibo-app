@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gotoAppPage } from "./helpers/navigation";
+import { gotoAppPage, waitForHydration } from "./helpers/navigation";
 
 const routes = [
   ["ダッシュボード", "/dashboard"],
@@ -12,11 +12,12 @@ const routes = [
 ] as const;
 
 test("navigates between all primary screens from the sidebar", async ({ page }) => {
-  await page.goto("/dashboard");
+  await gotoAppPage(page, "/dashboard", "ダッシュボード");
 
   // サイドバーの主要導線が全画面へ遷移できることをまとめて確認する。
   for (const [label, path] of routes) {
     await page.getByRole("link", { name: label, exact: true }).click();
+    await waitForHydration(page);
     await expect(page).toHaveURL(new RegExp(`${path}(\\?.*)?$`));
     await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: label, exact: true })).toHaveAttribute("aria-current", "page");

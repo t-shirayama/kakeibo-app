@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, CreditCard, ReceiptText, Wallet } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { calendarQueryKeys } from "@/features/calendar/queryKeys";
 import { api } from "@/lib/api";
+import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { formatCurrency } from "@/lib/format";
 import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { TransactionDto } from "@/lib/types";
@@ -27,6 +28,7 @@ type DailyCalendarSummary = {
 
 export function CalendarPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
@@ -66,15 +68,15 @@ export function CalendarPage() {
     }
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", selectedYearMonth);
-    replaceCurrentUrl(pathname, next);
-  }, [pathname, searchParams, selectedYearMonth]);
+    router.replace(buildAppRouteUrl(pathname, next));
+  }, [pathname, router, searchParams, selectedYearMonth]);
 
   function updateSelectedYearMonth(nextValue: string) {
     const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();
     setSelectedDate(getDefaultSelectedDate(normalized, transactions));
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
-    replaceCurrentUrl(pathname, next);
+    router.replace(buildAppRouteUrl(pathname, next));
   }
 
   function openTransactions(dateFrom: string, dateTo: string) {
@@ -606,8 +608,4 @@ function addDays(date: string, days: number) {
   const base = new Date(`${date}T00:00:00`);
   base.setDate(base.getDate() + days);
   return formatDateParam(base);
-}
-
-function replaceCurrentUrl(pathname: string, searchParams: URLSearchParams) {
-  window.history.replaceState(null, "", `${pathname}?${searchParams.toString()}`);
 }
