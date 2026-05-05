@@ -17,6 +17,8 @@ class IncomeSettingModel(TimestampMixin, SoftDeleteMixin, Base):
     category_id: Mapped[str] = mapped_column(CHAR(36), ForeignKey("categories.id"), nullable=False)
     base_amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
     base_day: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_month: Mapped[date] = mapped_column(Date, nullable=False)
+    end_month: Mapped[date | None] = mapped_column(Date, nullable=True)
 
 
 class IncomeSettingOverrideModel(TimestampMixin, Base):

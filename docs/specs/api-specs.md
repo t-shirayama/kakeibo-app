@@ -109,11 +109,11 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 - `GET /api/income-settings`
   - 収入設定一覧を取得する。
-  - 発生日を迎えた当月の収入明細を重複しないよう自動追加する。
+  - 登録期間内で発生日を迎えた過去月を含む収入明細を、重複しないよう自動追加する。
 - `POST /api/income-settings`
-  - 対象者名、カテゴリ、毎月の金額、毎月の発生日を指定して収入設定を追加する。
+  - 対象者名、カテゴリ、毎月の金額、毎月の発生日、登録開始月、登録終了月を指定して収入設定を追加する。
 - `PUT /api/income-settings/{income_setting_id}`
-  - 収入設定の対象者名、カテゴリ、毎月の金額、毎月の発生日を更新する。
+  - 収入設定の対象者名、カテゴリ、毎月の金額、毎月の発生日、登録開始月、登録終了月を更新する。
 - `DELETE /api/income-settings/{income_setting_id}`
   - 収入設定を論理削除する。
 - `PUT /api/income-settings/{income_setting_id}/overrides/{target_month}`

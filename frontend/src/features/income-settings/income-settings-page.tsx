@@ -29,10 +29,13 @@ type MessageDialogState = {
 
 export default function IncomeSettingsPage() {
   const queryClient = useQueryClient();
+  const currentMonth = getCurrentYearMonth();
   const [newMemberName, setNewMemberName] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newDay, setNewDay] = useState("25");
   const [newCategoryId, setNewCategoryId] = useState("");
+  const [newStartMonth, setNewStartMonth] = useState(currentMonth);
+  const [newEndMonth, setNewEndMonth] = useState("");
   const [overrideDrafts, setOverrideDrafts] = useState<Record<string, OverrideDraft>>({});
   const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
 
@@ -51,6 +54,8 @@ export default function IncomeSettingsPage() {
       setNewAmount("");
       setNewDay("25");
       setNewCategoryId("");
+      setNewStartMonth(currentMonth);
+      setNewEndMonth("");
     },
   });
   const updateMutation = useMutation({
@@ -131,6 +136,8 @@ export default function IncomeSettingsPage() {
       category_id: defaultCategoryId,
       base_amount: Number(newAmount),
       base_day: Number(newDay),
+      start_month: newStartMonth,
+      end_month: newEndMonth || null,
     });
   }
 
@@ -142,6 +149,8 @@ export default function IncomeSettingsPage() {
         category_id: String(formData.get("category_id") ?? ""),
         base_amount: Number(formData.get("base_amount") ?? 0),
         base_day: Number(formData.get("base_day") ?? 1),
+        start_month: String(formData.get("start_month") ?? currentMonth),
+        end_month: normalizeOptionalMonth(formData.get("end_month")),
       },
     });
   }
@@ -171,7 +180,7 @@ export default function IncomeSettingsPage() {
 
   return (
     <>
-      <PageHeader title="収入設定" subtitle="家族ごとの毎月収入を登録し、発生日に明細へ自動追加します。" />
+      <PageHeader title="収入設定" subtitle="家族ごとの毎月収入を登録し、指定期間の発生日に合わせて明細へ自動追加します。" />
 
       {apiError ? <ApiErrorAlert error={apiError} /> : null}
 
@@ -215,6 +224,26 @@ export default function IncomeSettingsPage() {
                   onChange={(event) => setNewDay(event.target.value)}
                 />
               </div>
+              <div className="form-field">
+                <label htmlFor="new-income-start-month">登録開始月</label>
+                <input
+                  id="new-income-start-month"
+                  className="input"
+                  type="month"
+                  value={newStartMonth}
+                  onChange={(event) => setNewStartMonth(event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="new-income-end-month">登録終了月</label>
+                <input
+                  id="new-income-end-month"
+                  className="input"
+                  type="month"
+                  value={newEndMonth}
+                  onChange={(event) => setNewEndMonth(event.target.value)}
+                />
+              </div>
             </div>
             <div className="form-field">
               <label htmlFor="new-income-category">カテゴリ</label>
@@ -250,7 +279,13 @@ export default function IncomeSettingsPage() {
             <div className="settings-row">
               <div>
                 <h2>毎月の明細</h2>
-                <p>発生日を迎えた月の収入明細を、重複しないよう自動で追加します。</p>
+                <p>登録開始月から登録終了月までの範囲で、発生日を迎えた月の収入明細を重複しないよう自動で追加します。</p>
+              </div>
+            </div>
+            <div className="settings-row">
+              <div>
+                <h2>期間指定と過去月の登録</h2>
+                <p>登録開始月を過去の月にすると、指定期間内で発生日を過ぎている月の収入もまとめて自動登録します。登録終了月を空欄にすると継続扱いです。</p>
               </div>
             </div>
             <div className="settings-row">
@@ -303,6 +338,20 @@ export default function IncomeSettingsPage() {
                       max="31"
                       defaultValue={setting.base_day}
                     />
+                    <input
+                      className="input"
+                      name="start_month"
+                      aria-label={`${setting.member_name}の登録開始月`}
+                      type="month"
+                      defaultValue={setting.start_month}
+                    />
+                    <input
+                      className="input"
+                      name="end_month"
+                      aria-label={`${setting.member_name}の登録終了月`}
+                      type="month"
+                      defaultValue={setting.end_month ?? ""}
+                    />
                     <select className="select" name="category_id" aria-label={`${setting.member_name}のカテゴリ`} defaultValue={setting.category_id}>
                       {categories.map((item) => (
                         <option value={item.category_id} key={item.category_id}>
@@ -326,6 +375,7 @@ export default function IncomeSettingsPage() {
                   <div className="income-setting-summary">
                     <span>{formatCurrency(setting.base_amount)}</span>
                     <span>毎月{setting.base_day}日</span>
+                    <span>{formatIncomeSettingPeriod(setting.start_month, setting.end_month)}</span>
                     <IncomeCategoryBadge category={category} />
                   </div>
                   <div className="income-override-row">
@@ -414,10 +464,29 @@ export default function IncomeSettingsPage() {
 
 function defaultOverrideDraft(setting: IncomeSettingDto): OverrideDraft {
   return {
-    targetMonth: new Date().toISOString().slice(0, 7),
+    targetMonth: getCurrentYearMonth(),
     amount: String(setting.base_amount),
     day: String(setting.base_day),
   };
+}
+
+function normalizeOptionalMonth(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+  return value;
+}
+
+function formatIncomeSettingPeriod(startMonth: string, endMonth: string | null) {
+  return endMonth ? `${startMonth} - ${endMonth}` : `${startMonth} から継続`;
+}
+
+function getCurrentYearMonth() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date()).slice(0, 7);
 }
 
 function IncomeCategoryBadge({ category }: { category: CategoryDto | undefined }) {

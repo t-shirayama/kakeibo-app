@@ -154,6 +154,8 @@ export type IncomeSettingRequest = {
   category_id: string;
   base_amount: number;
   base_day: number;
+  start_month: string;
+  end_month?: string | null;
 };
 
 export type IncomeSettingResponse = {
@@ -162,6 +164,8 @@ export type IncomeSettingResponse = {
   category_id: string;
   base_amount: number;
   base_day: number;
+  start_month: string;
+  end_month: string | null;
   overrides: Array<IncomeOverrideResponse>;
 };
 

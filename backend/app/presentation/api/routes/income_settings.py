@@ -36,6 +36,8 @@ class IncomeSettingResponse(BaseModel):
     category_id: str
     base_amount: int
     base_day: int
+    start_month: str
+    end_month: str | None
     overrides: list[IncomeOverrideResponse]
 
 
@@ -44,6 +46,8 @@ class IncomeSettingRequest(BaseModel):
     category_id: UUID
     base_amount: int = Field(ge=0)
     base_day: int = Field(ge=1, le=31)
+    start_month: str = Field(pattern=r"^\d{4}-\d{2}$")
+    end_month: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}$")
 
 
 class IncomeOverrideRequest(BaseModel):
@@ -155,6 +159,8 @@ def _setting_command(request: IncomeSettingRequest) -> IncomeSettingCommand:
         category_id=request.category_id,
         base_amount=request.base_amount,
         base_day=request.base_day,
+        start_month=_parse_target_month(request.start_month),
+        end_month=_parse_target_month(request.end_month) if request.end_month else None,
     )
 
 
@@ -173,6 +179,8 @@ def _setting_response(setting: IncomeSetting) -> IncomeSettingResponse:
         category_id=str(setting.category_id),
         base_amount=setting.base_amount,
         base_day=setting.base_day,
+        start_month=_format_target_month(setting.start_month),
+        end_month=_format_target_month(setting.end_month) if setting.end_month else None,
         overrides=[_override_response(override) for override in setting.overrides],
     )
 
@@ -184,3 +192,7 @@ def _override_response(override: IncomeOverride) -> IncomeOverrideResponse:
         amount=override.amount,
         day=override.day,
     )
+
+
+def _format_target_month(value: date) -> str:
+    return value.strftime("%Y-%m")
