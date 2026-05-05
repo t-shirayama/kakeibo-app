@@ -298,7 +298,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <>
+    <div className="transactions-page">
       <PageHeader
         title="明細一覧"
         subtitle="取り込んだ明細を検索、絞り込み、手動追加できます。"
@@ -416,75 +416,77 @@ export default function TransactionsPage() {
         <span>1ページ {currentParams.pageSize}件</span>
       </div>
 
-      <section className="card table-wrap">
+      <section className="card transactions-table-panel">
         {transactionsQuery.isLoading || categoriesQuery.isLoading || settingsQuery.isLoading ? (
           <LoadingState />
         ) : transactions.length === 0 ? (
           <EmptyState title="明細がありません" description="検索条件を変更するか、手動で明細を追加してください。" />
         ) : (
           <>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>
-                    <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${currentParams.sortField === "date" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
-                      日付
-                      <SortIcon active={currentParams.sortField === "date"} direction={currentParams.sortDirection} />
-                    </button>
-                  </th>
-                  <th>店名</th>
-                  <th>カテゴリ</th>
-                  <th className="amount-column">
-                    <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${currentParams.sortField === "amount" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
-                      金額
-                      <SortIcon active={currentParams.sortField === "amount"} direction={currentParams.sortDirection} />
-                    </button>
-                  </th>
-                  <th>支払い方法</th>
-                  <th>メモ</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((transaction) => (
-                  <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
-                    <td>{transaction.transaction_date}</td>
-                    <td>{transaction.shop_name}</td>
-                    <td>
-                      <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
-                        {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
-                      </span>
-                    </td>
-                    <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
-                    <td>{transaction.payment_method ?? "-"}</td>
-                    <td>{transaction.memo ?? "-"}</td>
-                    <td>
-                      <div className="row-actions">
-                        <button
-                          className="icon-button"
-                          type="button"
-                          aria-label="明細を編集"
-                          onClick={() => {
-                            setEditingTransaction(transaction);
-                            setIsEditorOpen(true);
-                          }}
-                        >
-                          <Edit3 size={15} aria-hidden="true" />
-                        </button>
-                        <button
-                          className="icon-button"
-                          type="button"
-                          aria-label="明細を削除"
-                          onClick={() => void handleDelete(transaction.transaction_id)}
-                        >
-                          <Trash2 size={15} aria-hidden="true" />
-                        </button>
-                      </div>
-                    </td>
+            <div className="table-wrap transactions-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${currentParams.sortField === "date" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
+                        日付
+                        <SortIcon active={currentParams.sortField === "date"} direction={currentParams.sortDirection} />
+                      </button>
+                    </th>
+                    <th>店名</th>
+                    <th>カテゴリ</th>
+                    <th className="amount-column">
+                      <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${currentParams.sortField === "amount" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
+                        金額
+                        <SortIcon active={currentParams.sortField === "amount"} direction={currentParams.sortDirection} />
+                      </button>
+                    </th>
+                    <th>支払い方法</th>
+                    <th>メモ</th>
+                    <th>操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {transactions.map((transaction) => (
+                    <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
+                      <td>{transaction.transaction_date}</td>
+                      <td>{transaction.shop_name}</td>
+                      <td>
+                        <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
+                          {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
+                        </span>
+                      </td>
+                      <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
+                      <td>{transaction.payment_method ?? "-"}</td>
+                      <td>{transaction.memo ?? "-"}</td>
+                      <td>
+                        <div className="row-actions">
+                          <button
+                            className="icon-button"
+                            type="button"
+                            aria-label="明細を編集"
+                            onClick={() => {
+                              setEditingTransaction(transaction);
+                              setIsEditorOpen(true);
+                            }}
+                          >
+                            <Edit3 size={15} aria-hidden="true" />
+                          </button>
+                          <button
+                            className="icon-button"
+                            type="button"
+                            aria-label="明細を削除"
+                            onClick={() => void handleDelete(transaction.transaction_id)}
+                          >
+                            <Trash2 size={15} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="pagination-bar transactions-pagination-bar" aria-label="ページネーション">
               <button className="button secondary compact" type="button" onClick={() => updateParams({ page: currentParams.page - 1 })} disabled={currentParams.page <= 1}>
                 <ChevronLeft size={14} aria-hidden="true" />
@@ -544,7 +546,7 @@ export default function TransactionsPage() {
           }}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
