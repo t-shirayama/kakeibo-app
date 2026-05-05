@@ -1011,7 +1011,9 @@ button:not(:disabled) {
 
 .category-list {
   display: grid;
+  align-content: start;
   gap: 12px;
+  grid-auto-rows: max-content;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
