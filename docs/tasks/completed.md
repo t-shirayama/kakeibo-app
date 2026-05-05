@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Frontend Integration Test を明細フォーム、PDFアップロード、CSRF再試行へ拡張する
+  - 対応: `frontend/src/test/integration/transactions/transactions-page.it.test.tsx` で明細フォームの追加と同じ店名のカテゴリ一括更新、`frontend/src/test/integration/uploads/upload-page.it.test.tsx` でPDFアップロードの進捗表示と再試行、`frontend/src/test/integration/api/auth-refresh.it.test.ts` と `frontend/src/test/integration/api/csrf-retry.it.test.ts` で401/403時の自己回復を確認する構成にそろえた。`docs/specs/development-workflow.md` にも、Frontend Integration Test がこの範囲を受け持つ現状を反映した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:integration` が 16 passed で通過した。
+  - 根拠: `docs/tasks/open.md` の優先度C「Frontend Integration Test を明細フォーム、PDFアップロード、CSRF再試行へ拡張する」。
+
 - [x] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
   - 対応: `backend/tests/integration/test_api_critical_paths.py` に、PDF解析失敗時は失敗履歴だけを残して明細を作らないケースと、カテゴリ一覧・アップロード履歴が他ユーザーに漏れないケースを追加した。既存のカテゴリ作成/一覧/状態変更、PDF取込成功/重複排除/原本削除のITと合わせて、カテゴリ管理とPDF取込の主要経路を integration marker で確認できる状態にした。あわせて `docs/specs/development-workflow.md` と `docs/specs/pdf-import.md` を現行カバレッジへ同期した。
   - 確認: `docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py` が 8 passed で通過した。

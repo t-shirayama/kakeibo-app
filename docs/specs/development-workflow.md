@@ -54,7 +54,7 @@
 
 - 明細一覧、ログイン、アップロードは Frontend Integration Test と E2E の両方に観点があるため、E2E では代表導線、Integration Test では分岐とエラー回復を主に受け持つ。
 - Backend Integration Test は認証、明細CRUD、月次集計、カテゴリ状態変更、カテゴリ一覧のユーザー分離、PDF取込の成功/失敗履歴、Excel出力までは持てている一方で、Alembic migration の自動検証強化が残る。
-- Frontend Integration Test は主要画面の読み込みと認証/CSRF 回復を持てている一方で、カテゴリ管理、設定保存のような操作系がまだ薄い。
+- Frontend Integration Test は、主要画面の読み込みに加えて、明細フォームの追加・編集、PDFアップロードの進捗と再試行、401/403 時の認証 refresh と CSRF 再取得まで確認できる状態にした。カテゴリ管理、設定保存のような操作系はまだ薄い。
 - E2E helper は `auth.ts`、`date.ts`、`navigation.ts`、`transactions.ts`、`upload.ts` に分かれ、`navigation.ts` では通常画面遷移の `gotoAppPage()` と redirect 専用待ち合わせを分ける。
 
 今後の拡充順は、次の順番を標準とする。
@@ -91,7 +91,7 @@
 - GitHub ActionsのCIは `quality` と `test` に分ける。
 - `quality` では `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、未確定事項チェック、シークレットスキャン、OpenAPI生成物チェックを実行する。
 - `quality` ではあわせて `backend/requirements.lock` の再生成差分も検証する。
-- `test` では Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを分けて実行する。
+- `test` では Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを pull request ごとに分けて実行する。現時点では定期実行は追加せず、PR単位の即時検知を優先する。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
 - バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
 - clone 後は `scripts/install-git-hooks.ps1` または `scripts/install-git-hooks.sh` で `core.hooksPath=.githooks` を設定し、`push` 前に `requirements.lock` 整合性チェックと、E2E関連変更時の `docker compose build e2e` を自動実行する。
