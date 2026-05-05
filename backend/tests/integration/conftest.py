@@ -2,18 +2,20 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
+from sqlalchemy import create_engine, delete, text
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.application.auth.password_hasher import PasswordHasher
 from app.infrastructure.config import get_settings
-from app.infrastructure.db.session import SessionLocal, engine
+import app.infrastructure.db.session as db_session
 from app.infrastructure.models import Base
 from app.infrastructure.models.audit_log import AuditLogModel
 from app.infrastructure.models.category import CategoryModel
@@ -32,6 +34,7 @@ def integration_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("COOKIE_SECURE", "false")
     monkeypatch.setenv("JWT_SECRET_KEY", "integration-test-secret-key-32-bytes!!")
+    monkeypatch.setenv("DATABASE_URL", _get_integration_database_url())
     get_settings.cache_clear()
     try:
         yield
@@ -51,12 +54,30 @@ def integration_upload_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 
 @pytest.fixture(scope="session", autouse=True)
 def mysql_schema() -> Iterator[None]:
+    original_engine = db_session.engine
+    original_session_local = db_session.SessionLocal
     try:
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
+        integration_engine = _prepare_integration_engine()
+        integration_session_local = sessionmaker(
+            bind=integration_engine,
+            autoflush=False,
+            autocommit=False,
+            expire_on_commit=False,
+            class_=Session,
+        )
+        db_session.engine = integration_engine
+        db_session.SessionLocal = integration_session_local
+        Base.metadata.drop_all(integration_engine)
+        Base.metadata.create_all(integration_engine)
     except OperationalError as exc:
         pytest.skip(f"MySQL integration database is not available: {exc}")
-    yield
+    try:
+        yield
+    finally:
+        Base.metadata.drop_all(db_session.engine)
+        db_session.engine.dispose()
+        db_session.engine = original_engine
+        db_session.SessionLocal = original_session_local
 
 
 @dataclass(frozen=True)
@@ -100,7 +121,7 @@ def integration_user() -> Iterator[IntegrationUser]:
         email=f"it-{uuid4().hex}@example.com",
         password="SamplePassw0rd!",
     )
-    with SessionLocal() as session:
+    with db_session.SessionLocal() as session:
         _cleanup_user(session, user.user_id)
         session.add(
             UserModel(
@@ -115,7 +136,7 @@ def integration_user() -> Iterator[IntegrationUser]:
     try:
         yield user
     finally:
-        with SessionLocal() as session:
+        with db_session.SessionLocal() as session:
             _cleanup_user(session, user.user_id)
             session.commit()
 
@@ -165,3 +186,47 @@ def _cleanup_user(session: Session, user_id: UUID) -> None:
     ):
         session.execute(delete(model).where(model.user_id == user_id_text))
     session.execute(delete(UserModel).where(UserModel.id == user_id_text))
+
+
+def _prepare_integration_engine() -> Engine:
+    integration_database_url = _get_integration_database_url()
+    admin_database_url = os.getenv(
+        "INTEGRATION_ADMIN_DATABASE_URL",
+        "mysql+pymysql://root:root_password@mysql:3306/mysql",
+    )
+    database_name = _extract_database_name(integration_database_url)
+    database_user = _extract_database_user(integration_database_url)
+
+    admin_engine = create_engine(admin_database_url, future=True)
+    with admin_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
+        connection.execute(text(f"CREATE DATABASE IF NOT EXISTS `{database_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"))
+        connection.execute(text(f"GRANT ALL PRIVILEGES ON `{database_name}`.* TO '{database_user}'@'%'"))
+        connection.execute(text("FLUSH PRIVILEGES"))
+    admin_engine.dispose()
+
+    return create_engine(
+        integration_database_url,
+        pool_pre_ping=True,
+        future=True,
+    )
+
+
+def _get_integration_database_url() -> str:
+    return os.getenv(
+        "INTEGRATION_DATABASE_URL",
+        "mysql+pymysql://kakeibo:kakeibo_password@mysql:3306/kakeibo_integration",
+    )
+
+
+def _extract_database_name(database_url: str) -> str:
+    database_name = make_url(database_url).database
+    if not database_name or not database_name.replace("_", "").isalnum():
+        raise RuntimeError("INTEGRATION_DATABASE_URL の database 名が不正です。")
+    return database_name
+
+
+def _extract_database_user(database_url: str) -> str:
+    username = make_url(database_url).username
+    if not username or not username.replace("_", "").isalnum():
+        raise RuntimeError("INTEGRATION_DATABASE_URL の user 名が不正です。")
+    return username

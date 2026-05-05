@@ -17,7 +17,8 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column("categories", sa.Column("monthly_budget", sa.Integer(), nullable=True))
+    if not _has_monthly_budget_column():
+        op.add_column("categories", sa.Column("monthly_budget", sa.Integer(), nullable=True))
     op.execute(
         sa.text(
             "UPDATE categories "
@@ -35,4 +36,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column("categories", "monthly_budget")
+    if _has_monthly_budget_column():
+        op.drop_column("categories", "monthly_budget")
+
+
+def _has_monthly_budget_column() -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    return any(column["name"] == "monthly_budget" for column in inspector.get_columns("categories"))

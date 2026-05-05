@@ -10,9 +10,9 @@ import fitz
 import pytest
 from fastapi.testclient import TestClient
 import app.bootstrap.container as bootstrap_container
+import app.infrastructure.db.session as db_session
 from app.application.importing.pdf_importer import ImportedCardTransaction
 from app.application.auth.password_hasher import PasswordHasher
-from app.infrastructure.db.session import SessionLocal
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
@@ -339,7 +339,7 @@ def test_pdf_upload_records_failed_status_when_parser_raises(authenticated_api_c
 
 def test_category_and_upload_list_are_scoped_to_authenticated_user(authenticated_api_client, integration_user) -> None:
     other_user_id = uuid4()
-    with SessionLocal() as session:
+    with db_session.SessionLocal() as session:
         session.add(
             UserModel(
                 id=str(other_user_id),

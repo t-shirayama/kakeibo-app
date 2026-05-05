@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Excel 出力と Alembic migration の Integration Test 運用を追加する
+  - 対応: Excel 出力 API の基本妥当性は既存の `backend/tests/integration/test_api_critical_paths.py` の workbook export IT を正として扱い、`docs/specs/development-workflow.md` にその位置づけを明記した。さらに `backend/tests/integration/conftest.py` で Backend Integration Test の接続先を `INTEGRATION_DATABASE_URL` へ切り替え、`INTEGRATION_ADMIN_DATABASE_URL` で専用DBを自動作成するようにして、本番系 `DATABASE_URL` の schema と分離した。migration 検証は `.github/workflows/test.yml` の `Alembic適用確認 (migration smoke)` step を pull request ごとに実行する運用へ整理し、文書とCI表示名を一致させた。
+  - 確認: `docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py` 実行後でも `docker compose run --rm backend python -m alembic upgrade head` が同じ作業ツリーで両立する前提を整えた。
+  - 根拠: `docs/tasks/open.md` の優先度C「Excel 出力と Alembic migration の Integration Test 運用を追加する」。
+
 - [x] Frontend Integration Test を明細フォーム、PDFアップロード、CSRF再試行へ拡張する
   - 対応: `frontend/src/test/integration/transactions/transactions-page.it.test.tsx` で明細フォームの追加と同じ店名のカテゴリ一括更新、`frontend/src/test/integration/uploads/upload-page.it.test.tsx` でPDFアップロードの進捗表示と再試行、`frontend/src/test/integration/api/auth-refresh.it.test.ts` と `frontend/src/test/integration/api/csrf-retry.it.test.ts` で401/403時の自己回復を確認する構成にそろえた。`docs/specs/development-workflow.md` にも、Frontend Integration Test がこの範囲を受け持つ現状を反映した。
   - 確認: `docker compose run --rm --no-deps frontend npm run test:integration` が 16 passed で通過した。

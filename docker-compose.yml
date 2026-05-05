@@ -28,6 +28,8 @@ services:
       TZ: Asia/Tokyo
       BACKEND_CORS_ORIGINS: http://localhost:3000
       DATABASE_URL: mysql+pymysql://${MYSQL_USER:-kakeibo}:${MYSQL_PASSWORD:-kakeibo_password}@mysql:3306/${MYSQL_DATABASE:-kakeibo}
+      INTEGRATION_DATABASE_URL: mysql+pymysql://${MYSQL_USER:-kakeibo}:${MYSQL_PASSWORD:-kakeibo_password}@mysql:3306/kakeibo_integration
+      INTEGRATION_ADMIN_DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root_password}@mysql:3306/mysql
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-local-env-at-least-32-bytes}
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-15}
       JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-5}
