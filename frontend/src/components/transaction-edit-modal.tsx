@@ -8,6 +8,7 @@ import type { CategoryDto, TransactionDto } from "@/lib/types";
 
 type TransactionEditModalProps = {
   categories: CategoryDto[];
+  initialTransactionDate?: string;
   open: boolean;
   transaction: TransactionDto | null;
   onOpenChange: (open: boolean) => void;
@@ -18,6 +19,7 @@ type TransactionEditModalProps = {
 
 export function TransactionEditModal({
   categories,
+  initialTransactionDate,
   open,
   transaction,
   onOpenChange,
@@ -61,7 +63,7 @@ export function TransactionEditModal({
             {error ? <ApiErrorAlert error={error} /> : null}
             <div className="form-field horizontal">
               <label htmlFor="transaction-date">日付</label>
-              <input id="transaction-date" name="transaction_date" type="date" defaultValue={transaction?.transaction_date ?? ""} required />
+              <input id="transaction-date" name="transaction_date" type="date" defaultValue={transaction?.transaction_date ?? initialTransactionDate ?? ""} required />
             </div>
             <div className="form-field horizontal">
               <label htmlFor="merchant-name">店名</label>

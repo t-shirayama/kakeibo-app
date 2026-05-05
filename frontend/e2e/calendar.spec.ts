@@ -33,3 +33,13 @@ test("shows selected day details and opens filtered transactions", async ({ page
   await expect(page.getByRole("heading", { name: "明細一覧" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
 });
+
+test("opens add transaction modal with the selected date", async ({ page }) => {
+  await gotoAppPage(page, "/calendar?month=2026-05", "カレンダー");
+
+  await page.getByRole("gridcell", { name: /2026-05-18/ }).click();
+  await page.getByRole("button", { name: "明細追加" }).click();
+
+  await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
+  await expect(page.getByLabel("日付")).toHaveValue("2026-05-18");
+});
