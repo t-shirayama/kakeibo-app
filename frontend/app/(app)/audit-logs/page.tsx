@@ -27,7 +27,7 @@ export default function AuditLogsPage() {
       }),
   });
   const auditTotalPages = Math.max(1, Math.ceil((auditLogsQuery.data?.total ?? 0) / 10));
-  const auditRows = auditLogsQuery.data?.items ?? [];
+  const auditRows = useMemo(() => auditLogsQuery.data?.items ?? [], [auditLogsQuery.data?.items]);
   const auditActions = useMemo(() => Array.from(new Set(auditRows.map((item) => item.action))), [auditRows]);
   const auditResourceTypes = useMemo(() => Array.from(new Set(auditRows.map((item) => item.resource_type))), [auditRows]);
 

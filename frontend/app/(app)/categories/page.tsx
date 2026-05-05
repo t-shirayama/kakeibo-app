@@ -57,7 +57,7 @@ export default function CategoriesPage() {
     mutationFn: api.delete_category,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
   });
-  const categories = categoriesQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const uncategorizedCategory = useMemo(
     () => categories.find((category) => category.name === "未分類"),
     [categories],

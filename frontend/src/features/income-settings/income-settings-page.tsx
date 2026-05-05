@@ -41,8 +41,8 @@ export default function IncomeSettingsPage() {
 
   const incomeSettingsQuery = useQuery({ queryKey: incomeSettingsQueryKeys.all, queryFn: api.list_income_settings });
   const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
-  const categories = categoriesQuery.data ?? [];
-  const incomeSettings = incomeSettingsQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const incomeSettings = useMemo(() => incomeSettingsQuery.data ?? [], [incomeSettingsQuery.data]);
   const categoryById = useMemo(() => new Map(categories.map((category) => [category.category_id, category])), [categories]);
   const defaultCategoryId = newCategoryId || categories.find((category) => category.name.includes("給与"))?.category_id || categories[0]?.category_id || "";
 

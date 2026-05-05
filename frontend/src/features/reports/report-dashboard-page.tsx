@@ -45,8 +45,8 @@ export function ReportDashboardPage() {
 
   const summary = summaryQuery.data;
   const previousSummary = previousSummaryQuery.data;
-  const categorySummary = summary?.category_summaries ?? [];
-  const monthlySummary = summary?.monthly_summaries ?? [];
+  const categorySummary = useMemo(() => summary?.category_summaries ?? [], [summary?.category_summaries]);
+  const monthlySummary = useMemo(() => summary?.monthly_summaries ?? [], [summary?.monthly_summaries]);
   const comparisonRows = useMemo(() => buildCategoryComparisonRows(categorySummary, previousSummary?.category_summaries ?? []), [categorySummary, previousSummary?.category_summaries]);
   const insightItems = useMemo(() => buildInsights(summary), [summary]);
   const savingsRate = calculateSavingsRate(summary?.total_income ?? 0, summary?.balance ?? 0);

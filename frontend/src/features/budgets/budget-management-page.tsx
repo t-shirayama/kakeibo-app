@@ -22,7 +22,7 @@ export function BudgetManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<BudgetTab>(normalizeBudgetTab(searchParams.get("tab")) ?? "settings");
+  const activeTab = normalizeBudgetTab(searchParams.get("tab")) ?? "settings";
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
 
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
@@ -36,10 +36,6 @@ export function BudgetManagementPage() {
     next.set("month", selectedYearMonth);
     router.replace(buildAppRouteUrl(pathname, next));
   }, [pathname, router, searchParams, selectedYearMonth]);
-
-  useEffect(() => {
-    setActiveTab(normalizeBudgetTab(searchParams.get("tab")) ?? "settings");
-  }, [searchParams]);
 
   const categoriesQuery = useQuery({
     queryKey: categoriesQueryKeys.list(true),
@@ -93,7 +89,6 @@ export function BudgetManagementPage() {
   }
 
   function updateActiveTab(nextTab: BudgetTab) {
-    setActiveTab(nextTab);
     const next = new URLSearchParams(searchParams.toString());
     next.set("tab", nextTab);
     router.replace(buildAppRouteUrl(pathname, next));

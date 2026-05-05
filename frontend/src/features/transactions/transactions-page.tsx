@@ -116,12 +116,12 @@ export default function TransactionsPage() {
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
-  const categories = categoriesQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.category_id, category])),
     [categories],
   );
-  const transactions = transactionsQuery.data?.items ?? [];
+  const transactions = useMemo(() => transactionsQuery.data?.items ?? [], [transactionsQuery.data?.items]);
   const total = transactionsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / currentParams.pageSize));
   const searchSuggestions = useMemo(() => {

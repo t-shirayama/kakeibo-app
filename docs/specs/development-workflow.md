@@ -24,6 +24,7 @@
 
 - コードを変更した場合は、影響する単体テスト、Backend / Frontend Integration Test、E2Eを同じ作業内で更新する。
 - テストを更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
+- フロントエンドのコードを変更した場合は、少なくとも `docker compose run --rm --no-deps frontend npm run lint`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` を実行してから完了とする。
 - ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
