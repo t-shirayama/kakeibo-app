@@ -1497,6 +1497,7 @@ button:not(:disabled) {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.86fr);
   gap: 14px;
+  align-items: stretch;
 }
 
 .calendar-page .page-header {
@@ -1518,11 +1519,19 @@ button:not(:disabled) {
 .calendar-sidebar {
   display: grid;
   gap: 14px;
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
 }
 
 .calendar-board-panel {
   min-width: 0;
+}
+
+.calendar-selected-day-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-weekdays {
@@ -1693,8 +1702,10 @@ button:not(:disabled) {
 .calendar-transaction-list {
   display: grid;
   gap: 8px;
-  max-height: 260px;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
 }
 
 .calendar-transaction-row {

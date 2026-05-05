@@ -161,7 +161,7 @@ export function CalendarPage() {
           </section>
 
           <aside className="calendar-sidebar">
-            <section className="card panel">
+            <section className="card panel calendar-selected-day-panel">
               <h2 className="panel-title">月間サマリー</h2>
               <div className="calendar-summary-grid" aria-label="月間サマリー">
                 <SummaryTile icon={<Wallet size={16} aria-hidden="true" />} label="収入" value={formatCurrency(monthlySummary.total_income)} tone="income" />
