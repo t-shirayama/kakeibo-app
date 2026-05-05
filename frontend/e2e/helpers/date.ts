@@ -31,10 +31,21 @@ export function getMonthDateRange(value: string) {
 
 export async function expectDisplayedMonth(page: Page, value: string) {
   await expect(page.getByLabel("表示月")).toHaveValue(value);
-  await expect(page).toHaveURL(new RegExp(`month=${value}`));
+  await expect(page).toHaveURL(buildMonthParamPattern(value));
 }
 
 export async function moveDisplayedMonth(page: Page, buttonName: "前月" | "翌月", expectedValue: string) {
-  await page.getByRole("button", { name: buttonName }).click();
+  await Promise.all([
+    page.waitForURL(buildMonthParamPattern(expectedValue)),
+    page.getByRole("button", { name: buttonName }).click(),
+  ]);
   await expectDisplayedMonth(page, expectedValue);
+}
+
+function buildMonthParamPattern(value: string) {
+  return new RegExp(`[?&]month=${escapeRegExp(value)}(?:[&#]|$)`);
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
