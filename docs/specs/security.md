@@ -74,6 +74,8 @@
 
 ## UIとクライアント連携
 
+- Next.js の proxy では `/dashboard`、`/calendar`、`/transactions`、`/upload`、`/categories`、`/income-settings`、`/reports`、`/settings` を保護対象とし、未ログインの初回遷移ではサーバーサイドで `/login?redirect=...` へリダイレクトする。
+- 認証済み画面で 401 が返った後の refresh 失敗時は、クライアント側の認証 helper がログイン画面への再誘導を担当する。
 - CSRFトークンはフロントエンドのメモリに保持し、期限切れまたは403時に再取得する。
 - フロントエンドは `credentials: "include"` でCSRF取得APIを呼び、ブラウザに保存されたHttpOnlyのCSRFセッションCookieを自動送信する。
 

@@ -15,13 +15,6 @@
   - 完了条件: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` を含む対象 E2E が通り、必要なら `docs/tasks/completed.md` の最近の完了タスク記録も実態に合わせて更新されている。
   - 根拠: 2026-05-05 時点の途中作業。`docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` は 16 passed、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts` は 8 passed / 2 failed まで確認済みで、残りは `dashboard.spec.ts` のカテゴリサマリー導線と `transactions.spec.ts` の同じ店名更新シナリオだったため。
 
-- [ ] 認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる
-  - 目的: proxy とクライアント側401リダイレクトの責務を揃え、ページごとに認証導線が揺れない状態にする。
-  - 対象: `frontend/proxy.ts`、`frontend/e2e/auth.spec.ts`、`frontend/e2e/income-settings.spec.ts`、必要に応じて `docs/specs/security.md`、`docs/specs/development-workflow.md`
-  - 対応: 保護対象ルートと matcher を棚卸しし、`/income-settings` を含む主要画面が proxy で一貫してガードされるようにする。未ログイン時の server-side redirect と、認証切れ時の client-side redirect の住み分けもテストと文書で明確にする。
-  - 完了条件: 保護画面の認証境界が route 一覧・matcher・E2E の期待値で一致し、未ログイン時の遷移が画面ごとに揺れない。
-  - 根拠: `e2e-flaky-test-analysis.md` の「`/income-settings` が保護ルートに含まれていない」「認証境界の揺れが E2E を不安定化させる」という分析。
-
 - [ ] `gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす
   - 目的: 見出し表示だけで画面安定とみなしている helper を改善し、URL同期・API取得・redirect 完了前の flaky failure を減らす。
   - 対象: `frontend/e2e/helpers/navigation.ts`、`frontend/e2e/auth.spec.ts`、`frontend/e2e/reports.spec.ts`、`frontend/e2e/dashboard.spec.ts`、必要に応じて `docs/e2e/index.md`

@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] 認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる
+  - 対応: `frontend/proxy.ts` の保護対象ルートと matcher に `/income-settings` を追加し、`frontend/e2e/auth.spec.ts` で `/dashboard`、`/income-settings`、`/reports` の未ログイン redirect を同じ基準で確認するよう整理した。あわせて `docs/specs/security.md` と `docs/e2e/auth.md` に、server-side redirect を担う proxy と、401 後の client-side redirect を担う認証 helper の責務を追記した。
+  - 確認: `docker compose run --rm e2e npm run test:e2e -- auth.spec.ts income-settings.spec.ts reports.spec.ts` を含む対象E2Eを再実行し、未ログイン時の遷移が一貫することを確認した。
+  - 根拠: `docs/tasks/open.md` の優先度B「認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる」。
+
 - [x] 予算管理機能を追加し、予算超過と進捗を確認できるようにする
   - 対応: カテゴリへ `monthly_budget` を追加し、`backend/alembic/versions/20260505_0005_category_budgets.py` でスキーマとサンプルデータを更新した。カテゴリAPIとカテゴリ管理画面で月次予算の追加・編集・解除をできるようにし、ダッシュボードAPIと `frontend/src/features/reports/report-dashboard-page.tsx` に予算合計、支出実績、残額または超過額、進捗率、カテゴリ別予算進捗を追加した。あわせて `docs/specs/domain-model.md`、`docs/specs/api-specs.md`、`docs/specs/db-schema.md`、`docs/requirements/dashboard.md`、`docs/requirements/categories.md`、`docs/e2e/dashboard.md`、`docs/e2e/categories.md` を現行仕様へ同期した。
   - 確認: `docker compose run --rm backend python scripts/generate_openapi_client.py`、`docker compose run --rm backend python -m pytest tests/unit/domain/test_entities.py tests/unit/application/test_transactions.py tests/unit/infrastructure/test_repositories.py tests/unit/presentation/test_api.py`、`docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run test:integration`、`docker compose run --rm --no-deps frontend npm run build`、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts categories.spec.ts` を実行し、すべて通過した。
