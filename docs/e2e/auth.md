@@ -37,4 +37,5 @@
 
 - 認証状態はsetup projectで1回だけ作成し、通常specから共有する。
 - 未認証テストは空のstorage stateを持つ新規ブラウザコンテキストで実行する。
+- CSRF session不足の403を受けたときの再取得・再送は Frontend Integration Test でも確認し、E2Eでは実Cookie環境での代表回復導線を確認する。
 - 401テストはAPI routeをモックし、実際のトークン期限に依存しない。

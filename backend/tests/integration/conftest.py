@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
@@ -31,6 +32,16 @@ def integration_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("COOKIE_SECURE", "false")
     monkeypatch.setenv("JWT_SECRET_KEY", "integration-test-secret-key-32-bytes!!")
+    get_settings.cache_clear()
+    try:
+        yield
+    finally:
+        get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def integration_upload_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    monkeypatch.setenv("UPLOAD_STORAGE_ROOT", str(tmp_path / "uploads"))
     get_settings.cache_clear()
     try:
         yield

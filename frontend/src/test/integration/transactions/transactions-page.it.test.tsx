@@ -1,11 +1,13 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import TransactionsPage from "@/features/transactions/transactions-page";
+import type { TransactionRequest } from "@/lib/api";
 import { setMockUrl } from "@/test/navigation";
 import { renderWithClient } from "@/test/render";
 import { server } from "@/test/msw/server";
-import { mockTransactions, transactionList } from "@/test/msw/fixtures";
+import { mockCategories, mockTransactions, transactionList } from "@/test/msw/fixtures";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -54,4 +56,137 @@ describe("TransactionsPage integration", () => {
     expect(await screen.findByText("東京メトロ")).toBeInTheDocument();
     expect(requestedKeywords).toContain("東京");
   });
+
+  it("手動追加フォームから明細を登録し、一覧へ反映する", async () => {
+    const user = userEvent.setup();
+    const transactions = [...mockTransactions];
+    let submittedRequest: TransactionRequest | null = null;
+
+    server.use(
+      http.get(`${API_BASE_URL}/api/transactions`, () => HttpResponse.json(transactionList(transactions))),
+      http.post(`${API_BASE_URL}/api/transactions`, async ({ request }) => {
+        submittedRequest = await request.json() as TransactionRequest;
+        const category = mockCategories.find((item) => item.category_id === submittedRequest?.category_id) ?? mockCategories[0];
+        const created = {
+          transaction_id: "tx-created",
+          display_category_id: category.category_id,
+          category_id: category.category_id,
+          category_name: category.name,
+          category_color: category.color,
+          transaction_date: submittedRequest.transaction_date,
+          shop_name: submittedRequest.shop_name,
+          amount: submittedRequest.amount,
+          transaction_type: "expense" as const,
+          payment_method: submittedRequest.payment_method ?? null,
+          card_user_name: null,
+          memo: submittedRequest.memo ?? null,
+          source_upload_id: null,
+          source_file_name: null,
+          source_row_number: null,
+          source_page_number: null,
+          source_format: null,
+          source_hash: null,
+        };
+        transactions.unshift(created);
+        return HttpResponse.json(created, { status: 201 });
+      }),
+    );
+    setMockUrl("/transactions?date_from=2026-01-01&date_to=2026-12-31&page=1&page_size=10");
+
+    renderWithClient(<TransactionsPage />);
+
+    expect(await screen.findByText("スーパー青空")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "手動で追加" }));
+    const dialog = within(await screen.findByRole("dialog"));
+    fireEvent.change(dialog.getByLabelText("日付"), { target: { value: "2026-05-12" } });
+    await user.type(dialog.getByLabelText("店名"), "IT追加店舗");
+    await user.selectOptions(dialog.getByLabelText("カテゴリ"), "cat-transport");
+    await user.clear(dialog.getByLabelText("金額"));
+    await user.type(dialog.getByLabelText("金額"), "1980");
+    await user.type(dialog.getByLabelText("支払い方法"), "モバイル決済");
+    await user.type(dialog.getByLabelText("メモ"), "Integration Test");
+    await user.click(dialog.getByRole("button", { name: "追加" }));
+
+    expect(await screen.findByText("IT追加店舗")).toBeInTheDocument();
+    expect(submittedRequest).toMatchObject({
+      transaction_date: "2026-05-12",
+      shop_name: "IT追加店舗",
+      amount: 1980,
+      category_id: "cat-transport",
+      payment_method: "モバイル決済",
+      memo: "Integration Test",
+    });
+  });
+
+  it("同じ店名のカテゴリ一括更新を選ぶと、保存後に関連明細も更新する", async () => {
+    const user = userEvent.setup();
+    const transactions = [
+      createTransactionRecord({ transaction_id: "tx-bulk-1", shop_name: "一括更新対象", category_id: "cat-food", category_name: "食費", category_color: "#f97316" }),
+      createTransactionRecord({ transaction_id: "tx-bulk-2", shop_name: "一括更新対象", category_id: "cat-food", category_name: "食費", category_color: "#f97316" }),
+    ];
+    let sameShopUpdateRequest: { shop_name: string; category_id: string } | null = null;
+
+    server.use(
+      http.get(`${API_BASE_URL}/api/transactions`, () => HttpResponse.json(transactionList(transactions))),
+      http.put(`${API_BASE_URL}/api/transactions/:transactionId`, async ({ params, request }) => {
+        const body = await request.json() as TransactionRequest;
+        const category = mockCategories.find((item) => item.category_id === body.category_id) ?? mockCategories[0];
+        const index = transactions.findIndex((transaction) => transaction.transaction_id === params.transactionId);
+        transactions[index] = {
+          ...transactions[index],
+          transaction_date: body.transaction_date,
+          shop_name: body.shop_name,
+          amount: body.amount,
+          category_id: category.category_id,
+          display_category_id: category.category_id,
+          category_name: category.name,
+          category_color: category.color,
+          payment_method: body.payment_method ?? null,
+          memo: body.memo ?? null,
+        };
+        return HttpResponse.json(transactions[index]);
+      }),
+      http.get(`${API_BASE_URL}/api/transactions/:transactionId/same-shop-count`, () => HttpResponse.json({ count: 1 })),
+      http.patch(`${API_BASE_URL}/api/transactions/:transactionId/same-shop-category`, async ({ request }) => {
+        sameShopUpdateRequest = await request.json() as { shop_name: string; category_id: string };
+        const category = mockCategories.find((item) => item.category_id === sameShopUpdateRequest?.category_id) ?? mockCategories[0];
+        for (const transaction of transactions) {
+          if (transaction.shop_name === sameShopUpdateRequest.shop_name) {
+            transaction.category_id = category.category_id;
+            transaction.display_category_id = category.category_id;
+            transaction.category_name = category.name;
+            transaction.category_color = category.color;
+          }
+        }
+        return HttpResponse.json({ updated_count: 1 });
+      }),
+    );
+    setMockUrl("/transactions?date_from=2026-01-01&date_to=2026-12-31&page=1&page_size=10");
+
+    renderWithClient(<TransactionsPage />);
+
+    expect(await screen.findAllByText("一括更新対象")).toHaveLength(2);
+    await user.click(screen.getAllByRole("button", { name: "明細を編集" })[0]);
+    const dialog = within(await screen.findByRole("dialog"));
+    await user.selectOptions(dialog.getByLabelText("カテゴリ"), "cat-transport");
+    await user.click(dialog.getByRole("button", { name: "保存" }));
+    await user.click(await screen.findByRole("button", { name: "一括更新する" }));
+
+    expect(await screen.findAllByRole("row", { name: /一括更新対象.*交通費/ })).toHaveLength(2);
+    expect(sameShopUpdateRequest).toEqual({ shop_name: "一括更新対象", category_id: "cat-transport" });
+  });
 });
+
+function createTransactionRecord(
+  overrides: Partial<(typeof mockTransactions)[number]> & Pick<(typeof mockTransactions)[number], "transaction_id" | "shop_name" | "category_id" | "category_name" | "category_color">,
+) {
+  return {
+    ...mockTransactions[0],
+    display_category_id: overrides.category_id,
+    transaction_date: "2026-05-03",
+    amount: 2480,
+    payment_method: "クレジットカード",
+    memo: "Integration Test",
+    ...overrides,
+  };
+}

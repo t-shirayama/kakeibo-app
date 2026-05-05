@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useMemo } from "react";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, PiggyBank, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
 import { reportsQueryKeys } from "@/features/reports/queryKeys";
@@ -27,7 +27,6 @@ type DashboardSummary = {
 };
 
 export function ReportDashboardPage() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
@@ -40,11 +39,8 @@ export function ReportDashboardPage() {
     }
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", selectedYearMonth);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  }, [pathname, router, searchParams, selectedYearMonth]);
-  useEffect(() => {
-    router.prefetch("/transactions");
-  }, [router]);
+    replaceCurrentUrl(pathname, next);
+  }, [pathname, searchParams, selectedYearMonth]);
   const summaryQuery = useQuery({
     queryKey: reportsQueryKeys.dashboardSummary(selectedPeriod.year, selectedPeriod.month),
     queryFn: () => api.get_dashboard_summary({ year: selectedPeriod.year, month: selectedPeriod.month }) as Promise<DashboardSummary>,
@@ -76,13 +72,13 @@ export function ReportDashboardPage() {
       category_id: item.category_id,
     });
 
-    router.push(`/transactions?${params.toString()}`);
+    window.location.assign(`/transactions?${params.toString()}`);
   }
 
   function openSelectedMonthTransactions() {
     const range = getMonthDateRange(selectedYearMonth);
     const params = new URLSearchParams(range);
-    router.push(`/transactions?${params.toString()}`);
+    window.location.assign(`/transactions?${params.toString()}`);
   }
 
   function updateSelectedYearMonth(nextValue: string) {
@@ -92,7 +88,7 @@ export function ReportDashboardPage() {
     }
     const next = new URLSearchParams(searchParams.toString());
     next.set("month", normalized);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    replaceCurrentUrl(pathname, next);
   }
 
   return (
@@ -447,4 +443,8 @@ function getMonthDateRange(value: string) {
     date_from: `${year}-${paddedMonth}-01`,
     date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
   };
+}
+
+function replaceCurrentUrl(pathname: string, searchParams: URLSearchParams) {
+  window.history.replaceState(null, "", `${pathname}?${searchParams.toString()}`);
 }

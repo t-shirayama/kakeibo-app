@@ -163,6 +163,7 @@ export default function CategoriesPage() {
                 <Link
                   className="button secondary"
                   href={`/transactions?category_id=${uncategorizedCategory.category_id}&period=all`}
+                  prefetch={false}
                 >
                   確認
                 </Link>
@@ -221,7 +222,7 @@ export default function CategoriesPage() {
                   <h2>編集方法</h2>
                   <p>店名ごとの分類を変える場合は、明細一覧で対象明細のカテゴリを編集してください。次回以降の同一店名分類に反映されます。</p>
                 </div>
-                <Link className="button secondary" href="/transactions?period=current_year">
+                <Link className="button secondary" href="/transactions?period=current_year" prefetch={false}>
                   明細一覧へ
                 </Link>
               </div>

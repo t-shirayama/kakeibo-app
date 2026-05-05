@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { gotoAppPage } from "./helpers/navigation";
-import { createTransaction, setTransactionDateRange } from "./helpers/transactions";
+import {
+  createTransaction,
+  deleteTransaction,
+  fillTransactionForm,
+  openTransactionEditForm,
+  openTransactionCreateForm,
+  setTransactionDateRange,
+  submitTransactionForm,
+} from "./helpers/transactions";
 
 test("searches, creates, edits, deletes, and exports transactions", async ({ page }) => {
   await gotoAppPage(page, "/transactions", "明細一覧");
@@ -59,24 +67,25 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await setTransactionDateRange(page, "2026-01-01", "2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();
-  await page.getByRole("button", { name: "手動で追加" }).click();
-  await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
-  await page.getByLabel("日付").fill("2026-05-02");
-  await page.getByLabel("店名").fill("E2Eテスト店舗");
-  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "食費" });
-  await page.getByLabel("金額").fill("1234");
-  await page.getByLabel("支払い方法").fill("現金");
-  await page.getByLabel("メモ").fill("E2E追加");
-  await page.getByRole("button", { name: "追加" }).click();
+  await openTransactionCreateForm(page);
+  await fillTransactionForm(page, {
+    transactionDate: "2026-05-02",
+    shopName: "E2Eテスト店舗",
+    category: "食費",
+    amount: "1234",
+    paymentMethod: "現金",
+    memo: "E2E追加",
+  });
+  await submitTransactionForm(page, "追加");
 
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗" })).toBeVisible();
 
-  const row = page.getByRole("row").filter({ hasText: "E2Eテスト店舗" });
-  await row.getByRole("button", { name: "明細を編集" }).click();
-  await expect(page.getByRole("heading", { name: "明細を編集" })).toBeVisible();
-  await page.getByLabel("店名").fill("E2Eテスト店舗 編集済み");
-  await page.getByLabel("金額").fill("2345");
-  await page.getByRole("button", { name: "保存" }).click();
+  await openTransactionEditForm(page, "E2Eテスト店舗");
+  await fillTransactionForm(page, {
+    shopName: "E2Eテスト店舗 編集済み",
+    amount: "2345",
+  });
+  await submitTransactionForm(page, "保存");
 
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toBeVisible();
 
@@ -98,13 +107,7 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await page.getByLabel("明細検索").fill("");
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toBeVisible();
 
-  await page
-    .getByRole("row")
-    .filter({ hasText: "E2Eテスト店舗 編集済み" })
-    .getByRole("button", { name: "明細を削除" })
-    .click();
-  await expect(page.getByRole("heading", { name: "この明細を削除しますか？" })).toBeVisible();
-  await page.getByRole("button", { name: "削除する" }).click();
+  await deleteTransaction(page, "E2Eテスト店舗 編集済み");
 
   await expect(page.getByRole("cell", { name: "E2Eテスト店舗 編集済み" })).toHaveCount(0);
 });
@@ -119,9 +122,9 @@ test("asks whether to update categories for the same shop name", async ({ page }
 
   const bulkRows = page.getByRole("row").filter({ hasText: "E2E一括店舗" });
   await expect(bulkRows).toHaveCount(2);
-  await bulkRows.first().getByRole("button", { name: "明細を編集" }).click();
-  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "日用品" });
-  await page.getByRole("button", { name: "保存" }).click();
+  await openTransactionEditForm(page, "E2E一括店舗");
+  await fillTransactionForm(page, { category: "日用品" });
+  await submitTransactionForm(page, "保存");
   const bulkDialog = page.getByRole("dialog").filter({ hasText: "同じ店名の明細を一括更新しますか？" });
   await expect(bulkDialog.getByRole("heading", { name: "同じ店名の明細を一括更新しますか？" })).toBeVisible();
   await bulkDialog.getByRole("button", { name: "一括更新する" }).click();
@@ -132,9 +135,9 @@ test("asks whether to update categories for the same shop name", async ({ page }
 
   const singleRows = page.getByRole("row").filter({ hasText: "E2E単独店舗" });
   await expect(singleRows).toHaveCount(2);
-  await singleRows.first().getByRole("button", { name: "明細を編集" }).click();
-  await page.getByLabel("カテゴリ", { exact: true }).selectOption({ label: "日用品" });
-  await page.getByRole("button", { name: "保存" }).click();
+  await openTransactionEditForm(page, "E2E単独店舗");
+  await fillTransactionForm(page, { category: "日用品" });
+  await submitTransactionForm(page, "保存");
   const cancelDialog = page.getByRole("dialog").filter({ hasText: "同じ店名の明細を一括更新しますか？" });
   await expect(cancelDialog.getByRole("heading", { name: "同じ店名の明細を一括更新しますか？" })).toBeVisible();
   await cancelDialog.getByRole("button", { name: "キャンセル" }).click();

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { dashboardSummary, mockCategories, mockSettings, mockUser, transactionList } from "./fixtures";
+import { dashboardSummary, mockCategories, mockSettings, mockUploadJobs, mockUser, transactionList } from "./fixtures";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -9,6 +9,7 @@ export const handlers = [
   http.get(`${API_BASE_URL}/api/settings`, () => HttpResponse.json(mockSettings)),
   http.get(`${API_BASE_URL}/api/categories`, () => HttpResponse.json(mockCategories)),
   http.get(`${API_BASE_URL}/api/transactions`, () => HttpResponse.json(transactionList())),
+  http.get(`${API_BASE_URL}/api/uploads`, () => HttpResponse.json(mockUploadJobs)),
   http.get(`${API_BASE_URL}/api/dashboard/summary`, ({ request }) => {
     const url = new URL(request.url);
     const year = url.searchParams.get("year") ?? "2026";

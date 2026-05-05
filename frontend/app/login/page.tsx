@@ -80,7 +80,7 @@ export default function LoginPage() {
             <input id="password" name="password" type="password" autoComplete="current-password" />
           </div>
           <div className="login-links">
-            <Link href="/password-reset">パスワードを忘れた場合</Link>
+            <Link href="/password-reset" prefetch={false}>パスワードを忘れた場合</Link>
           </div>
           <button className="button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "ログイン中" : "ログイン"}

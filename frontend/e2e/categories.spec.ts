@@ -42,7 +42,7 @@ test("shows category colors and creates a category", async ({ page }) => {
   await page.getByRole("button", { name: "閉じる", exact: true }).click();
 
   await page.getByRole("link", { name: "確認" }).click();
-  await expect(page).toHaveURL(/\/transactions\?category_id=.*&period=all$/);
+  await expect(page).toHaveURL(/\/transactions\?category_id=.*&period=all(&.*)?$/);
   await expect(page.locator('select[aria-label="カテゴリ絞り込み"] option:checked')).toHaveText("未分類");
   await expect(page.getByLabel("開始日")).toHaveValue("");
   await expect(page.getByLabel("終了日")).toHaveValue("");

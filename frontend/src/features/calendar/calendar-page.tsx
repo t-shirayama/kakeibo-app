@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, CreditCard, ReceiptText, Wallet } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
@@ -26,7 +26,6 @@ type DailyCalendarSummary = {
 };
 
 export function CalendarPage() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
@@ -69,10 +68,6 @@ export function CalendarPage() {
     next.set("month", selectedYearMonth);
     replaceCurrentUrl(pathname, next);
   }, [pathname, searchParams, selectedYearMonth]);
-
-  useEffect(() => {
-    router.prefetch("/transactions");
-  }, [router]);
 
   function updateSelectedYearMonth(nextValue: string) {
     const normalized = normalizeYearMonth(nextValue) ?? getCurrentYearMonth();

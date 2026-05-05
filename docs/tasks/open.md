@@ -45,6 +45,20 @@
   - 完了条件: E2E spec が代表導線中心に読みやすくなり、共通操作は helper に集約され、移管した検証観点が Integration Test またはタスクとして追跡できる。
   - 根拠: E2Eの安定性と実行時間を守りながら、unit / integration / e2e の役割分担を明確にするため。
 
+- [ ] 認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる
+  - 目的: proxy とクライアント側401リダイレクトの責務を揃え、ページごとに認証導線が揺れない状態にする。
+  - 対象: `frontend/proxy.ts`、`frontend/e2e/auth.spec.ts`、`frontend/e2e/income-settings.spec.ts`、必要に応じて `docs/specs/security.md`、`docs/specs/development-workflow.md`
+  - 対応: 保護対象ルートと matcher を棚卸しし、`/income-settings` を含む主要画面が proxy で一貫してガードされるようにする。未ログイン時の server-side redirect と、認証切れ時の client-side redirect の住み分けもテストと文書で明確にする。
+  - 完了条件: 保護画面の認証境界が route 一覧・matcher・E2E の期待値で一致し、未ログイン時の遷移が画面ごとに揺れない。
+  - 根拠: `e2e-flaky-test-analysis.md` の「`/income-settings` が保護ルートに含まれていない」「認証境界の揺れが E2E を不安定化させる」という分析。
+
+- [ ] `gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす
+  - 目的: 見出し表示だけで画面安定とみなしている helper を改善し、URL同期・API取得・redirect 完了前の flaky failure を減らす。
+  - 対象: `frontend/e2e/helpers/navigation.ts`、`frontend/e2e/auth.spec.ts`、`frontend/e2e/reports.spec.ts`、`frontend/e2e/dashboard.spec.ts`、必要に応じて `docs/e2e/index.md`
+  - 対応: `gotoAppPage()` の待機条件をページ特性に応じて見直し、redirect-only route は専用の待ち合わせへ分離する。必要なら API 到達、URL 確定、主要コンポーネント表示のいずれを待つかを helper または spec 側で明示し、汎用 helper の責務を絞る。
+  - 完了条件: redirect 系とデータ取得依存ページで共通 helper の誤用が減り、E2E が URL 同期や API 応答待ち不足で落ちにくくなる。対応方針が `docs/e2e/index.md` にも反映される。
+  - 根拠: `e2e-flaky-test-analysis.md` の「`gotoAppPage()` が見出しだけを待っている」「redirect 系テストは専用に書くべき」という分析。
+
 ## 優先度C
 
 - [ ] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する

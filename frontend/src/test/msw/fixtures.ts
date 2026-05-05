@@ -4,6 +4,7 @@ import type {
   SettingsResponse,
   TransactionListResponse,
   TransactionResponse,
+  UploadResponse,
   UserResponse,
 } from "@/lib/generated/openapi-client";
 
@@ -79,6 +80,27 @@ export const mockTransactions: TransactionResponse[] = [
     source_page_number: null,
     source_format: null,
     source_hash: null,
+  },
+];
+
+export const mockUploadJobs: UploadResponse[] = [
+  {
+    upload_id: "upload-1",
+    file_name: "2026_04_楽天カード.pdf",
+    stored_file_path: "storage/uploads/sample/upload-1/original.pdf",
+    status: "completed",
+    imported_count: 8,
+    error_message: null,
+    uploaded_at: "2026-05-01 09:12",
+  },
+  {
+    upload_id: "upload-2",
+    file_name: "2026_05_読み取り不可.pdf",
+    stored_file_path: "storage/uploads/sample/upload-2/original.pdf",
+    status: "failed",
+    imported_count: 0,
+    error_message: "明細行を抽出できませんでした。",
+    uploaded_at: "2026-05-02 11:40",
   },
 ];
 

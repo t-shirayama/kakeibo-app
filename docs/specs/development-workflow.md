@@ -28,7 +28,7 @@
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。
 - バックエンドテストは `backend/tests/unit/` を単体テスト、`backend/tests/integration/` を Integration Test の置き場とする。`unit/` には domain / application / infrastructure / presentation の単体寄りテストを置き、`integration/` には `integration` pytest marker を付けた FastAPI + Cookie認証 + CSRF + MySQL 永続化の結合テストを置く。
-- フロントエンドテストは `frontend/src/test/unit/` を単体テスト、`frontend/src/test/integration/` を Integration Test の置き場とする。単体テストは純粋関数や小さな表示ロジックを検証し、Integration Test は Vitest、React Testing Library、MSW、user-event、jsdom を使い、API mock と TanStack Query を通した画面結合を検証する。ログイン、明細一覧、ダッシュボードのような主要画面の表示、APIエラー、URLや条件変更による再取得は Integration Test で確認する。
+- フロントエンドテストは `frontend/src/test/unit/` を単体テスト、`frontend/src/test/integration/` を Integration Test の置き場とする。単体テストは純粋関数や小さな表示ロジックを検証し、Integration Test は Vitest、React Testing Library、MSW、user-event、jsdom を使い、API mock と TanStack Query を通した画面結合を検証する。ログイン、明細一覧、ダッシュボードのような主要画面の表示、APIエラー、URLや条件変更による再取得に加え、明細フォームの保存分岐、PDFアップロード履歴と再試行UI、CSRF 403 後の再試行は Integration Test で確認する。
 - 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。
 
 ## Docker Compose での確認ルール

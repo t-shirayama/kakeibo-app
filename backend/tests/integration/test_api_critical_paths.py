@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from io import BytesIO
+from pathlib import Path
+from zipfile import ZipFile
+
+import fitz
 import pytest
 from fastapi.testclient import TestClient
 
@@ -153,9 +158,227 @@ def test_monthly_report_aggregates_transactions_through_api_and_mysql(authentica
     assert dashboard_payload["expense_change"] == -8799
 
 
+def test_category_status_change_normalizes_existing_transactions_to_uncategorized(authenticated_client: TestClient) -> None:
+    csrf_token = fetch_csrf_token(authenticated_client)
+    category_response = authenticated_client.post(
+        "/api/categories",
+        headers={"X-CSRF-Token": csrf_token},
+        json={"name": "分類確認IT", "color": "#22c55e", "description": "無効化確認"},
+    )
+    assert category_response.status_code == 200
+    category_payload = category_response.json()
+    category_id = category_payload["category_id"]
+
+    create_response = authenticated_client.post(
+        "/api/transactions",
+        headers={"X-CSRF-Token": csrf_token},
+        json={
+            "transaction_date": "2026-05-12",
+            "shop_name": "無効化対象店舗",
+            "amount": 1800,
+            "transaction_type": "expense",
+            "category_id": category_id,
+        },
+    )
+    assert create_response.status_code == 200
+
+    disable_response = authenticated_client.patch(
+        f"/api/categories/{category_id}/status",
+        headers={"X-CSRF-Token": csrf_token},
+        json={"is_active": False},
+    )
+    assert disable_response.status_code == 200
+    assert disable_response.json()["is_active"] is False
+
+    active_categories_response = authenticated_client.get("/api/categories")
+    assert active_categories_response.status_code == 200
+    assert [item["category_id"] for item in active_categories_response.json()] == []
+
+    all_categories_response = authenticated_client.get("/api/categories", params={"include_inactive": "true"})
+    assert all_categories_response.status_code == 200
+    assert all_categories_response.json()[0]["category_id"] == category_id
+    assert all_categories_response.json()[0]["is_active"] is False
+
+    list_response = authenticated_client.get("/api/transactions", params={"keyword": "未分類"})
+    assert list_response.status_code == 200
+    item = list_response.json()["items"][0]
+    assert item["category_id"] == category_id
+    assert item["category_name"] == "未分類"
+    assert item["category_color"] == "#6B7280"
+
+    rejected_response = authenticated_client.post(
+        "/api/transactions",
+        headers={"X-CSRF-Token": csrf_token},
+        json={
+            "transaction_date": "2026-05-13",
+            "shop_name": "無効カテゴリ新規",
+            "amount": 500,
+            "transaction_type": "expense",
+            "category_id": category_id,
+        },
+    )
+    assert rejected_response.status_code == 400
+    assert rejected_response.json()["error"]["message"] == "Category is inactive."
+
+
+def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_upload(authenticated_client: TestClient, tmp_path: Path) -> None:
+    csrf_token = fetch_csrf_token(authenticated_client)
+    pdf_bytes = _build_rakuten_statement_pdf()
+
+    first_upload_response = authenticated_client.post(
+        "/api/uploads",
+        headers={"X-CSRF-Token": csrf_token},
+        files={"file": ("rakuten-statement.pdf", pdf_bytes, "application/pdf")},
+    )
+    assert first_upload_response.status_code == 200
+    first_payload = first_upload_response.json()
+    assert first_payload["status"] == "completed"
+    assert first_payload["imported_count"] == 3
+    assert Path(first_payload["stored_file_path"]).exists()
+
+    transactions_response = authenticated_client.get("/api/transactions", params={"page_size": 10})
+    assert transactions_response.status_code == 200
+    transactions_payload = transactions_response.json()
+    assert transactions_payload["total"] == 3
+    source_rows = {(item["shop_name"], item["source_row_number"], item["source_page_number"]) for item in transactions_payload["items"]}
+    assert ("セブン-イレブン", 1, 1) in source_rows
+    assert all(item["category_name"] == "未分類" for item in transactions_payload["items"])
+    assert all(item["source_format"] == "rakuten_card_pdf" for item in transactions_payload["items"])
+
+    categories_response = authenticated_client.get("/api/categories")
+    assert categories_response.status_code == 200
+    assert categories_response.json()[0]["name"] == "未分類"
+
+    second_upload_response = authenticated_client.post(
+        "/api/uploads",
+        headers={"X-CSRF-Token": csrf_token},
+        files={"file": ("rakuten-statement.pdf", pdf_bytes, "application/pdf")},
+    )
+    assert second_upload_response.status_code == 200
+    assert second_upload_response.json()["imported_count"] == 0
+
+    after_duplicate_response = authenticated_client.get("/api/transactions", params={"page_size": 10})
+    assert after_duplicate_response.status_code == 200
+    assert after_duplicate_response.json()["total"] == 3
+
+    uploads_response = authenticated_client.get("/api/uploads")
+    assert uploads_response.status_code == 200
+    assert len(uploads_response.json()) == 2
+
+    delete_response = authenticated_client.delete(
+        f"/api/uploads/{first_payload['upload_id']}",
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {"status": "ok"}
+    assert not Path(first_payload["stored_file_path"]).exists()
+
+    after_delete_uploads = authenticated_client.get("/api/uploads")
+    assert after_delete_uploads.status_code == 200
+    assert [item["upload_id"] for item in after_delete_uploads.json()] == [second_upload_response.json()["upload_id"]]
+
+
+def test_transaction_export_returns_filtered_workbook_with_summary_sheets(authenticated_client: TestClient) -> None:
+    csrf_token = fetch_csrf_token(authenticated_client)
+    category_response = authenticated_client.post(
+        "/api/categories",
+        headers={"X-CSRF-Token": csrf_token},
+        json={"name": "輸出IT", "color": "#f97316"},
+    )
+    assert category_response.status_code == 200
+    category_id = category_response.json()["category_id"]
+
+    for payload in (
+        {
+            "transaction_date": "2026-05-05",
+            "shop_name": "Export Target",
+            "amount": 2100,
+            "transaction_type": "expense",
+            "category_id": category_id,
+            "payment_method": "現金",
+            "memo": "出力対象",
+        },
+        {
+            "transaction_date": "2026-05-20",
+            "shop_name": "Export Income",
+            "amount": 50000,
+            "transaction_type": "income",
+            "category_id": category_id,
+        },
+        {
+            "transaction_date": "2026-04-01",
+            "shop_name": "Filtered Out",
+            "amount": 999,
+            "transaction_type": "expense",
+            "category_id": category_id,
+        },
+    ):
+        response = authenticated_client.post("/api/transactions", headers={"X-CSRF-Token": csrf_token}, json=payload)
+        assert response.status_code == 200
+
+    export_response = authenticated_client.get(
+        "/api/transactions/export",
+        params={
+            "keyword": "Export",
+            "category_id": category_id,
+            "date_from": "2026-05-01",
+            "date_to": "2026-05-31",
+        },
+    )
+    assert export_response.status_code == 200
+    assert export_response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert export_response.headers["content-disposition"] == 'attachment; filename="kakeibo-export.xlsx"'
+
+    workbook_text = _read_workbook_xml(export_response.content)
+    assert "明細一覧" in workbook_text
+    assert "カテゴリ集計" in workbook_text
+    assert "月別集計" in workbook_text
+    assert "Export Target" in workbook_text
+    assert "Export Income" in workbook_text
+    assert "Filtered Out" not in workbook_text
+    assert "2026-05" in workbook_text
+    assert "輸出IT" in workbook_text
+
+
 def fetch_csrf_token(client: TestClient) -> str:
     response = client.get("/api/auth/csrf")
     assert response.status_code == 200
     token = response.json()["csrf_token"]
     assert token
     return token
+
+
+def _build_rakuten_statement_pdf() -> bytes:
+    lines = [
+        "2026/04/28",
+        "セブン-イレブン",
+        "本人",
+        "1回払い",
+        "842円",
+        "2026/04/27",
+        "Amazon.co.jp",
+        "家族",
+        "1回払い",
+        "3,200円",
+        "2026/04/26",
+        "取消 サンプルストア",
+        "本人",
+        "1回払い",
+        "-1518円",
+    ]
+    document = fitz.open()
+    page = document.new_page()
+    y = 72
+    for line in lines:
+        page.insert_text((72, y), line, fontsize=12)
+        y += 18
+    return document.tobytes()
+
+
+def _read_workbook_xml(content: bytes) -> str:
+    with ZipFile(BytesIO(content)) as archive:
+        return "\n".join(
+            archive.read(name).decode("utf-8")
+            for name in archive.namelist()
+            if name.endswith(".xml")
+        )

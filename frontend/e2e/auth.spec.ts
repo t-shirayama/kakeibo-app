@@ -67,6 +67,6 @@ test.describe("authentication", () => {
 
     await page.goto("/dashboard");
 
-    await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard$/);
+    await expect(page).toHaveURL(/\/login\?redirect=%2Fdashboard(?:%3Fmonth%3D\d{4}-\d{2})?$/);
   });
 });
