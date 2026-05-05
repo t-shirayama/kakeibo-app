@@ -1464,6 +1464,13 @@ textarea {
   overscroll-behavior: none;
 }
 
+.report-dashboard-page .dashboard-comparison-table-wrap .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
 .report-dashboard-page .insight-list {
   min-height: 0;
 }
