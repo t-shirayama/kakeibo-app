@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する
+  - 対応: `backend/tests/unit/`、`backend/tests/integration/`、`frontend/src/test/unit/`、`frontend/src/test/integration/`、`frontend/e2e/` を棚卸しし、各テスト層の責務、重複しやすい観点、未カバー領域、helper 化の優先箇所を整理した。あわせて `docs/specs/development-workflow.md` に 2026-05 時点のテスト資産、層ごとの責務、拡充順、タスク化の判断基準を追記し、`docs/e2e/index.md` に E2E に残す観点、Integration Test へ寄せる観点、helper の責務、直近の見直し順を反映した。
+  - 確認: `docs/tasks/open.md` の後続タスクが Unit / Integration / E2E の順で実行可能な粒度になっていることを見直し、ドキュメント更新後に未確定事項チェックを実行した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する」。
+
 - [x] Backend Integration Test の基盤と最重要シナリオを導入する
   - 対応: `backend/tests/integration/` を追加し、`integration` pytest marker、MySQL schema 確認、テストユーザー作成・後片付けfixtureを整備した。認証/CSRF/refresh、明細作成〜一覧取得〜更新〜削除、月次レポートとダッシュボード集計を FastAPI と MySQL を通して検証するITを追加した。あわせて既存の単体テスト群は `backend/tests/unit/` 配下へ整理し、`docs/specs/development-workflow.md` と `docs/e2e/index.md` に住み分けと実行手順を追記した。
   - 確認: `docker compose run --rm backend python -m pytest -m integration` が 3 件通過し、`docker compose run --rm backend python -m pytest` が 60 件すべて通過した。

@@ -17,13 +17,6 @@
 
 ## 優先度B
 
-- [ ] Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する
-  - 目的: テスト層ごとの責務、重複、抜け漏れを整理し、今後の追加・リファクタリングを迷わず進められる状態にする。
-  - 対象: `backend/tests/unit/`、`backend/tests/integration/`、`frontend/src/test/unit/`、`frontend/src/test/integration/`、`frontend/e2e/`、`docs/specs/development-workflow.md`、`docs/e2e/index.md`
-  - 対応: unit / integration / e2e の既存ケースを棚卸しし、どのリスクをどの層で守るかを整理する。重複している検証、未カバーの重要導線、helper化できる準備処理を洗い出し、テスト追加順とドキュメント更新範囲を決める。
-  - 完了条件: テスト層ごとの責務と拡充順が文書化され、以降のテスト追加タスクが `docs/tasks/open.md` 上で実行可能な粒度に整理されている。
-  - 根拠: ユーザー依頼「unit、integration、e2eのテスト拡充と整備とリファクタリングを追加」「共通化やhelperの検討」「ドキュメントの更新」。
-
 - [ ] Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する
   - 目的: ドメインルール、純粋関数、表示用ヘルパーの退行を軽量な単体テストで早期に検出できるようにする。
   - 対象: `backend/tests/unit/`、`frontend/src/test/unit/`、`frontend/src/lib/`、`backend/tests/unit/conftest.py`、必要に応じて `docs/specs/development-workflow.md`

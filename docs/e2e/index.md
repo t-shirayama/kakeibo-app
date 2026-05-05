@@ -73,6 +73,27 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 - 開発サーバーとE2Eを同じポートで同時起動しない。必要な場合は `E2E_BACKEND_PORT` / `E2E_FRONTEND_PORT` を指定する。
 - `frontend/e2e/helpers/` に、ログイン、ページ遷移、年月操作、明細フォーム操作、アップロード履歴確認、アップロード用PDF生成のような共通操作をまとめ、spec側で重複実装しない。
 
+E2Eに残す観点と Integration Test へ寄せる観点は、次のように切り分ける。
+
+- E2Eに残す: 未ログイン redirect、ログイン後の主要画面遷移、実 API 接続を伴う一覧表示、破壊的操作の確認、Cookie / CSRF / refresh を含む代表導線、Excelエクスポートのようなブラウザ統合。
+- Frontend Integration Test へ寄せる: API mock 前提で再現できる表示分岐、再取得条件、フォームバリデーション、アップロード進捗表示、再試行UI、401/403 後の自己回復、細かなエラーメッセージ。
+- Backend Integration Test へ寄せる: 画面を介さず確認できる認証/CSRF、永続化、集計、カテゴリ状態変更、ユーザー分離、PDF取込結果の整合性。
+
+helper の責務も次のように分ける。
+
+- `auth.ts`: サンプルユーザーのログイン状態作成、新規匿名コンテキスト作成。
+- `navigation.ts`: URL確定と主要画面表示の待ち合わせ。redirect-only route の待機はここへ増やすが、見出し待ちだけで済まない画面へは汎用化しすぎない。
+- `date.ts`: 年月操作や日付選択。
+- `transactions.ts`: 明細作成・編集・削除の共通UI操作。
+- `upload.ts`: PDF選択、ドロップ、履歴確認の共通操作。
+
+直近の見直し順は次のとおり。
+
+1. 保護対象ルートと redirect 系 spec を揃え、未ログイン時の server-side redirect を安定化する。
+2. `gotoAppPage()` の待機条件を見直し、redirect 完了前や API 応答前の assert を減らす。
+3. 画面固有の待機が必要な箇所は spec 側または専用 helper へ分け、全画面を一つの helper で吸収しようとしない。
+4. E2Eで重くなっている表示分岐や再試行UIは、Frontend Integration Test へ移してから spec を薄くする。
+
 ## 更新方針
 
 コード変更時は、変更が影響するテスト層を同じ作業内で更新する。

@@ -31,6 +31,45 @@
 - フロントエンドテストは `frontend/src/test/unit/` を単体テスト、`frontend/src/test/integration/` を Integration Test の置き場とする。単体テストは純粋関数や小さな表示ロジックを検証し、Integration Test は Vitest、React Testing Library、MSW、user-event、jsdom を使い、API mock と TanStack Query を通した画面結合を検証する。ログイン、明細一覧、ダッシュボードのような主要画面の表示、APIエラー、URLや条件変更による再取得に加え、明細フォームの保存分岐、PDFアップロード履歴と再試行UI、CSRF 403 後の再試行は Integration Test で確認する。
 - 画面表示、画面操作、認証導線、API接続、エクスポートなどの主要ユーザーフローはE2Eで検証する。
 
+## テスト棚卸しと拡充順
+
+2026-05 時点の主なテスト資産は次のとおり。
+
+- Backend Unit Test: `backend/tests/unit/` に 9 ファイル。domain の不変条件、application の認証・取引・Excel出力、infrastructure repository、presentation API の単体寄り検証を置く。
+- Backend Integration Test: `backend/tests/integration/` に 1 ファイル。FastAPI + Cookie認証 + CSRF + MySQL 永続化を通し、認証/refresh、明細 CRUD、月次集計、カテゴリ無効化時の未分類表示をまとめて守る。
+- Frontend Unit Test: `frontend/src/test/unit/` に 2 ファイル。整形関数とカテゴリ表示ルールのような純粋ロジックを置く。
+- Frontend Integration Test: `frontend/src/test/integration/` に 5 ファイル。ログイン、明細一覧、レポート、アップロード、CSRF再試行を MSW と React Testing Library で検証する。
+- E2E: `frontend/e2e/` に 11 spec。認証、主要画面遷移、ダッシュボード、カレンダー、明細一覧、収入設定、カテゴリ管理、アップロード、設定、レガシー導線、ドキュメント用スクリーンショットを扱う。
+
+各層の責務と、優先して置く観点は次のとおり。
+
+- Unit Test: 値オブジェクト、不変条件、表示用ヘルパー、日付・金額・カテゴリ整形のような純粋ロジックを最短で守る。DB、HTTP、ブラウザ、MSW には依存させない。
+- Backend Integration Test: 認証Cookie、CSRF、FastAPI ルーティング、永続化、集計、ユーザー分離のように、バックエンド単体では分割しにくい境界を守る。画面表示や細かなUI分岐は持ち込まない。
+- Frontend Integration Test: API mock 前提で、画面表示、フォーム送信、再取得、エラー表示、再試行、Query 状態遷移を守る。細かなブラウザ導線や実認証はE2Eへ寄せる。
+- E2E: 実ブラウザ、実バックエンド、MySQL、Cookie を通した代表導線だけを守る。細かな異常系や表示分岐は Integration Test で先に検証し、E2E は「本番に近い結合で壊れやすいところ」に集中させる。
+
+現時点での重複と未カバーは次の整理を基準に扱う。
+
+- 明細一覧、ログイン、アップロードは Frontend Integration Test と E2E の両方に観点があるため、E2E では代表導線、Integration Test では分岐とエラー回復を主に受け持つ。
+- Backend Integration Test は主要導線を一通り持てている一方で、カテゴリ管理、PDF取込、Excel出力、Alembic migration の確認が薄い。
+- Frontend Integration Test は主要画面の読み込みと一部フォームを持てている一方で、明細編集フォーム、PDFアップロード詳細、401/403 回復、カテゴリ管理、設定保存のような操作系が不足している。
+- E2E helper は `auth.ts`、`date.ts`、`navigation.ts`、`transactions.ts`、`upload.ts` に分かれているが、redirect 専用待ち合わせと画面安定待ちの境界がまだ曖昧で、`gotoAppPage()` の責務見直し余地がある。
+
+今後の拡充順は、次の順番を標準とする。
+
+1. Unit Test の未カバー純粋ロジックを追加し、重複 fixture と小さな helper を整理する。
+2. Backend / Frontend Integration Test の共通 fixture と helper を整え、認証、CSRF、MSW、Query 初期化の準備処理を標準化する。
+3. 認証ガード対象ルートと E2E の待ち合わせを見直し、認証境界の揺れと redirect 起因の flaky failure を減らす。
+4. E2E helper を代表導線中心に整理し、細かな表示分岐や再試行UIは Frontend Integration Test へ寄せる。
+5. そのうえで、カテゴリ管理、PDF取込、明細フォーム、CSRF再試行、Excel出力、migration 検証の順に、各層へ追加する。
+
+タスク化の判断基準は次のとおり。
+
+- 同じ前準備を 2 回以上書き始めたら、まず fixture または helper 化を検討する。
+- 失敗時の原因が UI ではなく API 契約や永続化にあるなら Backend Integration Test へ寄せる。
+- 失敗時の原因が画面状態、Query、再描画、エラー表示にあるなら Frontend Integration Test へ寄せる。
+- 未ログイン redirect、Cookie、実 API 接続、主要遷移の確認が必要なら E2E に残す。
+
 ## Docker Compose での確認ルール
 
 - 動作確認やテストはDocker Composeのコンテナ内で実行することを標準とし、ホスト環境のPython/Nodeの有無に依存しない。
