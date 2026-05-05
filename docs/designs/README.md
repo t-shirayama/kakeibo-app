@@ -5,12 +5,14 @@
 ## 現行スクリーンショット
 
 - [ダッシュボード](dashboard.png)
+- [予算管理](budgets.png)
 - [カレンダー](calendar.png)
 - [明細一覧](transactions.png)
 - [明細編集モーダル](transaction-edit-modal.png)
 - [収入設定](income-settings.png)
 - [アップロード](upload.png)
 - [カテゴリ管理](categories.png)
+- [監査ログ](audit-logs.png)
 - [設定](settings.png)
 
 ## アーカイブ
