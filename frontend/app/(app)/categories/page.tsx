@@ -56,7 +56,7 @@ export default function CategoriesPage() {
   const apiError = categoriesQuery.error || editorError || statusMutation.error || deleteMutation.error;
 
   return (
-    <>
+    <div className="categories-page">
       <PageHeader
         title="カテゴリ管理"
         subtitle="自動分類に使うカテゴリ名、色、説明を管理します。"
@@ -77,7 +77,7 @@ export default function CategoriesPage() {
       />
 
       <section className="grid two-column-grid">
-        <div className="card panel">
+        <div className="card panel category-list-panel">
           <h2 className="panel-title">支出カテゴリ</h2>
           {apiError ? <ApiErrorAlert error={apiError} /> : null}
           {categoriesQuery.isLoading ? (
@@ -85,7 +85,7 @@ export default function CategoriesPage() {
           ) : categories.length === 0 ? (
             <EmptyState title="カテゴリがありません" description="最初のカテゴリを追加して明細を分類しましょう。" />
           ) : (
-            <div className="category-list">
+            <div className="category-list" aria-label="支出カテゴリ一覧">
               {categories.map((category) => (
                 <div className="category-row" key={category.category_id}>
                   <span className="swatch" style={{ background: category.color }} />
@@ -236,6 +236,6 @@ export default function CategoriesPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-    </>
+    </div>
   );
 }

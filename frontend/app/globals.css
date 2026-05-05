@@ -938,9 +938,26 @@ textarea {
   min-height: 0;
 }
 
+.categories-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.categories-page > .grid {
+  min-height: 0;
+}
+
 .category-list {
   display: grid;
   gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
 }
 
 .category-row {
@@ -951,6 +968,13 @@ textarea {
   padding: 14px;
   border: 1px solid #edf2f7;
   border-radius: 8px;
+}
+
+.category-list-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .category-pie-layout {
