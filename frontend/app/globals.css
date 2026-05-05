@@ -617,18 +617,18 @@ textarea {
     box-shadow 0.16s ease;
 }
 
-.transaction-row:focus-visible td,
-.transaction-row:focus-within td {
+.transaction-row:focus td,
+.transaction-row:focus-visible td {
   background: #f4f9ff;
 }
 
-.transaction-row:focus-visible td:first-child,
-.transaction-row:focus-within td:first-child {
+.transaction-row:focus td:first-child,
+.transaction-row:focus-visible td:first-child {
   box-shadow: inset 3px 0 0 #2563eb;
 }
 
-.transaction-row:focus-visible td:last-child,
-.transaction-row:focus-within td:last-child {
+.transaction-row:focus td:last-child,
+.transaction-row:focus-visible td:last-child {
   box-shadow: inset -1px 0 0 #dbeafe;
 }
 
