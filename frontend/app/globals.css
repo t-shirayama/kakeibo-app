@@ -592,6 +592,8 @@ button:not(:disabled) {
 
 .numeric-input-plain {
   appearance: textfield;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .numeric-input-plain::-webkit-outer-spin-button,
