@@ -48,15 +48,7 @@ export default function IncomeSettingsPage() {
 
   const createMutation = useMutation({
     mutationFn: api.create_income_setting,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all });
-      setNewMemberName("");
-      setNewAmount("");
-      setNewDay("25");
-      setNewCategoryId("");
-      setNewStartMonth(currentMonth);
-      setNewEndMonth("");
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all }),
   });
   const updateMutation = useMutation({
     mutationFn: ({ incomeSettingId, request }: { incomeSettingId: string; request: IncomeSettingRequest }) =>
@@ -265,10 +257,10 @@ export default function IncomeSettingsPage() {
               className="button"
               type="button"
               onClick={createIncomeSetting}
-              disabled={!newMemberName.trim() || !newAmount || !defaultCategoryId || isBusy}
+              disabled={!newMemberName.trim() || !newAmount || !defaultCategoryId || createMutation.isPending}
             >
               <Plus size={15} aria-hidden="true" />
-              追加
+              {createMutation.isPending ? "追加中" : "追加"}
             </button>
           </div>
         </div>

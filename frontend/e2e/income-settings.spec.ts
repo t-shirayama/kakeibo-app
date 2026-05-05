@@ -16,6 +16,7 @@ test("creates and updates monthly income settings", async ({ page }) => {
   const saveOverrideButton = page.getByRole("button", { name: "月別変更を保存" });
 
   await expect(overrideAmount).toBeVisible();
+  await expect(page.getByRole("button", { name: "追加" })).toBeEnabled();
   await expect(page.getByText("2026-03 - 2026-12")).toBeVisible();
   await overrideAmount.fill("365000");
   await overrideDay.fill("20");
