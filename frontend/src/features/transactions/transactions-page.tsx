@@ -147,13 +147,6 @@ export default function TransactionsPage() {
   );
   const apiError = transactionsQuery.error || categoriesQuery.error || settingsQuery.error || deleteMutation.error || exportMutation.error;
   const isSaving = saveMutation.isPending || isPreparingSave;
-  const hasActiveFilters = Boolean(
-    currentParams.keyword.trim() ||
-      currentParams.categoryFilter ||
-      currentParams.dateFrom !== defaultDateRange.date_from ||
-      currentParams.dateTo !== defaultDateRange.date_to,
-  );
-
   function updateParams(
     updates: Partial<{
       keyword: string;
@@ -182,6 +175,9 @@ export default function TransactionsPage() {
     };
     currentParamsRef.current = values;
 
+    if ("dateFrom" in updates || "dateTo" in updates) {
+      next.delete("period");
+    }
     setOrDelete(next, "keyword", values.keyword);
     setOrDelete(next, "date_from", values.dateFrom);
     setOrDelete(next, "date_to", values.dateTo);
@@ -208,8 +204,8 @@ export default function TransactionsPage() {
     const next = new URLSearchParams(searchParams.toString());
     currentParamsRef.current = {
       keyword: "",
-      dateFrom: defaultDateRange.date_from,
-      dateTo: defaultDateRange.date_to,
+      dateFrom: "",
+      dateTo: "",
       categoryFilter: "",
       page: 1,
       pageSize: defaultPageSize,
@@ -218,8 +214,9 @@ export default function TransactionsPage() {
     };
     next.delete("keyword");
     next.delete("category_id");
-    next.set("date_from", defaultDateRange.date_from);
-    next.set("date_to", defaultDateRange.date_to);
+    next.delete("date_from");
+    next.delete("date_to");
+    next.set("period", "all");
     next.set("page", "1");
     next.set("page_size", String(defaultPageSize));
     next.set("sort_field", "date");
@@ -403,7 +400,7 @@ export default function TransactionsPage() {
           <div className="filter-chips" aria-label="適用中のフィルタ">
             {activeFilterChips.length > 0 ? activeFilterChips.map((chip) => <span className="filter-chip" key={chip}>{chip}</span>) : <span className="filter-chip muted-chip">条件なし</span>}
           </div>
-          <button className="button secondary compact" type="button" onClick={clearFilters} disabled={!hasActiveFilters}>
+          <button className="button secondary compact" type="button" onClick={clearFilters}>
             <X size={14} aria-hidden="true" />
             フィルタ解除
           </button>
@@ -559,10 +556,13 @@ function parseSearchParams(
   const sortDirection = searchParams.get("sort_direction") === "asc" ? "asc" : "desc";
   const parsedPage = Number(searchParams.get("page") ?? "1");
   const parsedPageSize = Number(searchParams.get("page_size") ?? String(defaultPageSize));
+  const explicitDateFrom = searchParams.get("date_from");
+  const explicitDateTo = searchParams.get("date_to");
+  const hasExplicitDateFilter = explicitDateFrom !== null || explicitDateTo !== null || searchParams.get("period") === "all";
   return {
     keyword: searchParams.get("keyword") ?? "",
-    dateFrom: searchParams.get("date_from") ?? defaultDateRange.date_from,
-    dateTo: searchParams.get("date_to") ?? defaultDateRange.date_to,
+    dateFrom: hasExplicitDateFilter ? explicitDateFrom ?? "" : defaultDateRange.date_from,
+    dateTo: hasExplicitDateFilter ? explicitDateTo ?? "" : defaultDateRange.date_to,
     categoryFilter: searchParams.get("category_id") ?? "",
     page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
     pageSize: [10, 20, 50].includes(parsedPageSize) ? parsedPageSize : defaultPageSize,
@@ -577,10 +577,12 @@ function buildNormalizedSearchParams(
   defaultPageSize: number,
 ) {
   const normalized = new URLSearchParams(searchParams.toString());
-  if (!normalized.get("date_from")) {
+  const hasExplicitDateFilter =
+    normalized.has("date_from") || normalized.has("date_to") || normalized.get("period") === "all";
+  if (!hasExplicitDateFilter && !normalized.get("date_from")) {
     normalized.set("date_from", defaultDateRange.date_from);
   }
-  if (!normalized.get("date_to")) {
+  if (!hasExplicitDateFilter && !normalized.get("date_to")) {
     normalized.set("date_to", defaultDateRange.date_to);
   }
   if (!normalized.get("page")) {

@@ -53,6 +53,20 @@ describe("TransactionsPage integration", () => {
     expect(requestedKeywords).toContain("東京");
   });
 
+  it("開始日または終了日だけを指定した場合も、反対側を自動補完しない", async () => {
+    setMockUrl("/transactions?date_from=2026-05-01&page=1&page_size=10");
+    const view = renderWithClient(<TransactionsPage />);
+
+    expect(await screen.findByLabelText("開始日")).toHaveValue("2026-05-01");
+    expect(screen.getByLabelText("終了日")).toHaveValue("");
+
+    setMockUrl("/transactions?date_to=2026-05-31&page=1&page_size=10");
+    view.rerender(<TransactionsPage />);
+
+    expect(await screen.findByLabelText("終了日")).toHaveValue("2026-05-31");
+    expect(screen.getByLabelText("開始日")).toHaveValue("");
+  });
+
   it("手動追加フォームから明細を登録し、一覧へ反映する", async () => {
     const user = setupIntegrationUser();
     const transactions = [...mockTransactions];
