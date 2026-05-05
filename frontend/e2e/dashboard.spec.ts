@@ -61,9 +61,13 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
 
   const monthInput = page.getByLabel("表示月");
   const currentValue = await monthInput.inputValue();
+  const previousMonth = addMonths(currentValue, -1);
   const pickerMonth = addMonths(currentValue, -2);
 
-  await monthInput.fill(pickerMonth.value);
+  await page.getByRole("button", { name: "前月" }).click();
+  await expect(monthInput).toHaveValue(previousMonth.value);
+  await expect(page).toHaveURL(new RegExp(`month=${previousMonth.value}`));
+  await page.getByRole("button", { name: "前月" }).click();
 
   await expect(monthInput).toHaveValue(pickerMonth.value);
   await expect(page).toHaveURL(new RegExp(`month=${pickerMonth.value}`));

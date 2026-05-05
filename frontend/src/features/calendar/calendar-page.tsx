@@ -87,7 +87,7 @@ export function CalendarPage() {
       date_from: dateFrom,
       date_to: dateTo,
     });
-    router.push(`/transactions?${next.toString()}`);
+    window.location.assign(`/transactions?${next.toString()}`);
   }
 
   return (

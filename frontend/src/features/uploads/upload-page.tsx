@@ -2,7 +2,7 @@
 
 import { FileUp, RotateCcw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
@@ -23,6 +23,7 @@ export default function UploadPage() {
   const [currentFileName, setCurrentFileName] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [lastFailedFile, setLastFailedFile] = useState<File | null>(null);
+  const clearProgressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
   const uploadsQuery = useQuery({ queryKey: uploadsQueryKeys.all, queryFn: api.list_uploads });
   const uploadMutation = useMutation({
@@ -47,13 +48,24 @@ export default function UploadPage() {
     },
     onSettled: () => {
       setUploadProgress(100);
-      setTimeout(() => {
+      if (clearProgressTimerRef.current) {
+        clearTimeout(clearProgressTimerRef.current);
+      }
+      clearProgressTimerRef.current = setTimeout(() => {
         setCurrentFileName(null);
         setUploadProgress(0);
       }, 600);
     },
   });
   const uploadJobs = uploadsQuery.data ?? [];
+
+  useEffect(() => {
+    return () => {
+      if (clearProgressTimerRef.current) {
+        clearTimeout(clearProgressTimerRef.current);
+      }
+    };
+  }, []);
 
   const uploadFile = (file: File | undefined) => {
     if (!file || uploadMutation.isPending) {

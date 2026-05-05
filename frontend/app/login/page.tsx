@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { ApiError, api } from "@/lib/api";
 import { refresh_csrf_token } from "@/lib/csrf";
@@ -11,9 +11,14 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<Error | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
+    mountedRef.current = true;
     void refresh_csrf_token().catch(() => null);
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   async function submitLogin(email: string, password: string) {
@@ -55,9 +60,13 @@ export default function LoginPage() {
               router.push(searchParams.get("redirect") || "/dashboard");
               router.refresh();
             } catch (caught) {
-              setError(caught instanceof Error ? caught : new Error("ログインに失敗しました。"));
+              if (mountedRef.current) {
+                setError(caught instanceof Error ? caught : new Error("ログインに失敗しました。"));
+              }
             } finally {
-              setIsSubmitting(false);
+              if (mountedRef.current) {
+                setIsSubmitting(false);
+              }
             }
           }}
         >

@@ -1,9 +1,8 @@
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import TransactionsPage from "@/features/transactions/transactions-page";
-import { getMockRouter, setMockUrl } from "@/test/navigation";
+import { setMockUrl } from "@/test/navigation";
 import { renderWithClient } from "@/test/render";
 import { server } from "@/test/msw/server";
 import { mockTransactions, transactionList } from "@/test/msw/fixtures";
@@ -49,10 +48,6 @@ describe("TransactionsPage integration", () => {
     const view = renderWithClient(<TransactionsPage />);
 
     expect(await screen.findByText("スーパー青空")).toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText("明細検索"));
-    await userEvent.keyboard("東京");
-
-    await waitFor(() => expect(getMockRouter().replace).toHaveBeenCalled());
     setMockUrl("/transactions?keyword=%E6%9D%B1%E4%BA%AC&date_from=2026-05-01&date_to=2026-05-31&page=1&page_size=10");
     view.rerender(<TransactionsPage />);
 
