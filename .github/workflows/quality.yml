@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: ripgrepをインストール
         run: sudo apt-get update && sudo apt-get install -y ripgrep
@@ -24,10 +24,13 @@ jobs:
       - name: Frontend typecheck
         run: docker compose run --rm --no-deps frontend npm run typecheck
 
+      - name: Backend layer dependency check
+        run: docker compose run --rm backend python -m pytest tests/unit/application/test_layer_dependencies.py
+
       - name: ドキュメント未確定事項チェック
         shell: bash
         run: |
-          matches="$(rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml" | rg -v 'rg "確認事項\|未決定事項\|TODO\|TBD\|要確認" docs \.codex -g "\*\.md" -g "\*\.toml"' || true)"
+          matches="$(rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml" | rg -v 'rg "確認事項.*docs \.codex -g "\*\.md" -g "\*\.toml"' || true)"
           if [ -n "$matches" ]; then
             echo "$matches"
             echo "未確定事項が残っています。"
@@ -39,3 +42,9 @@ jobs:
 
       - name: Frontend build
         run: docker compose run --rm --no-deps frontend npm run build
+
+      - name: OpenAPI client is up to date
+        run: docker compose run --rm backend python scripts/generate_openapi_client.py --check
+
+      - name: Backend lock file is up to date
+        run: docker compose run --rm backend python scripts/generate_requirements_lock.py --check

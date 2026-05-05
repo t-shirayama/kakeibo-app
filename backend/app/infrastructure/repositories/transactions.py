@@ -15,114 +15,13 @@ from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.transaction import TransactionModel
 
 
-class TransactionCategoryRepository:
-    # SQLAlchemyモデルとドメインオブジェクトの変換をこの層に閉じ込める。
+class TransactionRepository:
+    # 明細の保存と更新だけを担当し、一覧検索やカテゴリ表示の都合は持ち込まない。
     def __init__(self, session: Session) -> None:
         self._session = session
 
     def next_id(self) -> UUID:
         return uuid4()
-
-    def list_transactions(
-        self,
-        *,
-        user_id: UUID,
-        page: Page,
-        keyword: str | None = None,
-        category_id: UUID | None = None,
-        date_from: date | None = None,
-        date_to: date | None = None,
-    ) -> PageResult[TransactionWithCategory]:
-        filters = self._build_transaction_filters(
-            user_id=user_id,
-            keyword=keyword,
-            category_id=category_id,
-            date_from=date_from,
-            date_to=date_to,
-        )
-
-        total = self._session.scalar(select(func.count()).select_from(TransactionModel).where(*filters)) or 0
-        rows = self._session.execute(
-            select(
-                TransactionModel,
-                CategoryModel.id,
-                CategoryModel.name,
-                CategoryModel.color,
-                CategoryModel.is_active,
-                CategoryModel.deleted_at,
-            )
-            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
-            .where(*filters)
-            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
-            .offset(page.offset)
-            .limit(page.page_size)
-        ).all()
-        uncategorized = self._get_uncategorized_category_display(user_id)
-        return PageResult(
-            items=[
-                self._to_transaction_with_category(
-                    transaction=transaction,
-                    category_id=category_id_value,
-                    category_name=category_name,
-                    category_color=category_color,
-                    category_is_active=category_is_active,
-                    category_deleted_at=category_deleted_at,
-                    uncategorized=uncategorized,
-                )
-                for transaction, category_id_value, category_name, category_color, category_is_active, category_deleted_at in rows
-            ],
-            total=total,
-            page=page.page,
-            page_size=page.page_size,
-        )
-
-    def list_transactions_with_categories(
-        self,
-        *,
-        user_id: UUID,
-        keyword: str | None = None,
-        category_id: UUID | None = None,
-        date_from: date | None = None,
-        date_to: date | None = None,
-        limit: int | None = None,
-    ) -> list[TransactionWithCategory]:
-        filters = self._build_transaction_filters(
-            user_id=user_id,
-            keyword=keyword,
-            category_id=category_id,
-            date_from=date_from,
-            date_to=date_to,
-        )
-
-        statement = (
-            select(
-                TransactionModel,
-                CategoryModel.id,
-                CategoryModel.name,
-                CategoryModel.color,
-                CategoryModel.is_active,
-                CategoryModel.deleted_at,
-            )
-            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
-            .where(*filters)
-            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
-        )
-        if limit is not None:
-            statement = statement.limit(limit)
-
-        uncategorized = self._get_uncategorized_category_display(user_id)
-        return [
-            self._to_transaction_with_category(
-                transaction=transaction,
-                category_id=category_id_value,
-                category_name=category_name,
-                category_color=category_color,
-                category_is_active=category_is_active,
-                category_deleted_at=category_deleted_at,
-                uncategorized=uncategorized,
-            )
-            for transaction, category_id_value, category_name, category_color, category_is_active, category_deleted_at in self._session.execute(statement).all()
-        ]
 
     def create_transaction(self, transaction: Transaction) -> Transaction:
         model = TransactionModel(
@@ -146,7 +45,7 @@ class TransactionCategoryRepository:
         self._session.add(model)
         self._session.commit()
         self._session.refresh(model)
-        return self._to_transaction(model)
+        return _to_transaction(model)
 
     def source_hash_exists(self, *, user_id: UUID, source_hash: str) -> bool:
         count = self._session.scalar(
@@ -168,7 +67,7 @@ class TransactionCategoryRepository:
                 TransactionModel.deleted_at.is_(None),
             )
         )
-        return self._to_transaction(model) if model else None
+        return _to_transaction(model) if model else None
 
     def update_transaction(self, transaction: Transaction) -> Transaction:
         model = self._session.get(TransactionModel, str(transaction.id))
@@ -185,7 +84,7 @@ class TransactionCategoryRepository:
         model.updated_at = datetime.now(UTC)
         self._session.commit()
         self._session.refresh(model)
-        return self._to_transaction(model)
+        return _to_transaction(model)
 
     def count_other_transactions_by_shop(self, *, user_id: UUID, transaction_id: UUID, shop_name: str) -> int:
         count = self._session.scalar(
@@ -237,117 +136,150 @@ class TransactionCategoryRepository:
         model.updated_at = model.deleted_at
         self._session.commit()
 
-    def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
-        filters = [CategoryModel.user_id == str(user_id), CategoryModel.deleted_at.is_(None)]
-        if not include_inactive:
-            filters.append(CategoryModel.is_active.is_(True))
-        rows = self._session.scalars(select(CategoryModel).where(*filters).order_by(CategoryModel.name.asc())).all()
-        return [self._to_category(row) for row in rows]
 
-    def get_category(self, *, user_id: UUID, category_id: UUID) -> Category | None:
-        model = self._session.scalar(
-            select(CategoryModel).where(
-                CategoryModel.id == str(category_id),
-                CategoryModel.user_id == str(user_id),
-                CategoryModel.deleted_at.is_(None),
+class TransactionQueryRepository:
+    # 一覧検索と表示用カテゴリ解決を担当し、更新系の保存責務は持たない。
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def list_transactions(
+        self,
+        *,
+        user_id: UUID,
+        page: Page,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        sort_field: str = "date",
+        sort_direction: str = "desc",
+    ) -> PageResult[TransactionWithCategory]:
+        filters = self._build_transaction_filters(
+            user_id=user_id,
+            keyword=keyword,
+            category_id=category_id,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        total = self._session.scalar(select(func.count()).select_from(TransactionModel).where(*filters)) or 0
+        rows = self._session.execute(
+            select(
+                TransactionModel,
+                CategoryModel.id,
+                CategoryModel.name,
+                CategoryModel.color,
+                CategoryModel.is_active,
+                CategoryModel.deleted_at,
             )
+            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
+            .where(*filters)
+            .order_by(*self._transaction_order_by(sort_field=sort_field, sort_direction=sort_direction))
+            .offset(page.offset)
+            .limit(page.page_size)
+        ).all()
+        uncategorized = self._get_uncategorized_category_display(user_id)
+        return PageResult(
+            items=[
+                self._to_transaction_with_category(
+                    transaction=transaction,
+                    category_id=category_id_value,
+                    category_name=category_name,
+                    category_color=category_color,
+                    category_is_active=category_is_active,
+                    category_deleted_at=category_deleted_at,
+                    uncategorized=uncategorized,
+                )
+                for transaction, category_id_value, category_name, category_color, category_is_active, category_deleted_at in rows
+            ],
+            total=total,
+            page=page.page,
+            page_size=page.page_size,
         )
-        return self._to_category(model) if model else None
 
-    def category_name_exists(self, *, user_id: UUID, name: str) -> bool:
-        count = self._session.scalar(
-            select(func.count())
-            .select_from(CategoryModel)
-            .where(
-                CategoryModel.user_id == str(user_id),
-                func.lower(CategoryModel.name) == name.casefold(),
-                CategoryModel.deleted_at.is_(None),
+    def list_transactions_with_categories(
+        self,
+        *,
+        user_id: UUID,
+        keyword: str | None = None,
+        category_id: UUID | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        limit: int | None = None,
+    ) -> list[TransactionWithCategory]:
+        filters = self._build_transaction_filters(
+            user_id=user_id,
+            keyword=keyword,
+            category_id=category_id,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        statement = (
+            select(
+                TransactionModel,
+                CategoryModel.id,
+                CategoryModel.name,
+                CategoryModel.color,
+                CategoryModel.is_active,
+                CategoryModel.deleted_at,
             )
+            .join(CategoryModel, TransactionModel.category_id == CategoryModel.id, isouter=True)
+            .where(*filters)
+            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
         )
-        return bool(count)
+        if limit is not None:
+            statement = statement.limit(limit)
 
-    def create_category(self, category: Category) -> Category:
-        model = CategoryModel(
-            id=str(category.id),
-            user_id=str(category.user_id),
-            name=category.name,
-            color=category.color,
-            description=category.description,
-            is_active=category.is_active,
-        )
-        self._session.add(model)
-        self._session.commit()
-        self._session.refresh(model)
-        return self._to_category(model)
-
-    def update_category(self, category: Category) -> Category:
-        model = self._session.get(CategoryModel, str(category.id))
-        if model is None or model.deleted_at is not None:
-            raise ValueError("Category not found.")
-        model.name = category.name
-        model.color = category.color
-        model.description = category.description
-        model.is_active = category.is_active
-        model.updated_at = datetime.now(UTC)
-        self._session.commit()
-        self._session.refresh(model)
-        return self._to_category(model)
-
-    def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
-        model = self._session.scalar(
-            select(CategoryModel).where(
-                CategoryModel.id == str(category_id),
-                CategoryModel.user_id == str(user_id),
-                CategoryModel.deleted_at.is_(None),
+        uncategorized = self._get_uncategorized_category_display(user_id)
+        return [
+            self._to_transaction_with_category(
+                transaction=transaction,
+                category_id=category_id_value,
+                category_name=category_name,
+                category_color=category_color,
+                category_is_active=category_is_active,
+                category_deleted_at=category_deleted_at,
+                uncategorized=uncategorized,
             )
-        )
-        if model is None:
-            raise ValueError("Category not found.")
-        model.is_active = is_active
-        model.updated_at = datetime.now(UTC)
-        self._session.commit()
-        self._session.refresh(model)
-        return self._to_category(model)
+            for transaction, category_id_value, category_name, category_color, category_is_active, category_deleted_at in self._session.execute(statement).all()
+        ]
 
-    def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
-        model = self._session.scalar(
-            select(CategoryModel).where(
-                CategoryModel.id == str(category_id),
-                CategoryModel.user_id == str(user_id),
-                CategoryModel.deleted_at.is_(None),
-            )
+    def find_category_id_for_shop(
+        self,
+        *,
+        user_id: UUID,
+        shop_name: str,
+        card_user_name: str | None,
+        payment_method: str | None,
+    ) -> UUID | None:
+        # 自動分類は直近の同一店舗・同一利用者・同一支払方法の分類を再利用する。
+        filters = [
+            TransactionModel.user_id == str(user_id),
+            TransactionModel.shop_name == shop_name,
+            TransactionModel.deleted_at.is_(None),
+        ]
+        if card_user_name:
+            filters.append(TransactionModel.card_user_name == card_user_name)
+        if payment_method:
+            filters.append(TransactionModel.payment_method == payment_method)
+        row = self._session.scalar(
+            select(TransactionModel)
+            .where(*filters)
+            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
+            .limit(1)
         )
-        if model is None:
-            return
-        model.is_active = False
-        model.deleted_at = datetime.now(UTC)
-        model.updated_at = model.deleted_at
-        self._session.commit()
+        return UUID(row.category_id) if row else None
 
-    def get_uncategorized_category_id(self, user_id: UUID) -> UUID | None:
-        model = self._session.scalar(
-            select(CategoryModel).where(
-                CategoryModel.user_id == str(user_id),
-                CategoryModel.name == "未分類",
-                CategoryModel.deleted_at.is_(None),
-            )
-        )
-        return UUID(model.id) if model else None
+    def _transaction_order_by(self, *, sort_field: str, sort_direction: str) -> tuple[object, ...]:
+        descending = sort_direction != "asc"
+        if sort_field == "amount":
+            amount_order = TransactionModel.amount.desc() if descending else TransactionModel.amount.asc()
+            date_order = TransactionModel.transaction_date.desc() if descending else TransactionModel.transaction_date.asc()
+            created_order = TransactionModel.created_at.desc() if descending else TransactionModel.created_at.asc()
+            return (amount_order, date_order, created_order)
 
-    def _category_filter(self, *, user_id: UUID, category_id: UUID):
-        # 未分類フィルターでは、無効化・論理削除されたカテゴリの明細も未分類として扱う。
-        if not self._is_uncategorized_category(user_id=user_id, category_id=category_id):
-            return TransactionModel.category_id == str(category_id)
-
-        unavailable_category_ids = select(CategoryModel.id).where(
-            CategoryModel.user_id == str(user_id),
-            CategoryModel.name != "未分類",
-            or_(CategoryModel.is_active.is_(False), CategoryModel.deleted_at.is_not(None)),
-        )
-        return or_(
-            TransactionModel.category_id == str(category_id),
-            TransactionModel.category_id.in_(unavailable_category_ids),
-        )
+        date_order = TransactionModel.transaction_date.desc() if descending else TransactionModel.transaction_date.asc()
+        created_order = TransactionModel.created_at.desc() if descending else TransactionModel.created_at.asc()
+        return (date_order, created_order)
 
     def _build_transaction_filters(
         self,
@@ -369,6 +301,21 @@ class TransactionCategoryRepository:
         if date_to:
             filters.append(TransactionModel.transaction_date <= date_to)
         return filters
+
+    def _category_filter(self, *, user_id: UUID, category_id: UUID):
+        # 未分類フィルターでは、無効化・論理削除されたカテゴリの明細も未分類として扱う。
+        if not self._is_uncategorized_category(user_id=user_id, category_id=category_id):
+            return TransactionModel.category_id == str(category_id)
+
+        unavailable_category_ids = select(CategoryModel.id).where(
+            CategoryModel.user_id == str(user_id),
+            CategoryModel.name != "未分類",
+            or_(CategoryModel.is_active.is_(False), CategoryModel.deleted_at.is_not(None)),
+        )
+        return or_(
+            TransactionModel.category_id == str(category_id),
+            TransactionModel.category_id.in_(unavailable_category_ids),
+        )
 
     def _keyword_filter(self, *, user_id: UUID, keyword: str):
         pattern = f"%{keyword}%"
@@ -414,18 +361,6 @@ class TransactionCategoryRepository:
         )
         return bool(count)
 
-    def create_uncategorized_category(self, user_id: UUID) -> UUID:
-        category = self.create_category(
-            Category(
-                id=self.next_id(),
-                user_id=user_id,
-                name="未分類",
-                color="#6B7280",
-                description="取込直後や分類未確定の明細",
-            )
-        )
-        return category.id
-
     def _get_uncategorized_category_display(self, user_id: UUID) -> tuple[UUID | None, str, str]:
         row = self._session.scalar(
             select(CategoryModel).where(
@@ -466,37 +401,137 @@ class TransactionCategoryRepository:
             display_color = category_color
 
         return TransactionWithCategory(
-            transaction=self._to_transaction(transaction),
+            transaction=_to_transaction(transaction),
             display_category_id=display_category_id,
             category_name=display_name,
             category_color=display_color,
         )
 
-    def find_category_id_for_shop(
-        self,
-        *,
-        user_id: UUID,
-        shop_name: str,
-        card_user_name: str | None,
-        payment_method: str | None,
-    ) -> UUID | None:
-        # 自動分類は直近の同一店舗・同一利用者・同一支払方法の分類を再利用する。
-        filters = [
-            TransactionModel.user_id == str(user_id),
-            TransactionModel.shop_name == shop_name,
-            TransactionModel.deleted_at.is_(None),
-        ]
-        if card_user_name:
-            filters.append(TransactionModel.card_user_name == card_user_name)
-        if payment_method:
-            filters.append(TransactionModel.payment_method == payment_method)
-        row = self._session.scalar(
-            select(TransactionModel)
-            .where(*filters)
-            .order_by(TransactionModel.transaction_date.desc(), TransactionModel.created_at.desc())
-            .limit(1)
+
+class CategoryRepository:
+    # カテゴリ集約の保存と取得に責務を絞り、明細一覧ルールは持ち込まない。
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def next_id(self) -> UUID:
+        return uuid4()
+
+    def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
+        filters = [CategoryModel.user_id == str(user_id), CategoryModel.deleted_at.is_(None)]
+        if not include_inactive:
+            filters.append(CategoryModel.is_active.is_(True))
+        rows = self._session.scalars(select(CategoryModel).where(*filters).order_by(CategoryModel.name.asc())).all()
+        return [_to_category(row) for row in rows]
+
+    def get_category(self, *, user_id: UUID, category_id: UUID) -> Category | None:
+        model = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.id == str(category_id),
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.deleted_at.is_(None),
+            )
         )
-        return UUID(row.category_id) if row else None
+        return _to_category(model) if model else None
+
+    def category_name_exists(self, *, user_id: UUID, name: str) -> bool:
+        count = self._session.scalar(
+            select(func.count())
+            .select_from(CategoryModel)
+            .where(
+                CategoryModel.user_id == str(user_id),
+                func.lower(CategoryModel.name) == name.casefold(),
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        return bool(count)
+
+    def create_category(self, category: Category) -> Category:
+        model = CategoryModel(
+            id=str(category.id),
+            user_id=str(category.user_id),
+            name=category.name,
+            color=category.color,
+            description=category.description,
+            monthly_budget=category.monthly_budget.amount if category.monthly_budget else None,
+            is_active=category.is_active,
+        )
+        self._session.add(model)
+        self._session.commit()
+        self._session.refresh(model)
+        return _to_category(model)
+
+    def update_category(self, category: Category) -> Category:
+        model = self._session.get(CategoryModel, str(category.id))
+        if model is None or model.deleted_at is not None:
+            raise ValueError("Category not found.")
+        model.name = category.name
+        model.color = category.color
+        model.description = category.description
+        model.monthly_budget = category.monthly_budget.amount if category.monthly_budget else None
+        model.is_active = category.is_active
+        model.updated_at = datetime.now(UTC)
+        self._session.commit()
+        self._session.refresh(model)
+        return _to_category(model)
+
+    def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
+        model = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.id == str(category_id),
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        if model is None:
+            raise ValueError("Category not found.")
+        model.is_active = is_active
+        model.updated_at = datetime.now(UTC)
+        self._session.commit()
+        self._session.refresh(model)
+        return _to_category(model)
+
+    def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
+        model = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.id == str(category_id),
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        if model is None:
+            return
+        model.is_active = False
+        model.deleted_at = datetime.now(UTC)
+        model.updated_at = model.deleted_at
+        self._session.commit()
+
+    def get_uncategorized_category_id(self, user_id: UUID) -> UUID | None:
+        model = self._session.scalar(
+            select(CategoryModel).where(
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.name == "未分類",
+                CategoryModel.deleted_at.is_(None),
+            )
+        )
+        return UUID(model.id) if model else None
+
+    def create_uncategorized_category(self, user_id: UUID) -> UUID:
+        category = self.create_category(
+            Category(
+                id=self.next_id(),
+                user_id=user_id,
+                name="未分類",
+                color="#6B7280",
+                description="取込直後や分類未確定の明細",
+            )
+        )
+        return category.id
+
+
+class AuditLogRepository:
+    # 監査ログの永続化だけを担当し、明細やカテゴリの業務判断は持ち込まない。
+    def __init__(self, session: Session) -> None:
+        self._session = session
 
     def create_audit_log(
         self,
@@ -518,32 +553,35 @@ class TransactionCategoryRepository:
         )
         self._session.commit()
 
-    def _to_transaction(self, model: TransactionModel) -> Transaction:
-        return Transaction(
-            id=UUID(model.id),
-            user_id=UUID(model.user_id),
-            category_id=UUID(model.category_id),
-            transaction_date=model.transaction_date,
-            shop_name=model.shop_name,
-            amount=MoneyJPY(model.amount),
-            transaction_type=TransactionType(model.transaction_type),
-            payment_method=model.payment_method,
-            card_user_name=model.card_user_name,
-            memo=model.memo,
-            source_upload_id=UUID(model.source_upload_id) if model.source_upload_id else None,
-            source_file_name=model.source_file_name,
-            source_row_number=model.source_row_number,
-            source_page_number=model.source_page_number,
-            source_format=model.source_format,
-            source_hash=model.source_hash,
-        )
 
-    def _to_category(self, model: CategoryModel) -> Category:
-        return Category(
-            id=UUID(model.id),
-            user_id=UUID(model.user_id),
-            name=model.name,
-            color=model.color,
-            description=model.description,
-            is_active=model.is_active,
-        )
+def _to_transaction(model: TransactionModel) -> Transaction:
+    return Transaction(
+        id=UUID(model.id),
+        user_id=UUID(model.user_id),
+        category_id=UUID(model.category_id),
+        transaction_date=model.transaction_date,
+        shop_name=model.shop_name,
+        amount=MoneyJPY(model.amount),
+        transaction_type=TransactionType(model.transaction_type),
+        payment_method=model.payment_method,
+        card_user_name=model.card_user_name,
+        memo=model.memo,
+        source_upload_id=UUID(model.source_upload_id) if model.source_upload_id else None,
+        source_file_name=model.source_file_name,
+        source_row_number=model.source_row_number,
+        source_page_number=model.source_page_number,
+        source_format=model.source_format,
+        source_hash=model.source_hash,
+    )
+
+
+def _to_category(model: CategoryModel) -> Category:
+    return Category(
+        id=UUID(model.id),
+        user_id=UUID(model.user_id),
+        name=model.name,
+        color=model.color,
+        description=model.description,
+        monthly_budget=MoneyJPY(model.monthly_budget) if model.monthly_budget is not None else None,
+        is_active=model.is_active,
+    )

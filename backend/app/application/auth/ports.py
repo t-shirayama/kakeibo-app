@@ -28,6 +28,14 @@ class PasswordResetTokenRecord:
     expires_at: datetime
 
 
+@dataclass(frozen=True, slots=True)
+class AuthSettings:
+    jwt_secret: str
+    jwt_algorithm: str
+    access_token_minutes: int
+    refresh_token_days: int
+
+
 class AuthRepositoryPort(Protocol):
     def has_any_user(self) -> bool:
         raise NotImplementedError

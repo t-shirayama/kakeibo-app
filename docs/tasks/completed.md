@@ -2,6 +2,181 @@
 
 このファイルは、`docs/tasks/open.md` から退避した完了済みタスクの一覧です。
 
+## 最近の完了タスク
+
+- [x] Excel 出力と Alembic migration の Integration Test 運用を追加する
+  - 対応: Excel 出力 API の基本妥当性は既存の `backend/tests/integration/test_api_critical_paths.py` の workbook export IT を正として扱い、`docs/specs/development-workflow.md` にその位置づけを明記した。さらに `backend/tests/integration/conftest.py` で Backend Integration Test の接続先を `INTEGRATION_DATABASE_URL` へ切り替え、`INTEGRATION_ADMIN_DATABASE_URL` で専用DBを自動作成するようにして、本番系 `DATABASE_URL` の schema と分離した。migration 検証は `.github/workflows/test.yml` の `Alembic適用確認 (migration smoke)` step を pull request ごとに実行する運用へ整理し、文書とCI表示名を一致させた。
+  - 確認: `docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py` 実行後でも `docker compose run --rm backend python -m alembic upgrade head` が同じ作業ツリーで両立する前提を整えた。
+  - 根拠: `docs/tasks/open.md` の優先度C「Excel 出力と Alembic migration の Integration Test 運用を追加する」。
+
+- [x] Frontend Integration Test を明細フォーム、PDFアップロード、CSRF再試行へ拡張する
+  - 対応: `frontend/src/test/integration/transactions/transactions-page.it.test.tsx` で明細フォームの追加と同じ店名のカテゴリ一括更新、`frontend/src/test/integration/uploads/upload-page.it.test.tsx` でPDFアップロードの進捗表示と再試行、`frontend/src/test/integration/api/auth-refresh.it.test.ts` と `frontend/src/test/integration/api/csrf-retry.it.test.ts` で401/403時の自己回復を確認する構成にそろえた。`docs/specs/development-workflow.md` にも、Frontend Integration Test がこの範囲を受け持つ現状を反映した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:integration` が 16 passed で通過した。
+  - 根拠: `docs/tasks/open.md` の優先度C「Frontend Integration Test を明細フォーム、PDFアップロード、CSRF再試行へ拡張する」。
+
+- [x] Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する
+  - 対応: `backend/tests/integration/test_api_critical_paths.py` に、PDF解析失敗時は失敗履歴だけを残して明細を作らないケースと、カテゴリ一覧・アップロード履歴が他ユーザーに漏れないケースを追加した。既存のカテゴリ作成/一覧/状態変更、PDF取込成功/重複排除/原本削除のITと合わせて、カテゴリ管理とPDF取込の主要経路を integration marker で確認できる状態にした。あわせて `docs/specs/development-workflow.md` と `docs/specs/pdf-import.md` を現行カバレッジへ同期した。
+  - 確認: `docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py` が 8 passed で通過した。
+  - 根拠: `docs/tasks/open.md` の優先度C「Backend Integration Test をカテゴリ管理と PDF 取込へ拡張する」。
+
+- [x] E2E helper整理の残作業を完了し、対象specの再検証を通す
+  - 対応: `frontend/e2e/transactions.spec.ts` の検索条件保持シナリオに、reload 後の URL と期間フィルタ待ちを追加してから結果行を確認するよう見直した。あわせて `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts auth.spec.ts income-settings.spec.ts reports.spec.ts` を再実行し、dashboard / transactions / upload の代表導線に加えて、認証ガードとレガシー redirect の現行結果もそろえた。
+  - 確認: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts auth.spec.ts income-settings.spec.ts reports.spec.ts` が 14 passed で通過した。
+  - 根拠: `docs/tasks/open.md` の優先度B「E2E helper整理の残作業を完了し、対象specの再検証を通す」。
+
+- [x] `gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす
+  - 対応: `frontend/e2e/helpers/navigation.ts` で、通常画面遷移の `gotoAppPage()` に URL 確定待ちを追加し、redirect 専用の `gotoRedirectedAppPage()` を分離した。`frontend/e2e/reports.spec.ts` は redirect helper を使う形へ整理し、`docs/specs/development-workflow.md`、`docs/e2e/index.md`、`docs/e2e/reports.md` に helper の責務分割を反映した。
+  - 確認: `docker compose run --rm e2e npm run test:e2e -- auth.spec.ts reports.spec.ts dashboard.spec.ts` を含む対象E2Eを再実行し、redirect 系で URL 待ち不足による失敗が起きないことを確認した。
+  - 根拠: `docs/tasks/open.md` の優先度B「`gotoAppPage()` と redirect系E2Eの待ち合わせを見直し、非同期完了前のassertを減らす」。
+
+- [x] 認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる
+  - 対応: `frontend/proxy.ts` の保護対象ルートと matcher に `/income-settings` を追加し、`frontend/e2e/auth.spec.ts` で `/dashboard`、`/income-settings`、`/reports` の未ログイン redirect を同じ基準で確認するよう整理した。あわせて `docs/specs/security.md` と `docs/e2e/auth.md` に、server-side redirect を担う proxy と、401 後の client-side redirect を担う認証 helper の責務を追記した。
+  - 確認: `docker compose run --rm e2e npm run test:e2e -- auth.spec.ts income-settings.spec.ts reports.spec.ts` を含む対象E2Eを再実行し、未ログイン時の遷移が一貫することを確認した。
+  - 根拠: `docs/tasks/open.md` の優先度B「認証ガード対象ルートを棚卸しし、`/income-settings` を含む保護境界を実装とテストで一致させる」。
+
+- [x] 予算管理機能を追加し、予算超過と進捗を確認できるようにする
+  - 対応: カテゴリへ `monthly_budget` を追加し、`backend/alembic/versions/20260505_0005_category_budgets.py` でスキーマとサンプルデータを更新した。カテゴリAPIとカテゴリ管理画面で月次予算の追加・編集・解除をできるようにし、ダッシュボードAPIと `frontend/src/features/reports/report-dashboard-page.tsx` に予算合計、支出実績、残額または超過額、進捗率、カテゴリ別予算進捗を追加した。あわせて `docs/specs/domain-model.md`、`docs/specs/api-specs.md`、`docs/specs/db-schema.md`、`docs/requirements/dashboard.md`、`docs/requirements/categories.md`、`docs/e2e/dashboard.md`、`docs/e2e/categories.md` を現行仕様へ同期した。
+  - 確認: `docker compose run --rm backend python scripts/generate_openapi_client.py`、`docker compose run --rm backend python -m pytest tests/unit/domain/test_entities.py tests/unit/application/test_transactions.py tests/unit/infrastructure/test_repositories.py tests/unit/presentation/test_api.py`、`docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run test:integration`、`docker compose run --rm --no-deps frontend npm run build`、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts categories.spec.ts` を実行し、すべて通過した。
+  - 根拠: `docs/tasks/open.md` の優先度A「予算管理機能を追加し、予算超過と進捗を確認できるようにする」。
+
+- [x] E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる
+  - 対応: `frontend/e2e/helpers/navigation.ts` に未ログイン redirect 確認 helper、`frontend/e2e/helpers/date.ts` に年月操作 helper、`frontend/e2e/helpers/transactions.ts` に複数明細追加 helper、`frontend/e2e/helpers/upload.ts` にアップロード完了待ち helper を追加し、calendar / categories / dashboard / transactions / upload / auth の各 spec へ適用した。認証の `page.route()` 依存だった CSRF 403 再試行と 401 後 refresh 失敗の導線は E2E から外し、`frontend/src/test/integration/api/auth-refresh.it.test.ts` と既存の login integration test で受け持つ形へ整理した。あわせて `docs/e2e/index.md`、`docs/e2e/auth.md`、`docs/e2e/transactions.md`、`docs/e2e/upload.md`、`docs/specs/development-workflow.md` を現状に合わせて更新した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` と `docker compose run --rm e2e -- auth.spec.ts calendar.spec.ts dashboard.spec.ts transactions.spec.ts upload.spec.ts categories.spec.ts` で対象の Integration Test / E2E を確認した。E2Eは representative flow に絞り、モック分岐は Frontend Integration Test へ移した。
+  - 根拠: `docs/tasks/open.md` の優先度B「E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる」。
+
+- [x] Integration Test の共通fixtureとAPI/画面helperを整備する
+  - 対応: バックエンドは `backend/tests/integration/conftest.py` に認証済み API helper を追加し、`backend/tests/integration/test_api_critical_paths.py` で CSRF ヘッダー付与の重複を減らした。あわせて PDF アップロードITは parser の細部を unit test に任せ、integration では fake parser を使って保存・重複排除・削除導線を安定して検証する形へ整理した。フロントエンドは `frontend/src/test/integration/helpers.tsx` に route-aware render / user helper、`frontend/src/test/msw/http.ts` に API URL / エラーレスポンス helper、`frontend/src/test/integration/transactions/helpers.ts` に明細フォーム helper を追加し、既存の login / reports / transactions / uploads / csrf-retry IT へ適用した。`docs/specs/development-workflow.md` にも Integration Test helper の利用方針を追記した。
+  - 確認: `docker compose run --rm backend python -m pytest -m integration` が 6 件通過し、`docker compose run --rm --no-deps frontend npm run test:integration -- transactions-page.it.test.tsx` を含む Frontend Integration Test 全体が 15 件通過した。フロント側では既存の DialogContent 警告が出るが、テスト失敗はないことを確認した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Integration Test の共通fixtureとAPI/画面helperを整備する」。
+
+- [x] Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する
+  - 対応: `backend/tests/unit/application/test_auth_security.py` にパスワードポリシーの失敗理由、トークンハッシュ、CSRF のセッション不一致、refresh rotation の unit test を追加し、`backend/tests/unit/domain/test_money_jpy.py` に `UtcDateTime` の検証を追加した。`backend/tests/unit/conftest.py` に in-memory SQLite の `sqlite_session_factory` fixture を追加して、`backend/tests/unit/presentation/test_api.py` の重複していたDB準備処理を helper と共通 fixture に寄せた。フロントエンドでは `frontend/src/test/unit/lib/format.test.ts` と `frontend/src/test/unit/lib/transaction-category.test.ts` を拡充し、カテゴリ表示入力の小さな helper へ重複を寄せた。
+  - 確認: `docker compose run --rm --no-deps backend python -m pytest tests/unit` が 63 件通過し、`docker compose run --rm --no-deps frontend npm run test:unit` が 6 件通過した。フロントエンドは初回に `vitest: not found` となったため、`docker compose run --rm --no-deps frontend npm install` を実行して `frontend-node-modules` を更新後に再実行した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する」。
+
+- [x] Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する
+  - 対応: `backend/tests/unit/`、`backend/tests/integration/`、`frontend/src/test/unit/`、`frontend/src/test/integration/`、`frontend/e2e/` を棚卸しし、各テスト層の責務、重複しやすい観点、未カバー領域、helper 化の優先箇所を整理した。あわせて `docs/specs/development-workflow.md` に 2026-05 時点のテスト資産、層ごとの責務、拡充順、タスク化の判断基準を追記し、`docs/e2e/index.md` に E2E に残す観点、Integration Test へ寄せる観点、helper の責務、直近の見直し順を反映した。
+  - 確認: `docs/tasks/open.md` の後続タスクが Unit / Integration / E2E の順で実行可能な粒度になっていることを見直し、ドキュメント更新後に未確定事項チェックを実行した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する」。
+
+- [x] Backend Integration Test の基盤と最重要シナリオを導入する
+  - 対応: `backend/tests/integration/` を追加し、`integration` pytest marker、MySQL schema 確認、テストユーザー作成・後片付けfixtureを整備した。認証/CSRF/refresh、明細作成〜一覧取得〜更新〜削除、月次レポートとダッシュボード集計を FastAPI と MySQL を通して検証するITを追加した。あわせて既存の単体テスト群は `backend/tests/unit/` 配下へ整理し、`docs/specs/development-workflow.md` と `docs/e2e/index.md` に住み分けと実行手順を追記した。
+  - 確認: `docker compose run --rm backend python -m pytest -m integration` が 3 件通過し、`docker compose run --rm backend python -m pytest` が 60 件すべて通過した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Backend Integration Test の基盤と最重要シナリオを導入する」。
+
+- [x] Frontend Integration Test の基盤と主要画面テストを導入する
+  - 対応: `frontend/vitest.config.ts`、`frontend/src/test/`、MSW fixture / server、Next navigation mock、React Query 用 render helper を追加し、`frontend/package.json` に `test:unit` / `test:integration` を追加した。ログイン画面、明細一覧、ダッシュボードの Integration Test を `frontend/src/test/integration/` に実装し、主要表示、APIエラー、条件変更や表示月変更による再取得を検証できるようにした。
+  - 確認: `docker compose run --rm --no-deps frontend npm run test:unit`、`docker compose run --rm --no-deps frontend npm run test:integration`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` が通過した。ビルドでは既存の React Hooks 警告のみ出力された。
+  - 根拠: `docs/tasks/open.md` の優先度B「Frontend Integration Test の基盤と主要画面テストを導入する」。
+
+- [x] 初期デザイン案をアーカイブへ移し、現行画面スクリーンショットを正本へ置き換える
+  - 対応: `docs/designs/README.md` を新設し、ダッシュボード、カレンダー、明細一覧、収入設定、アップロード、カテゴリ管理、設定、明細編集モーダルの現行スクリーンショットを配置した。初期構想の SVG 群と `ToBe/` は `docs/designs/archive/` へ移し、旧レポート画面の `reports.png` も `archive/legacy-screens/` へ退避した。あわせて `README.md` に画面イメージの埋め込み、`docs/README.md` と各画面要件の `対応デザイン`、`docs/specs/project-rules.md` の参照先を新構成へ同期した。
+  - 確認: `docker compose run --rm -e DOC_SCREENSHOT_CAPTURE=1 e2e npx playwright test docs-screenshots.spec.ts` で現行スクリーンショットを再生成し、未確定事項チェックを実行して意図しないメモがないことを確認した。
+  - 根拠: ユーザー依頼「designの初期構想をアーカイブに移動して現在の画面スクショに置き換えてほしい。そしてREADME.mdに画面イメージを参照して表示するようにしたい。」。
+
+- [x] レポート画面の年月入力UIを `type="month"` ベースへ改善する
+  - 対応: `frontend/src/features/reports/report-dashboard-page.tsx` の表示月入力を `type="text"` から `type="month"` へ変更し、ブラウザ標準の月選択UIを使う形へ寄せた。あわせて `docs/requirements/dashboard.md` と `frontend/e2e/dashboard.spec.ts` を現行挙動へ同期した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度C「フロントの年月入力は type="month" も検討したい」。
+
+- [x] 本番向けCookie設定の確認手順を文書化する
+  - 対応: `README.md` と `docs/specs/security.md` に、本番では `COOKIE_SECURE=true` を必須とすること、`kakeibo_access` / `kakeibo_refresh` / `kakeibo_csrf_session` に `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/` が付いていることを確認する手順、ローカルとの差分、`SameSite=Lax` が成立する前提を追記した。
+  - 確認: 文書内容を見直し、未確定事項チェックを実行して意図しないメモが増えていないことを確認した。
+  - 根拠: `kakeibo-app-review.md` のセキュリティ観点メモ。
+
+- [x] フロントエンドDockerfileを用途別に分離する
+  - 対応: `frontend/Dockerfile` を廃止し、`frontend/Dockerfile.dev`、`frontend/Dockerfile.e2e`、`frontend/Dockerfile.prod` へ分割した。`docker-compose.yml` の `frontend` は開発用、`e2e` は Playwright とE2E用バックエンド実行環境込みのイメージを参照する形へ更新し、`README.md` と `docs/specs/development-workflow.md` に各Dockerfileの役割を追記した。
+  - 確認: `docker compose build frontend e2e`、`docker build -f frontend/Dockerfile.prod . -t kakeibo-frontend-prod-test`、`docker compose run --rm --no-deps frontend npm run build`、`docker compose run --rm e2e npm run test:e2e -- navigation.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度B「フロントエンドDockerfileが開発/E2E寄りで重い」。
+
+- [x] `frontend/src/lib/api.ts` の責務を分割する
+  - 対応: `frontend/src/lib/api.ts` は薄い公開口に縮小し、実装を `frontend/src/lib/api/` 配下へ移した。transport、認証再試行、download、upload、transactions / reports / settings / categories / income-settings / audit-logs の feature別呼び出し口へ分割し、生成クライアントの利用点を追いやすくした。あわせて `docs/specs/frontend-architecture.md` を新構成に同期した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts categories.spec.ts settings.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度B「frontend/src/lib/api.ts が少し太り気味」。
+
+- [x] バックエンド依存のlock運用を導入する
+  - 対応: `backend/scripts/generate_requirements_lock.py` と `backend/requirements.lock` を追加し、`.[dev]` を一時venvへ解決して `pip freeze --exclude-editable` から再現可能なlockファイルを生成できるようにした。あわせて `backend/Dockerfile` と `frontend/Dockerfile` を lock ファイル前提のインストールへ切り替え、`README.md`、`docs/specs/development-workflow.md`、`.github/workflows/quality.yml` に更新手順と `--check` によるCI確認を追記した。
+  - 確認: `docker compose build backend frontend`、`docker compose run --rm backend python scripts/generate_requirements_lock.py --check`、`docker compose run --rm backend python -m pytest` が通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度B「依存バージョンの固定が弱い」。
+
+- [x] CSRFトークンをセッションまたはユーザーに紐づけて強化する
+  - 対応: `GET /api/auth/csrf` でトークン本体とは別に HttpOnly のCSRFセッションCookieを発行し、CSRFトークンにはそのセッション識別子のダイジェストを埋め込むようにした。変更系APIではヘッダートークンと同じセッションCookieの組み合わせだけを受け付けるようにし、関連するセキュリティ仕様、API仕様、フロント/バックエンド設計文書、CSRFテストを更新した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 57 件すべて通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度A「CSRFトークンがセッション/ユーザーに強く紐づいていない可能性」。
+
+- [x] パスワードリセットAPIを本番安全化する
+  - 対応: `POST /api/auth/password-reset` を本番相当環境では常に `status="ok"` と `reset_token=null` を返す形へ変更し、`local` / `test` 環境だけ検証用トークンを返すようにした。あわせて `docs/specs/api-specs.md`、`docs/specs/security.md`、OpenAPI生成クライアント、APIテストを更新した。
+  - 確認: `docker compose run --rm backend python scripts/generate_openapi_client.py` で生成物を同期し、`docker compose run --rm backend python -m pytest` が 56 件すべて通過した。
+  - 根拠: `kakeibo-app-review.md` の優先度A「パスワードリセットAPIが本番向きではない」。
+
+- [x] 画面要件の共通表示ルールを `requirements/common.md` へ分離する
+  - 対応: `docs/requirements/common.md` を新設し、共通表示ルールを移した。`docs/requirements.md` は入口へ戻し、`docs/README.md` と `README.md` から新しい共通要件文書へ辿れるよう導線を更新した。
+  - 確認: `docs/requirements.md` と `docs/requirements/common.md` の内容を確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。
+  - 根拠: `requirements.md` を索引として保ちつつ、共通表示前提の置き場所を明確にするため。
+
+- [x] `project-rules.md` を薄い入口へ再編する
+  - 対応: `docs/specs/project-rules.md` を入口文書へ再構成し、`docs/specs/development-workflow.md` と `docs/specs/architecture-principles.md` を新設した。あわせて、共通要件の一部を `domain-model.md`、`api-specs.md`、`security.md`、`pdf-import.md`、`docs/requirements/` へ移し、`docs/README.md`、`README.md`、`.codex/AGENTS.md`、`docs/e2e/index.md` の参照導線を更新した。
+  - 確認: 文書リンクと内容の整合を目視確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。
+  - 根拠: `project-rules.md` に入口、運用、設計原則、共通要件が混在していたため、責務ごとに読める形へ整理するため。
+
+- [x] Dependabotを導入する
+  - 対応: `.github/dependabot.yml` を追加し、`frontend` の npm、`backend` の Python、GitHub Actions、`backend` / `frontend` の Dockerfile を週次で更新する設定を追加した。あわせて `docs/specs/project-rules.md` と `docs/README.md` に依存更新運用を追記した。
+  - 確認: `.github/dependabot.yml` を目視確認し、未確定事項チェックを実行して意図しない記述が増えていないことを確認した。
+  - 根拠: 依存更新を定期PR化し、手動追従漏れを減らすため。
+
+- [x] calendar-pageをfeatures/calendarへ移す
+  - 対応: カレンダー画面の実体を `frontend/src/features/calendar/calendar-page.tsx` へ移し、`frontend/app/(app)/calendar/page.tsx` の参照先とフロントエンド設計文書を更新した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- calendar.spec.ts navigation.spec.ts settings.spec.ts` が通過した。
+  - 根拠: `kakeibo-app-repository-re-review.md` の優先度A-1。
+
+- [x] settings.pyのProtocolをportsへ分離する
+  - 対応: `backend/app/application/settings/` を新設し、`commands.py`、`ports.py`、`use_cases.py`、`__init__.py` へ分割した。`SettingsRepositoryProtocol`、`UploadStorageProtocol`、`UserSettingsRecord`、`UpdateSettingsCommand`、`SettingsUseCases` の import を新構成へ更新した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 54 件すべて通過した。
+  - 根拠: `kakeibo-app-repository-re-review.md` の優先度A-2。
+
+- [x] AGENTS.mdへタスク分割ルールを追加する
+  - 対応: `.codex/AGENTS.md` に、アーキテクチャ変更、features 移行、application 分割、生成物更新の粒度ルールを追記した。
+  - 確認: ドキュメント更新後の未確定事項チェックを実行し、意図しない未確定事項が増えていないことを確認した。
+  - 根拠: `kakeibo-app-repository-re-review.md` の優先度A-3。
+
+- [x] E2Eのデータ準備と共通操作を整理する
+  - 対応: `frontend/e2e/helpers/` を追加し、ログイン、ページ遷移、年月操作、明細追加、アップロード用PDF生成の共通処理を helper 化した。あわせて `frontend/scripts/e2e-runtime.mjs` を追加し、`reset-e2e-db.mjs` と `start-backend-e2e.mjs` の Python 解決、環境変数組み立て、コマンド実行を共通化した。既存 spec は helper 利用へ更新し、`docs/e2e/index.md` に運用方針を追記した。
+  - 確認: `docker compose run --rm e2e` が 20 件すべて通過した。
+  - 根拠: E2E増加時の重複と不安定化を抑えるため。
+
+- [x] TanStack QueryのqueryKeysをfeatureごとに分離する
+  - 対応: `frontend/src/features/*/queryKeys.ts` を追加し、transactions / uploads / reports / income-settings / categories / settings / calendar の query key 定義を feature ごとに整理した。画面側の直書きキーを置き換え、カレンダーE2EのURL期待値も現行仕様へ合わせた。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts calendar.spec.ts` が通過した。
+  - 根拠: サーバー状態のキー管理を安定させ、画面間のキャッシュ操作を追いやすくするため。
+
+- [x] import依存ルールをCIでチェックする
+  - 対応: `backend/tests/unit/application/test_layer_dependencies.py` を一般化し、`domain -> application/infrastructure/presentation` と `application -> infrastructure/presentation` の禁止を検証できるようにした。あわせて application 層の外側依存を Protocol / DTO へ寄せ、`.github/workflows/quality.yml` にレイヤ依存チェックを追加した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 54 件すべて通過した。
+  - 根拠: domain/application層の外側依存退行をCIで早期検出するため。
+
+- [x] applicationファイルを機能別ディレクトリへ分割する
+  - 対応: `backend/app/application/transactions.py` を `backend/app/application/transactions/` 配下の `commands`、`ports`、`policies`、`use_cases` へ分割し、`__init__.py` から再公開する構成へ整理した。関連する application 設計文書も更新した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 53 件すべて通過した。
+  - 根拠: `transactions.py` への責務集中を避け、機能単位で参照しやすくするため。
+
+- [x] service_factories.pyをbootstrap/container.pyへ移す
+  - 対応: `backend/app/bootstrap/container.py` を新設し、ユースケース、Repository、Parser、Storage、Settingsの組み立てを bootstrap 層へ移した。`auth` と `settings` を含むAPIルートの依存配線も container 経由へ統一した。
+  - 確認: `docker compose run --rm backend python -m pytest` が 53 件すべて通過した。
+  - 根拠: presentation層をHTTP入出力へ集中させ、依存配線の肥大化を防ぐため。
+
+- [x] Codex向けに変更パターン別の参照順を追加する
+  - 対応: `.codex/AGENTS.md` に、API、DB、UI、E2E、PDF取込、認証・セキュリティの変更ごとに、仕様・実装・テスト・生成物の参照順を追記した。
+  - 確認: ドキュメント更新後の未確定事項チェックを実行し、意図しない未確定事項が増えていないことを確認した。
+
+- [x] features移行後の関連E2Eをデスクトップ環境で確認する
+  - 対応: `docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts transactions.spec.ts upload.spec.ts income-settings.spec.ts` を実行し、ダッシュボードの月切り替え、カテゴリクリックからの明細遷移、収入設定、アップロード履歴、PDFドロップ操作まで確認した。
+  - 確認: Playwright の 9 シナリオがすべて通過した。
+  - 根拠: features移行作業の残確認。mac環境で持ち越していたE2E確認をデスクトップ環境で完了。
+
+- [x] フロントエンドをfeatures構成へ段階的に移行する
+  - 対応: dashboard / transactions / upload / income-settings の画面実体を `frontend/src/features/*` へ移し、`frontend/app/(app)/*/page.tsx` はルーティング入口へ整理した。
+  - 確認: `docker compose run --rm --no-deps frontend npm run typecheck` と `docker compose run --rm --no-deps frontend npm run build` が通過。関連E2Eはmac環境で重いため、残確認タスクとして `open.md` に追加。
+
 ## 0. プロジェクト基盤
 
 - [x] ルートに `backend/` と `frontend/` を作成する。
@@ -363,3 +538,63 @@
 - [x] `backend` の Alembic 適用確認を自動実行する。
 - [x] `docker compose run --rm --no-deps` 経由でシークレットスキャンをコンテナ内で実行する。
 - [x] `rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"` による未確定事項チェックをCIへ組み込む。
+
+## 39. トランザクション/カテゴリ/監査ログのリポジトリ責務を分離する
+
+- [x] `backend/app/infrastructure/repositories/transactions.py` の `TransactionCategoryRepository` を、少なくとも `TransactionRepository`、`TransactionQueryRepository`、`CategoryRepository`、`AuditLogRepository` 相当へ分割する。
+- [x] 明細検索条件の組み立て、未分類表示への正規化、同一店舗の自動分類検索など、永続化以外の責務を専用のクエリコンポーネントへ切り出す。
+- [x] 分割後も `/api/transactions`、カテゴリ管理、レポート集計から同じ表示結果になるように、関連するアプリケーション層・テストを更新する。
+
+## 40. 明細ユースケースとカテゴリユースケースの責務を分離する
+
+- [x] `backend/app/application/transactions.py` の `TransactionCategoryUseCases` を、明細操作中心の `TransactionUseCases` とカテゴリ管理中心の `CategoryUseCases` へ分割する。
+- [x] カテゴリ可用性チェック、未分類カテゴリの補完、同一店舗カテゴリ更新のような共通業務ルールを `TransactionCategoryPolicy` へ切り出す。
+- [x] APIルート、依存注入、単体テストを分割後の構成へ合わせて更新する。
+
+## 41. レポート集計とExcelエクスポート組み立ての責務を分離する
+
+- [x] `backend/app/application/reports.py` から、月次/週次/年次/ダッシュボードの集計ロジックと、Excelワークシート組み立てロジックを分離する。
+- [x] Excel出力向けのシート構築を `app/application/exporting/transaction_workbook_exporter.py` の専用コンポーネントへ切り出し、`ReportUseCases` は集計結果の生成に集中させる。
+- [x] エクスポートAPIと関連テストを、新しい責務境界に合わせて更新する。
+
+## 42. 明細一覧のページサイズを設定値と仕様に合わせて統一する
+
+- [x] 明細一覧APIとフロントエンドの `page_size` 初期値を、仕様どおり `10` 件へ統一する。
+- [x] ユーザー設定の `page_size` を明細一覧の初期表示件数へ反映し、`10` / `20` / `50` 以外を選べないようにする。
+- [x] API、画面要件、E2E、単体テストを更新し、設定変更後の表示件数が維持されることを確認する。
+
+## 43. OpenAPIベースのAPIクライアント自動生成へ移行する
+
+- [x] 現在の手書きAPIクライアントを棚卸しし、OpenAPIから自動生成する構成へ置き換える。
+- [x] 型定義、APIエラーDTO、ページネーションDTOを生成物ベースで利用できるようにする。
+- [x] 生成手順をCIと開発ドキュメントへ反映し、仕様変更時にクライアントとの差分が残りにくい運用へ寄せる。
+
+## 44. 監査ログの参照機能を追加する
+
+- [x] 監査ログの一覧取得APIを追加し、日時、操作種別、対象、実行ユーザーで追えるようにする。
+- [x] 設定画面または管理者向け画面から監査ログを参照できるUIを追加する。
+- [x] 明細編集、削除、アップロード失敗に加えて、重要操作が不足なく記録・表示されることをテストで確認する。
+
+## 45. PDFアップロード処理の進捗表示と再試行導線を追加する
+
+- [x] PDFアップロード中の状態、完了、失敗理由を画面上で分かりやすく表示する。
+- [x] 失敗したアップロードに対して再試行しやすい導線を追加する。
+- [x] アップロード履歴、監査ログ、E2Eを更新し、大きめのPDFや失敗ケースでも状態が追えることを確認する。
+
+## 46. 画面状態をURLクエリへ同期して共有しやすくする
+
+- [x] 明細一覧の検索語、カテゴリ、期間、ページング、ソート状態をURLクエリへ同期する。
+- [x] ダッシュボードとカレンダーの表示年月もURLで復元できるようにする。
+- [x] リロードや共有URLアクセス後も同じ状態が再現されることをE2Eで確認する。
+
+## 47. ZAPスキャン検出事項を解消する
+
+- [x] 不正なPDFアップロード入力で `POST /api/uploads` が500を返さないようにする。
+- [x] APIレスポンスへ `X-Content-Type-Options` と `Cross-Origin-Resource-Policy` を付与する。
+- [x] 修正後に `docker compose run --rm zap` を再実行し、対象アラートが解消されたことを確認する。
+
+## 48. PDF取込ユースケースのレイヤ依存を整理する
+
+- [x] `UploadRepositoryProtocol` と `UploadStorageProtocol` をapplication層へ追加する。
+- [x] `PdfUploadUseCases` をinfrastructure層の具象Repository/StorageではなくProtocolへ依存させる。
+- [x] PDF取込周辺のapplication層から `app.infrastructure` import が消えたことをテストで確認する。

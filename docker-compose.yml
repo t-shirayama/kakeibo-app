@@ -28,6 +28,8 @@ services:
       TZ: Asia/Tokyo
       BACKEND_CORS_ORIGINS: http://localhost:3000
       DATABASE_URL: mysql+pymysql://${MYSQL_USER:-kakeibo}:${MYSQL_PASSWORD:-kakeibo_password}@mysql:3306/${MYSQL_DATABASE:-kakeibo}
+      INTEGRATION_DATABASE_URL: mysql+pymysql://${MYSQL_USER:-kakeibo}:${MYSQL_PASSWORD:-kakeibo_password}@mysql:3306/kakeibo_integration
+      INTEGRATION_ADMIN_DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-root_password}@mysql:3306/mysql
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-local-env-at-least-32-bytes}
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-15}
       JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-5}
@@ -40,6 +42,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app/backend
+      - ./frontend:/app/frontend
       - ./storage:/app/storage
     depends_on:
       mysql:
@@ -51,7 +54,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: frontend/Dockerfile
+      dockerfile: frontend/Dockerfile.dev
     container_name: kakeibo-frontend
     working_dir: /app/frontend
     environment:
@@ -73,7 +76,7 @@ services:
   e2e:
     build:
       context: .
-      dockerfile: frontend/Dockerfile
+      dockerfile: frontend/Dockerfile.e2e
     profiles:
       - test
     working_dir: /app/frontend
@@ -97,6 +100,25 @@ services:
     working_dir: /repo
     volumes:
       - .:/repo:ro
+
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles:
+      - security
+    working_dir: /zap/wrk
+    environment:
+      ZAP_BACKEND_BASE_URL: http://backend:8000
+      ZAP_TARGET_OPENAPI_URL: http://backend:8000/openapi.json
+      ZAP_REPORT_DIR: /zap/wrk
+      ZAP_CSRF_HEADER_NAME: X-CSRF-Token
+      ZAP_LOGIN_EMAIL: sample@example.com
+      ZAP_LOGIN_PASSWORD: SamplePassw0rd!
+    volumes:
+      - ./scripts/security:/zap/scripts/security:ro
+      - ./zap-reports:/zap/wrk
+    depends_on:
+      - backend
+    command: /bin/sh /zap/scripts/security/zap-api-scan.sh
 
 volumes:
   mysql-data:

@@ -59,7 +59,7 @@ export default function CategoriesPage() {
     <>
       <PageHeader
         title="カテゴリ管理"
-        subtitle="自動分類に使うカテゴリ、色、予算を管理します。"
+        subtitle="自動分類に使うカテゴリ、色、月次予算を管理します。"
         actions={
           <button
             className="button"
@@ -92,6 +92,9 @@ export default function CategoriesPage() {
                   <div>
                     <strong>{category.name}</strong>
                     <div className="muted">{category.description ?? "説明なし"}</div>
+                    <div className="muted">
+                      月次予算: {category.monthly_budget == null ? "未設定" : `${category.monthly_budget.toLocaleString("ja-JP")}円`}
+                    </div>
                   </div>
                   <div className="row-actions">
                     <span className={`badge ${category.is_active ? "" : "inactive"}`}>
@@ -163,6 +166,7 @@ export default function CategoriesPage() {
                 <Link
                   className="button secondary"
                   href={`/transactions?category_id=${uncategorizedCategory.category_id}&period=all`}
+                  prefetch={false}
                 >
                   確認
                 </Link>
@@ -221,7 +225,7 @@ export default function CategoriesPage() {
                   <h2>編集方法</h2>
                   <p>店名ごとの分類を変える場合は、明細一覧で対象明細のカテゴリを編集してください。次回以降の同一店名分類に反映されます。</p>
                 </div>
-                <Link className="button secondary" href="/transactions?period=current_year">
+                <Link className="button secondary" href="/transactions?period=current_year" prefetch={false}>
                   明細一覧へ
                 </Link>
               </div>

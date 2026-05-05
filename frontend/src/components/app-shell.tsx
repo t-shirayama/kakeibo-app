@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "レポート", icon: BarChart3 },
+  { href: "/dashboard", label: "ダッシュボード", icon: BarChart3 },
   { href: "/calendar", label: "カレンダー", icon: CalendarDays },
   { href: "/transactions", label: "明細一覧", icon: FileText },
   { href: "/income-settings", label: "収入設定", icon: WalletCards },
@@ -35,7 +35,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
     <div className="app-frame">
       <div className="app-shell">
         <aside className="sidebar" aria-label="メインナビゲーション">
-          <Link className="brand" href="/dashboard">
+          <Link className="brand" href="/dashboard" prefetch={false}>
             <span className="brand-mark">
               <NotebookText size={14} aria-hidden="true" />
             </span>
@@ -70,7 +70,7 @@ function isNavItemActive(pathname: string, href: string) {
 
 function NavLinkItem({ href, icon: Icon, isActive, label }: { href: string; icon: LucideIcon; isActive: boolean; label: string }) {
   return (
-    <Link aria-current={isActive ? "page" : undefined} className={`nav-link${isActive ? " active" : ""}`} href={href}>
+    <Link aria-current={isActive ? "page" : undefined} className={`nav-link${isActive ? " active" : ""}`} href={href} prefetch={false}>
       <Icon size={15} aria-hidden="true" />
       <span>{label}</span>
     </Link>

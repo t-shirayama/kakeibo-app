@@ -1,0 +1,12 @@
+FROM node:25-bookworm-slim
+
+WORKDIR /app/frontend
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+
+EXPOSE 3000

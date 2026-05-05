@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HydrationMarker } from "@/components/hydration-marker";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <HydrationMarker />
+          {children}
+        </Providers>
       </body>
     </html>
   );

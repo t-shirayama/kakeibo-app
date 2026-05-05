@@ -8,14 +8,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_pdf_upload_use_cases
 from app.application.importing.upload_import import PdfUploadError, PdfUploadUseCases
 from app.domain.entities import Upload, UploadStatus
-from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.parsers.rakuten_card_pdf_parser import RakutenCardPdfParser
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
-from app.infrastructure.repositories.uploads import UploadRepository
-from app.infrastructure.storage import LocalUploadStorage
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 
 router = APIRouter()
@@ -84,14 +80,7 @@ def delete_upload(
 
 
 def _use_cases(session: Session) -> PdfUploadUseCases:
-    settings = get_settings()
-    return PdfUploadUseCases(
-        upload_repository=UploadRepository(session),
-        transaction_repository=TransactionCategoryRepository(session),
-        parser=RakutenCardPdfParser(),
-        storage=LocalUploadStorage(settings.upload_storage_root),
-        max_upload_size_mb=settings.max_upload_size_mb,
-    )
+    return build_pdf_upload_use_cases(session)
 
 
 def _upload_response(upload: Upload) -> UploadResponse:

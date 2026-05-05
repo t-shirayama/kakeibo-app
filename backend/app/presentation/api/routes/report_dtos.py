@@ -4,7 +4,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from app.application.reports import CategorySummary, PeriodSummary, Report
+from app.application.reports import BudgetSummary, CategoryBudgetSummary, CategorySummary, PeriodSummary, Report
 from app.application.transaction_views import TransactionWithCategory
 
 
@@ -22,6 +22,26 @@ class PeriodSummaryResponse(BaseModel):
     total_income: int
     balance: int
     transaction_count: int
+
+
+class BudgetSummaryResponse(BaseModel):
+    total_budget: int
+    actual_expense: int
+    remaining_amount: int
+    progress_ratio: float
+    is_over_budget: bool
+    configured_category_count: int
+
+
+class CategoryBudgetSummaryResponse(BaseModel):
+    category_id: str
+    name: str
+    color: str
+    budget_amount: int
+    actual_amount: int
+    remaining_amount: int
+    progress_ratio: float
+    is_over_budget: bool
 
 
 class ReportResponse(BaseModel):
@@ -65,6 +85,30 @@ def period_summary_response(summary: PeriodSummary) -> PeriodSummaryResponse:
         total_income=summary.total_income,
         balance=summary.balance,
         transaction_count=summary.transaction_count,
+    )
+
+
+def budget_summary_response(summary: BudgetSummary) -> BudgetSummaryResponse:
+    return BudgetSummaryResponse(
+        total_budget=summary.total_budget,
+        actual_expense=summary.actual_expense,
+        remaining_amount=summary.remaining_amount,
+        progress_ratio=summary.progress_ratio,
+        is_over_budget=summary.is_over_budget,
+        configured_category_count=summary.configured_category_count,
+    )
+
+
+def category_budget_summary_response(summary: CategoryBudgetSummary) -> CategoryBudgetSummaryResponse:
+    return CategoryBudgetSummaryResponse(
+        category_id=str(summary.category_id),
+        name=summary.name,
+        color=summary.color,
+        budget_amount=summary.budget_amount,
+        actual_amount=summary.actual_amount,
+        remaining_amount=summary.remaining_amount,
+        progress_ratio=summary.progress_ratio,
+        is_over_budget=summary.is_over_budget,
     )
 
 

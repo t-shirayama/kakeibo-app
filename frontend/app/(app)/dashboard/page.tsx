@@ -1,4 +1,4 @@
-import { ReportDashboardPage } from "@/components/report-dashboard-page";
+import { ReportDashboardPage } from "@/features/reports/report-dashboard-page";
 
 export default function DashboardPage() {
   return <ReportDashboardPage />;

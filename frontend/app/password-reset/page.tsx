@@ -24,7 +24,7 @@ export default function PasswordResetPage() {
                 <p>登録済みのメールアドレスの場合、再設定手順を確認できます。</p>
               </div>
             </div>
-            <Link className="button" href="/login">
+            <Link className="button" href="/login" prefetch={false}>
               ログインに戻る
             </Link>
           </div>
@@ -47,7 +47,7 @@ export default function PasswordResetPage() {
               <button className="button" type="submit">
                 送信
               </button>
-              <Link className="button secondary" href="/login">
+              <Link className="button secondary" href="/login" prefetch={false}>
                 ログインに戻る
               </Link>
             </form>

@@ -7,7 +7,7 @@
 
 ## 目的
 
-ログイン、保護画面の未認証リダイレクト、認証済みAPIが401になった場合のログイン誘導を確認する。
+ログインと保護画面の未認証リダイレクトを確認する。
 
 ## 前提データ
 
@@ -25,16 +25,15 @@
 - `auth.spec.ts`
   - 未認証コンテキストで `/dashboard` を開く。
   - 未認証コンテキストで `/login` からログインする。
-  - 認証済み状態でダッシュボードAPIとrefresh APIを401にモックする。
 
 ## 期待結果
 
-- 未認証で保護画面を開くと `/login?redirect=%2Fdashboard` に遷移する。
+- 未認証で `/dashboard`、`/income-settings`、`/reports` を開くと、それぞれ `/login?redirect=...` に遷移する。
 - サンプルユーザーでログインすると `/dashboard` に遷移し、ダッシュボード見出しが表示される。
-- 認証済みAPIとrefreshが401の場合、ログイン画面に戻る。
 
 ## 安定化メモ
 
 - 認証状態はsetup projectで1回だけ作成し、通常specから共有する。
 - 未認証テストは空のstorage stateを持つ新規ブラウザコンテキストで実行する。
-- 401テストはAPI routeをモックし、実際のトークン期限に依存しない。
+- `navigation.ts` の redirect helper を使い、未ログイン時の URL とログイン見出しを同じ待ち方で確認する。
+- CSRF session不足の403再試行と、401後にrefreshも失敗した場合のログイン誘導は Frontend Integration Test で確認する。

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
 from app.application.reports import ReportUseCases, month_range
+from app.bootstrap.container import build_report_use_cases
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user
 from app.presentation.api.routes.income_settings import apply_due_income_transactions
 from app.presentation.api.routes.report_dtos import (
@@ -89,4 +89,4 @@ def get_yearly_report(
 
 
 def _use_cases(session: Session) -> ReportUseCases:
-    return ReportUseCases(TransactionCategoryRepository(session))
+    return build_report_use_cases(session)

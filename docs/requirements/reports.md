@@ -1,9 +1,8 @@
-# レポート（グラフ）要件
+# レガシーレポート導線要件
 
 ## 対応デザイン
 
-- `docs/designs/reports.png`
-- `docs/designs/reports.svg`
+- `docs/designs/dashboard.png`
 
 ## 目的
 

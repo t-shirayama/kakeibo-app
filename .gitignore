@@ -20,6 +20,7 @@ node_modules/
 frontend/e2e/.auth/
 frontend/playwright-report/
 frontend/test-results/
+zap-reports/
 *.tsbuildinfo
 out/
 dist/
@@ -31,6 +32,8 @@ pnpm-debug.log*
 # Local storage
 storage/uploads/**
 !storage/uploads/.gitkeep
+backend/storage/uploads/**
+!backend/storage/uploads/.gitkeep
 
 # OS / editor
 .DS_Store

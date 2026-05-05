@@ -45,7 +45,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `npx next dev --hostname 127.0.0.1 --port ${frontendPort}`,
+      command: `npm run build && npx next start --hostname 127.0.0.1 --port ${frontendPort}`,
       url: baseURL,
       reuseExistingServer: false,
       timeout: 120_000,

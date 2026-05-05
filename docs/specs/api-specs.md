@@ -16,15 +16,6 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - 金額は数値で返し、表示形式への変換はフロントエンドで行う。
 - 変更操作は成功・失敗が判別できるレスポンスを返す。
 - 認可対象のリソースはログインユーザー本人のデータに限定する。
-- 認証はJWTを使う。
-- JWTは HttpOnly Cookie に保存する。
-- リフレッシュトークンを使う。
-- アクセストークンの有効期限は15分とする。
-- リフレッシュトークンの有効期限は5日とする。
-- リフレッシュトークンはローテーションする。
-- CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
-- CSRFトークンは `GET /api/auth/csrf` で取得する。
-- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
 - エクスポート形式はExcel（`.xlsx`）とする。
 - MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
@@ -33,6 +24,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 - ページネーションは `page` と `page_size` を使うoffset/page方式とする。
 - ID項目名は `transaction_id` などのsnake_caseで統一する。
 - フロントDTOもsnake_caseのまま扱う。
+- APIクライアントはOpenAPIから自動生成する。
 
 ## 認証
 
@@ -50,8 +42,12 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - ログイン中ユーザーの情報を取得する。
 - `GET /api/auth/csrf`
   - CSRFトークンをレスポンスボディで取得する。
+  - あわせて、トークンを同一ブラウザセッションへ結び付けるための HttpOnly CSRF Cookie を設定または再利用する。
+  - レスポンスは `Cache-Control: no-store` とし、古いCSRFトークン本文だけがキャッシュ再利用されないようにする。
 - `POST /api/auth/password-reset`
-  - パスワードリセットを開始する。初期実装ではメール通知を行わないため、存在するユーザーの場合は検証用トークンを返す。
+  - パスワードリセットを開始する。
+  - 本番相当環境では常に `{"status": "ok"}` を返し、登録済みユーザーかどうかやリセットトークンはレスポンスから判別できないようにする。
+  - `local` / `test` 環境では検証用に `reset_token` を返してよい。
 - `POST /api/auth/password-reset/confirm`
   - パスワードリセットを完了する。
 
@@ -61,6 +57,7 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
 
 - `GET /api/dashboard/summary`
   - 対象月の支出合計、収入合計、収支、取引件数、前月比、直近6ヶ月の月別収入・支出推移を返す。
+  - あわせて、設定済みカテゴリ予算の合計、当月支出実績、残額、進捗率、超過状態、カテゴリ別予算進捗も返す。
   - 対象月は任意の `year` と `month` クエリで指定できる。未指定時は当月を対象にする。
 - `GET /api/dashboard/recent-transactions`
   - 最近の明細を日付降順で返す。
@@ -71,6 +68,8 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - 明細一覧を検索、期間、カテゴリ、ページ指定で取得する。
   - `keyword` は店名、メモ、カテゴリ名を対象に検索し、`未分類` 指定時は未分類表示対象の明細も含める。
   - 期間指定には `date_from` と `date_to` を `YYYY-MM-DD` 形式で指定する。
+  - `sort_field` は `date` または `amount`、`sort_direction` は `asc` または `desc` を受け付ける。初期値は `date` / `desc` とする。
+  - `page_size` の既定値は10件とする。
   - 未分類カテゴリで絞り込む場合は、未分類カテゴリに紐づく明細に加え、無効化または論理削除されたカテゴリに紐づく明細も返す。
   - 一覧レスポンスには `category_name`、`category_color`、`display_category_id` を含め、無効化または論理削除されたカテゴリは表示上 `未分類` として正規化して返す。
 - `POST /api/transactions`
@@ -97,8 +96,10 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - `include_inactive=true` 指定時は無効カテゴリも取得する。
 - `POST /api/categories`
   - カテゴリを追加する。
+  - `monthly_budget` に月次予算を指定できる。未設定の場合は `null` とする。
 - `PUT /api/categories/{category_id}`
   - カテゴリを更新する。
+  - カテゴリ名、色、説明に加えて `monthly_budget` を更新できる。
 - `PATCH /api/categories/{category_id}/status`
   - カテゴリの有効/無効を切り替える。
 - `DELETE /api/categories/{category_id}`
@@ -130,6 +131,13 @@ API契約の機械可読な正は、FastAPIが生成するOpenAPIとする。開
   - アップロード結果を取得する。
 - `DELETE /api/uploads/{upload_id}`
   - アップロード履歴を論理削除し、保存済みPDF原本をストレージから即削除する。
+
+### 監査ログ
+
+- `GET /api/audit-logs`
+  - 監査ログ一覧を取得する。
+  - `page`、`page_size`、`action`、`resource_type`、`date_from`、`date_to` で絞り込める。
+  - ログインユーザー本人の監査ログだけを返す。
 
 ### レポート
 

@@ -1,0 +1,35 @@
+FROM node:25-bookworm-slim AS node
+
+FROM python:3.14-slim
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node /usr/lib/x86_64-linux-gnu/libatomic.so.1* /usr/lib/x86_64-linux-gnu/
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+  && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
+WORKDIR /app/frontend
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+RUN npx playwright install --with-deps chromium
+
+WORKDIR /app/backend
+COPY backend/pyproject.toml ./
+COPY backend/requirements.lock ./
+COPY backend/app ./app
+COPY backend/alembic.ini ./
+COPY backend/alembic ./alembic
+RUN python -m venv /opt/kakeibo-backend-venv \
+  && /opt/kakeibo-backend-venv/bin/pip install --upgrade pip \
+  && /opt/kakeibo-backend-venv/bin/pip install -r requirements.lock \
+  && /opt/kakeibo-backend-venv/bin/pip install -e . --no-deps
+
+ENV E2E_PYTHON=/opt/kakeibo-backend-venv/bin/python
+
+WORKDIR /app/frontend
+COPY frontend/ ./
+
+EXPOSE 3000

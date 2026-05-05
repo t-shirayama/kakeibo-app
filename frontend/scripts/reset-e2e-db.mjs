@@ -1,7 +1,6 @@
-import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { buildE2EBackendEnv, resolvePython, runOrExit } from "./e2e-runtime.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
@@ -12,13 +11,10 @@ const databaseUrl =
   "mysql+pymysql://kakeibo:kakeibo_password@localhost:3306/kakeibo_e2e";
 const adminDatabaseUrl =
   process.env.E2E_ADMIN_DATABASE_URL ?? "mysql+pymysql://root:root_password@localhost:3306/mysql";
-const python = resolvePython();
-const env = {
-  ...process.env,
-  COOKIE_SECURE: "false",
+const python = resolvePython(backendDir);
+const env = buildE2EBackendEnv({
   DATABASE_URL: databaseUrl,
-  JWT_SECRET_KEY: process.env.E2E_JWT_SECRET_KEY ?? "e2e-local-jwt-secret-key-with-at-least-32-bytes",
-};
+});
 
 runPython(
   [
@@ -54,30 +50,8 @@ runPython(["-m", "alembic", "downgrade", "base"], env);
 runPython(["-m", "alembic", "upgrade", "head"], env);
 
 function runPython(args, env) {
-  const result = spawnSync(python, args, {
+  runOrExit(python, args, {
     cwd: backendDir,
     env,
-    stdio: "inherit",
   });
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
-}
-
-function resolvePython() {
-  if (process.env.E2E_PYTHON) {
-    return process.env.E2E_PYTHON;
-  }
-
-  const windowsVenvPython = resolve(backendDir, ".venv/Scripts/python.exe");
-  if (existsSync(windowsVenvPython)) {
-    return windowsVenvPython;
-  }
-
-  const unixVenvPython = resolve(backendDir, ".venv/bin/python");
-  if (existsSync(unixVenvPython)) {
-    return unixVenvPython;
-  }
-
-  return process.platform === "win32" ? "python" : "python3";
 }

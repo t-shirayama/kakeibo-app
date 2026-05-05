@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_income_settings_use_cases
 from app.application.income_settings import (
     IncomeOverride,
     IncomeOverrideCommand,
@@ -17,8 +18,6 @@ from app.application.income_settings import (
     IncomeSettingsUseCases,
 )
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 
 router = APIRouter()
@@ -147,7 +146,7 @@ def apply_due_income_transactions(*, user_id: UUID, session: Session) -> int:
 
 
 def _use_cases(session: Session) -> IncomeSettingsUseCases:
-    return IncomeSettingsUseCases(IncomeSettingsRepository(session), TransactionCategoryRepository(session))
+    return build_income_settings_use_cases(session)
 
 
 def _setting_command(request: IncomeSettingRequest) -> IncomeSettingCommand:

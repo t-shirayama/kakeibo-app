@@ -207,7 +207,7 @@ def upgrade() -> None:
                 "currency": "JPY",
                 "timezone": "Asia/Tokyo",
                 "date_format": "yyyy/MM/dd",
-                "page_size": 20,
+                "page_size": 10,
                 "dark_mode": False,
                 "updated_at": now,
             }

@@ -1,67 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Protocol
 from uuid import UUID
 
-from app.application.exporting.excel_exporter import Worksheet, export_workbook
+from app.application.report_models import (
+    BudgetSummary,
+    CategorySummary,
+    CategoryBudgetSummary,
+    DashboardSummary,
+    PeriodSummary,
+    Report,
+    TransactionExportFilters,
+)
 from app.application.transaction_views import TransactionWithCategory
-from app.domain.entities import Transaction, TransactionType
-
-
-@dataclass(frozen=True, slots=True)
-class CategorySummary:
-    category_id: UUID
-    name: str
-    color: str
-    amount: int
-    ratio: float
-
-
-@dataclass(frozen=True, slots=True)
-class PeriodSummary:
-    period: str
-    total_expense: int
-    total_income: int
-    balance: int
-    transaction_count: int
-
-
-@dataclass(frozen=True, slots=True)
-class Report:
-    period: str
-    start_date: date
-    end_date: date
-    total_expense: int
-    average_daily_expense: int
-    max_category: CategorySummary | None
-    min_category: CategorySummary | None
-    category_summaries: list[CategorySummary]
-    period_summaries: list[PeriodSummary]
-
-
-@dataclass(frozen=True, slots=True)
-class DashboardSummary:
-    year_month: str
-    total_expense: int
-    total_income: int
-    balance: int
-    transaction_count: int
-    expense_change: int
-    income_change: int
-    balance_change: int
-    transaction_count_change: int
-    category_summaries: list[CategorySummary]
-    monthly_summaries: list[PeriodSummary]
-
-
-@dataclass(frozen=True, slots=True)
-class TransactionExportFilters:
-    keyword: str | None = None
-    category_id: UUID | None = None
-    date_from: date | None = None
-    date_to: date | None = None
+from app.domain.entities import Category, Transaction, TransactionType
 
 
 class ReportRepositoryProtocol(Protocol):
@@ -78,10 +31,33 @@ class ReportRepositoryProtocol(Protocol):
         raise NotImplementedError
 
 
+class ReportCategoryRepositoryProtocol(Protocol):
+    def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
+        raise NotImplementedError
+
+
+class TransactionWorkbookExporterProtocol(Protocol):
+    def export(
+        self,
+        *,
+        rows: list[TransactionWithCategory],
+        category_summaries: list[CategorySummary],
+        monthly_summaries: list[PeriodSummary],
+    ) -> bytes:
+        raise NotImplementedError
+
+
 class ReportUseCases:
-    # 集計ロジックをユースケースに寄せ、APIやExcel出力は同じ計算結果を利用する。
-    def __init__(self, repository: ReportRepositoryProtocol) -> None:
+    # 集計ユースケースは計算結果の生成に集中し、出力形式の都合は別コンポーネントへ渡す。
+    def __init__(
+        self,
+        repository: ReportRepositoryProtocol,
+        category_repository: ReportCategoryRepositoryProtocol,
+        workbook_exporter: TransactionWorkbookExporterProtocol,
+    ) -> None:
         self._repository = repository
+        self._category_repository = category_repository
+        self._workbook_exporter = workbook_exporter
 
     def dashboard_summary(self, *, user_id: UUID, year: int, month: int) -> DashboardSummary:
         start_date, end_date = month_range(year, month)
@@ -102,6 +78,7 @@ class ReportUseCases:
             date_from=trend_start,
             date_to=end_date,
         )
+        categories = self._category_repository.list_categories(user_id=user_id, include_inactive=False)
         current_summary = _period_summary(f"{year:04d}-{month:02d}", current)
         previous_summary = _period_summary(previous_start.strftime("%Y-%m"), previous)
         return DashboardSummary(
@@ -114,6 +91,8 @@ class ReportUseCases:
             income_change=current_summary.total_income - previous_summary.total_income,
             balance_change=current_summary.balance - previous_summary.balance,
             transaction_count_change=current_summary.transaction_count - previous_summary.transaction_count,
+            budget_summary=_budget_summary(current, categories),
+            category_budget_summaries=_category_budget_summaries(current, categories),
             category_summaries=_category_summaries(current),
             monthly_summaries=_monthly_summaries(trend, trend_start, end_date),
         )
@@ -190,12 +169,11 @@ class ReportUseCases:
             date_from=export_filters.date_from,
             date_to=export_filters.date_to,
         )
-        return export_workbook(
-            [
-                Worksheet(name="明細一覧", rows=_transaction_sheet(rows)),
-                Worksheet(name="カテゴリ集計", rows=_category_sheet(rows)),
-                Worksheet(name="月別集計", rows=_monthly_sheet(rows)),
-            ]
+        monthly_summaries = _monthly_sheet_summaries(rows)
+        return self._workbook_exporter.export(
+            rows=rows,
+            category_summaries=_category_summaries(rows),
+            monthly_summaries=monthly_summaries,
         )
 
 
@@ -276,6 +254,52 @@ def _category_summaries(rows: list[TransactionWithCategory]) -> list[CategorySum
     ]
 
 
+def _budget_summary(rows: list[TransactionWithCategory], categories: list[Category]) -> BudgetSummary:
+    configured_categories = [category for category in categories if category.monthly_budget is not None]
+    total_budget = sum(category.monthly_budget.amount for category in configured_categories if category.monthly_budget is not None)
+    actual_expense = sum(_expense_amount(row.transaction) for row in rows)
+    remaining_amount = total_budget - actual_expense
+    progress_ratio = (actual_expense / total_budget) if total_budget > 0 else 0
+    return BudgetSummary(
+        total_budget=total_budget,
+        actual_expense=actual_expense,
+        remaining_amount=remaining_amount,
+        progress_ratio=progress_ratio,
+        is_over_budget=total_budget > 0 and actual_expense > total_budget,
+        configured_category_count=len(configured_categories),
+    )
+
+
+def _category_budget_summaries(rows: list[TransactionWithCategory], categories: list[Category]) -> list[CategoryBudgetSummary]:
+    actual_by_category: dict[UUID, int] = {}
+    for row in rows:
+        amount = _expense_amount(row.transaction)
+        if amount == 0:
+            continue
+        actual_by_category[row.display_category_id] = actual_by_category.get(row.display_category_id, 0) + amount
+
+    summaries: list[CategoryBudgetSummary] = []
+    for category in categories:
+        if category.monthly_budget is None:
+            continue
+        actual_amount = actual_by_category.get(category.id, 0)
+        budget_amount = category.monthly_budget.amount
+        remaining_amount = budget_amount - actual_amount
+        summaries.append(
+            CategoryBudgetSummary(
+                category_id=category.id,
+                name=category.name,
+                color=category.color,
+                budget_amount=budget_amount,
+                actual_amount=actual_amount,
+                remaining_amount=remaining_amount,
+                progress_ratio=(actual_amount / budget_amount) if budget_amount > 0 else 0,
+                is_over_budget=budget_amount > 0 and actual_amount > budget_amount,
+            )
+        )
+    return sorted(summaries, key=lambda item: (not item.is_over_budget, -item.progress_ratio, -item.actual_amount, item.name))
+
+
 def _monthly_summaries(rows: list[TransactionWithCategory], start_date: date, end_date: date) -> list[PeriodSummary]:
     # 明細がない月も0件として返し、グラフの月並びが欠けないようにする。
     result: list[PeriodSummary] = []
@@ -291,6 +315,13 @@ def _monthly_summaries(rows: list[TransactionWithCategory], start_date: date, en
     return result
 
 
+def _monthly_sheet_summaries(rows: list[TransactionWithCategory]) -> list[PeriodSummary]:
+    if not rows:
+        return []
+    dates = [row.transaction.transaction_date for row in rows]
+    return _monthly_summaries(rows, min(dates), max(dates))
+
+
 def _average_daily_expense(rows: list[TransactionWithCategory], start_date: date, end_date: date) -> int:
     days = (end_date - start_date).days + 1
     return round(sum(_expense_amount(row.transaction) for row in rows) / days) if days > 0 else 0
@@ -300,47 +331,3 @@ def _expense_amount(transaction: Transaction) -> int:
     if transaction.transaction_type != TransactionType.EXPENSE:
         return 0
     return transaction.amount.amount
-
-
-def _transaction_sheet(rows: list[TransactionWithCategory]) -> list[list[str | int]]:
-    sheet: list[list[str | int]] = [["日付", "店名", "カテゴリ", "種別", "金額", "支払方法", "利用者", "メモ"]]
-    for row in rows:
-        transaction = row.transaction
-        sheet.append(
-            [
-                transaction.transaction_date.isoformat(),
-                transaction.shop_name,
-                row.category_name,
-                transaction.transaction_type.value,
-                transaction.amount.amount,
-                transaction.payment_method or "",
-                transaction.card_user_name or "",
-                transaction.memo or "",
-            ]
-        )
-    return sheet
-
-
-def _category_sheet(rows: list[TransactionWithCategory]) -> list[list[str | int]]:
-    sheet: list[list[str | int]] = [["カテゴリ", "金額", "割合"]]
-    for summary in _category_summaries(rows):
-        sheet.append([summary.name, summary.amount, f"{summary.ratio:.4f}"])
-    return sheet
-
-
-def _monthly_sheet(rows: list[TransactionWithCategory]) -> list[list[str | int]]:
-    if not rows:
-        return [["月", "支出", "収入", "収支", "件数"]]
-    dates = [row.transaction.transaction_date for row in rows]
-    sheet: list[list[str | int]] = [["月", "支出", "収入", "収支", "件数"]]
-    for summary in _monthly_summaries(rows, min(dates), max(dates)):
-        sheet.append(
-            [
-                summary.period,
-                summary.total_expense,
-                summary.total_income,
-                summary.balance,
-                summary.transaction_count,
-            ]
-        )
-    return sheet

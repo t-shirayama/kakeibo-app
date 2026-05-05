@@ -7,10 +7,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
-from app.application.transactions import CategoryCommand, TransactionCategoryError, TransactionCategoryUseCases
+from app.application.transactions import CategoryCommand, CategoryUseCases, TransactionCategoryError
+from app.bootstrap.container import build_category_use_cases
 from app.domain.entities import Category
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 
 router = APIRouter()
@@ -21,6 +21,7 @@ class CategoryResponse(BaseModel):
     name: str
     color: str
     description: str | None
+    monthly_budget: int | None
     is_active: bool
 
 
@@ -28,6 +29,7 @@ class CategoryRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     color: str = Field(min_length=1, max_length=20)
     description: str | None = Field(default=None, max_length=255)
+    monthly_budget: int | None = Field(default=None, ge=0)
 
 
 class CategoryStatusRequest(BaseModel):
@@ -57,6 +59,7 @@ def create_category(
                 name=request.name,
                 color=request.color,
                 description=request.description,
+                monthly_budget=request.monthly_budget,
             ),
         )
     except TransactionCategoryError as exc:
@@ -79,6 +82,7 @@ def update_category(
                 name=request.name,
                 color=request.color,
                 description=request.description,
+                monthly_budget=request.monthly_budget,
             ),
         )
     except TransactionCategoryError as exc:
@@ -117,8 +121,8 @@ def delete_category(
     return {"status": "ok"}
 
 
-def _use_cases(session: Session) -> TransactionCategoryUseCases:
-    return TransactionCategoryUseCases(TransactionCategoryRepository(session))
+def _use_cases(session: Session) -> CategoryUseCases:
+    return build_category_use_cases(session)
 
 
 def _category_response(category: Category) -> CategoryResponse:
@@ -127,5 +131,6 @@ def _category_response(category: Category) -> CategoryResponse:
         name=category.name,
         color=category.color,
         description=category.description,
+        monthly_budget=category.monthly_budget.amount if category.monthly_budget else None,
         is_active=category.is_active,
     )

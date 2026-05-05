@@ -5,13 +5,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_report_use_cases, build_settings_use_cases
 from app.application.reports import ReportUseCases
-from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand
+from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand, UserSettingsRecord
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.settings import SettingsRepository, UserSettingsRecord
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
-from app.infrastructure.storage import LocalUploadStorage
 from app.presentation.api.cookies import delete_auth_cookie
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 
@@ -71,7 +69,7 @@ def export_user_data(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> Response:
-    content = ReportUseCases(TransactionCategoryRepository(session)).export_workbook(user_id=current_user.id)
+    content = build_report_use_cases(session).export_workbook(user_id=current_user.id)
     return Response(
         content=content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -101,11 +99,7 @@ def delete_all_user_data(
 
 
 def _use_cases(session: Session) -> SettingsUseCases:
-    settings = get_settings()
-    return SettingsUseCases(
-        repository=SettingsRepository(session),
-        storage=LocalUploadStorage(settings.upload_storage_root),
-    )
+    return build_settings_use_cases(session)
 
 
 def _settings_response(settings: UserSettingsRecord) -> SettingsResponse:

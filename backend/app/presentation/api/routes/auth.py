@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response
+from secrets import token_urlsafe
+
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 from jwt import PyJWTError
 from sqlalchemy.orm import Session
@@ -7,10 +9,10 @@ from app.application.auth.csrf_service import CsrfTokenService
 from app.application.auth.password_policy import PasswordPolicyError
 from app.application.auth.ports import UserRecord
 from app.application.auth.use_cases import AuthError, AuthTokens, AuthUseCases
+from app.bootstrap.container import build_auth_use_cases
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.auth import AuthRepository
-from app.presentation.api.cookies import delete_auth_cookie, set_auth_cookie
+from app.presentation.api.cookies import delete_auth_cookie, set_auth_cookie, set_session_cookie
 from app.presentation.api.dependencies import get_current_user, require_admin_user, validate_csrf_token
 
 router = APIRouter()
@@ -42,6 +44,7 @@ class PasswordResetStartRequest(BaseModel):
 
 
 class PasswordResetStartResponse(BaseModel):
+    status: str
     reset_token: str | None
 
 
@@ -51,10 +54,16 @@ class PasswordResetConfirmRequest(BaseModel):
 
 
 @router.get("/csrf", response_model=CsrfTokenResponse)
-def get_csrf_token() -> CsrfTokenResponse:
+def get_csrf_token(request: Request, response: Response) -> CsrfTokenResponse:
     settings = get_settings()
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    csrf_session = request.cookies.get(settings.csrf_session_cookie_name)
+    if not csrf_session:
+        csrf_session = token_urlsafe(32)
+        set_session_cookie(response, settings.csrf_session_cookie_name, csrf_session, settings)
     service = CsrfTokenService(secret_key=settings.jwt_secret, ttl_minutes=settings.csrf_token_minutes)
-    return CsrfTokenResponse(csrf_token=service.issue_token())
+    return CsrfTokenResponse(csrf_token=service.issue_token(session_binding=csrf_session))
 
 
 @router.post("/bootstrap-admin", response_model=UserResponse, dependencies=[Depends(validate_csrf_token)])
@@ -140,8 +149,12 @@ def start_password_reset(
     request: PasswordResetStartRequest,
     session: Session = Depends(get_db_session),
 ) -> PasswordResetStartResponse:
+    settings = get_settings()
     reset_token = _use_cases(session).start_password_reset(email=request.email)
-    return PasswordResetStartResponse(reset_token=reset_token)
+    return PasswordResetStartResponse(
+        status="ok",
+        reset_token=reset_token if settings.app_env in {"local", "test"} else None,
+    )
 
 
 @router.post("/password-reset/confirm", dependencies=[Depends(validate_csrf_token)])
@@ -157,7 +170,7 @@ def confirm_password_reset(
 
 
 def _use_cases(session: Session) -> AuthUseCases:
-    return AuthUseCases(repository=AuthRepository(session), settings=get_settings())
+    return build_auth_use_cases(session)
 
 
 def _set_auth_cookies(response: Response, tokens: AuthTokens) -> None:

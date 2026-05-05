@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -8,13 +9,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.bootstrap.container import build_report_use_cases, build_transaction_use_cases
 from app.application.common import Page, PageResult
 from app.application.reports import ReportUseCases, TransactionExportFilters
-from app.application.transactions import TransactionCategoryError, TransactionCategoryUseCases, TransactionCommand
+from app.application.transactions import TransactionCategoryError, TransactionCommand, TransactionUseCases
 from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Transaction, TransactionType
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
 from app.presentation.api.routes.income_settings import apply_due_income_transactions
 
@@ -76,11 +77,13 @@ class SameShopCategoryResponse(BaseModel):
 @router.get("", response_model=TransactionListResponse)
 def list_transactions(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=10, ge=1, le=100),
     keyword: str | None = Query(default=None),
     category_id: UUID | None = Query(default=None),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
+    sort_field: Literal["date", "amount"] = Query(default="date"),
+    sort_direction: Literal["asc", "desc"] = Query(default="desc"),
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> TransactionListResponse:
@@ -93,6 +96,8 @@ def list_transactions(
         category_id=category_id,
         date_from=date_from,
         date_to=date_to,
+        sort_field=sort_field,
+        sort_direction=sort_direction,
     )
     return _list_response(result)
 
@@ -106,7 +111,7 @@ def export_transactions(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> Response:
-    content = ReportUseCases(TransactionCategoryRepository(session)).export_workbook(
+    content = build_report_use_cases(session).export_workbook(
         user_id=current_user.id,
         filters=TransactionExportFilters(
             keyword=keyword,
@@ -211,8 +216,8 @@ def delete_transaction(
     return {"status": "ok"}
 
 
-def _use_cases(session: Session) -> TransactionCategoryUseCases:
-    return TransactionCategoryUseCases(TransactionCategoryRepository(session))
+def _use_cases(session: Session) -> TransactionUseCases:
+    return build_transaction_use_cases(session)
 
 
 def _command(request: TransactionRequest) -> TransactionCommand:

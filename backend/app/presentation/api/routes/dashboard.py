@@ -8,14 +8,18 @@ from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
 from app.application.reports import DashboardSummary, ReportUseCases
+from app.bootstrap.container import build_report_use_cases
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.repositories.transactions import TransactionCategoryRepository
 from app.presentation.api.dependencies import get_current_user
 from app.presentation.api.routes.income_settings import apply_due_income_transactions
 from app.presentation.api.routes.report_dtos import (
+    BudgetSummaryResponse,
     CategorySummaryResponse,
+    CategoryBudgetSummaryResponse,
     PeriodSummaryResponse,
     RecentTransactionResponse,
+    budget_summary_response,
+    category_budget_summary_response,
     category_summary_response,
     period_summary_response,
     recent_transaction_response,
@@ -34,6 +38,8 @@ class DashboardSummaryResponse(BaseModel):
     income_change: int
     balance_change: int
     transaction_count_change: int
+    budget_summary: BudgetSummaryResponse
+    category_budget_summaries: list[CategoryBudgetSummaryResponse]
     category_summaries: list[CategorySummaryResponse]
     monthly_summaries: list[PeriodSummaryResponse]
 
@@ -67,7 +73,7 @@ def get_recent_transactions(
 
 
 def _use_cases(session: Session) -> ReportUseCases:
-    return ReportUseCases(TransactionCategoryRepository(session))
+    return build_report_use_cases(session)
 
 
 def _dashboard_summary_response(summary: DashboardSummary) -> DashboardSummaryResponse:
@@ -81,6 +87,8 @@ def _dashboard_summary_response(summary: DashboardSummary) -> DashboardSummaryRe
         income_change=summary.income_change,
         balance_change=summary.balance_change,
         transaction_count_change=summary.transaction_count_change,
+        budget_summary=budget_summary_response(summary.budget_summary),
+        category_budget_summaries=[category_budget_summary_response(item) for item in summary.category_budget_summaries],
         category_summaries=[category_summary_response(item) for item in summary.category_summaries],
         monthly_summaries=[period_summary_response(item) for item in summary.monthly_summaries],
     )

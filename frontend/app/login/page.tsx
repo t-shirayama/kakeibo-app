@@ -2,14 +2,37 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
+import { refresh_csrf_token } from "@/lib/csrf";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<Error | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    void refresh_csrf_token().catch(() => null);
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  async function submitLogin(email: string, password: string) {
+    try {
+      return await api.login({ email, password });
+    } catch (caught) {
+      if (!isMissingCsrfSessionError(caught)) {
+        throw caught;
+      }
+
+      await refresh_csrf_token();
+      return api.login({ email, password });
+    }
+  }
 
   return (
     <main className="login-page">
@@ -29,18 +52,20 @@ export default function LoginPage() {
             setError(null);
             setIsSubmitting(true);
             const formData = new FormData(event.currentTarget);
+            const email = String(formData.get("email") ?? "");
+            const password = String(formData.get("password") ?? "");
             try {
-              await api.login({
-                email: String(formData.get("email") ?? ""),
-                password: String(formData.get("password") ?? ""),
-              });
+              await submitLogin(email, password);
               const searchParams = new URLSearchParams(window.location.search);
               router.push(searchParams.get("redirect") || "/dashboard");
-              router.refresh();
             } catch (caught) {
-              setError(caught instanceof Error ? caught : new Error("ログインに失敗しました。"));
+              if (mountedRef.current) {
+                setError(caught instanceof Error ? caught : new Error("ログインに失敗しました。"));
+              }
             } finally {
-              setIsSubmitting(false);
+              if (mountedRef.current) {
+                setIsSubmitting(false);
+              }
             }
           }}
         >
@@ -54,7 +79,7 @@ export default function LoginPage() {
             <input id="password" name="password" type="password" autoComplete="current-password" />
           </div>
           <div className="login-links">
-            <Link href="/password-reset">パスワードを忘れた場合</Link>
+            <Link href="/password-reset" prefetch={false}>パスワードを忘れた場合</Link>
           </div>
           <button className="button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "ログイン中" : "ログイン"}
@@ -63,4 +88,8 @@ export default function LoginPage() {
       </section>
     </main>
   );
+}
+
+function isMissingCsrfSessionError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403 && error.message.includes("CSRF session is required.");
 }

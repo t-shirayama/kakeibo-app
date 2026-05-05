@@ -13,13 +13,22 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Alembic適用確認
+      - name: Alembic適用確認 (migration smoke)
         run: docker compose run --rm backend python -m alembic upgrade head
 
-      - name: Backend pytest
-        run: docker compose run --rm backend python -m pytest
+      - name: Backend unit
+        run: docker compose run --rm --no-deps backend python -m pytest tests/unit
+
+      - name: Backend integration
+        run: docker compose run --rm backend python -m pytest -m integration
+
+      - name: Frontend unit
+        run: docker compose run --rm --no-deps frontend npm run test:unit
+
+      - name: Frontend integration
+        run: docker compose run --rm --no-deps frontend npm run test:integration
 
       - name: E2E
         run: docker compose run --rm e2e

@@ -15,6 +15,17 @@ def set_auth_cookie(response: Response, name: str, value: str, max_age_seconds: 
     )
 
 
+def set_session_cookie(response: Response, name: str, value: str, settings: Settings) -> None:
+    response.set_cookie(
+        key=name,
+        value=value,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        path="/",
+    )
+
+
 def delete_auth_cookie(response: Response, name: str, settings: Settings) -> None:
     response.delete_cookie(
         key=name,

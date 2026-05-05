@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kakeibo Task Management"
+  short_description: "Project task triage and docs/tasks updates"
+  default_prompt: "Use $kakeibo-task-management to turn these notes into actionable project tasks."
+policy:
+  allow_implicit_invocation: true

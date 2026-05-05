@@ -3,7 +3,6 @@
 ## 対応デザイン
 
 - `docs/designs/transaction-edit-modal.png`
-- `docs/designs/transaction-edit-modal.svg`
 
 ## 目的
 

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.application.settings import UserSettingsRecord
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.income_setting import IncomeSettingModel, IncomeSettingOverrideModel
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
@@ -15,16 +15,6 @@ from app.infrastructure.models.transaction import TransactionModel
 from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
 from app.infrastructure.models.user_setting import UserSettingModel
-
-
-@dataclass(frozen=True, slots=True)
-class UserSettingsRecord:
-    user_id: UUID
-    currency: str
-    timezone: str
-    date_format: str
-    page_size: int
-    dark_mode: bool
 
 
 class SettingsRepository:
