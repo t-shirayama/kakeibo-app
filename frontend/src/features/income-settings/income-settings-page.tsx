@@ -194,7 +194,7 @@ export default function IncomeSettingsPage() {
                 <label htmlFor="new-income-amount">毎月の金額</label>
                 <input
                   id="new-income-amount"
-                  className="input"
+                  className="input numeric-input-plain"
                   type="number"
                   inputMode="numeric"
                   min="0"
@@ -285,7 +285,7 @@ export default function IncomeSettingsPage() {
                   >
                     <input className="input" name="member_name" aria-label="対象" defaultValue={setting.member_name} />
                     <input
-                      className="input"
+                      className="input numeric-input-plain"
                       name="base_amount"
                       aria-label={`${setting.member_name}の毎月の金額`}
                       type="number"
@@ -338,7 +338,7 @@ export default function IncomeSettingsPage() {
                       onChange={(event) => updateOverrideDraft(setting, { targetMonth: event.target.value })}
                     />
                     <input
-                      className="input"
+                      className="input numeric-input-plain"
                       type="number"
                       inputMode="numeric"
                       min="0"

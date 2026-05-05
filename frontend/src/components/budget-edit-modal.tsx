@@ -56,10 +56,10 @@ export function BudgetEditModal({
               <label htmlFor="budget-monthly-budget">月次予算</label>
               <input
                 id="budget-monthly-budget"
+                className="numeric-input-plain"
                 name="monthly_budget"
                 type="number"
                 min="0"
-                step="1"
                 inputMode="numeric"
                 defaultValue={initialBudget ?? ""}
                 placeholder="未設定"

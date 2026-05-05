@@ -76,10 +76,10 @@ export function CategoryEditModal({
                 <label htmlFor="category-monthly-budget">月次予算</label>
                 <input
                   id="category-monthly-budget"
+                  className="numeric-input-plain"
                   name="monthly_budget"
                   type="number"
                   min="0"
-                  step="1"
                   inputMode="numeric"
                   defaultValue={category?.monthly_budget ?? ""}
                 />

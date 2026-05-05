@@ -583,6 +583,16 @@ button:not(:disabled) {
   width: min(330px, 100%);
 }
 
+.numeric-input-plain {
+  appearance: textfield;
+}
+
+.numeric-input-plain::-webkit-outer-spin-button,
+.numeric-input-plain::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
 .input.wide,
 .select.wide {
   width: 100%;

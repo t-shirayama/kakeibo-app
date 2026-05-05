@@ -79,7 +79,7 @@ export function TransactionEditModal({
             </div>
             <div className="form-field horizontal">
               <label htmlFor="amount">金額</label>
-              <input id="amount" name="amount" type="number" inputMode="numeric" defaultValue={transaction?.amount ?? 0} required />
+              <input id="amount" className="numeric-input-plain" name="amount" type="number" inputMode="numeric" defaultValue={transaction?.amount ?? 0} required />
             </div>
             <div className="form-field horizontal">
               <label htmlFor="payment-method">支払い方法</label>
