@@ -1508,10 +1508,21 @@ button:not(:disabled) {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.86fr);
   gap: 14px;
   align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.calendar-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-page .page-header {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .calendar-page .panel {
@@ -1531,10 +1542,17 @@ button:not(:disabled) {
   gap: 14px;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-board-panel {
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.calendar-month-summary-panel {
+  min-height: 0;
 }
 
 .calendar-selected-day-panel {
