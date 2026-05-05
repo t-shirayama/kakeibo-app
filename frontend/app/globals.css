@@ -13,6 +13,13 @@
   --muted-strong: #46566d;
   --primary: #2f7df6;
   --primary-soft: #eaf2ff;
+  --theme-income: #22c55e;
+  --theme-income-soft: rgb(34 197 94 / 14%);
+  --theme-expense: #ef4444;
+  --theme-expense-strong: #dc2626;
+  --theme-expense-soft: rgb(239 68 68 / 12%);
+  --theme-balance: #f59e0b;
+  --theme-balance-soft: rgb(245 158 11 / 14%);
   --success: #16a36a;
   --danger: #ff6b7a;
   --warning: #eea932;
@@ -368,18 +375,18 @@ button:not(:disabled) {
 }
 
 .summary-card-icon.income {
-  color: var(--success);
-  background: rgb(34 197 94 / 14%);
+  color: var(--theme-income);
+  background: var(--theme-income-soft);
 }
 
 .summary-card-icon.expense {
-  color: #ef4444;
-  background: rgb(239 68 68 / 12%);
+  color: var(--theme-expense);
+  background: var(--theme-expense-soft);
 }
 
 .summary-card-icon.balance {
-  color: #f59e0b;
-  background: rgb(245 158 11 / 14%);
+  color: var(--theme-balance);
+  background: var(--theme-balance-soft);
 }
 
 .summary-card-icon.saving {
@@ -418,7 +425,7 @@ button:not(:disabled) {
 }
 
 .summary-card-delta.bad {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .summary-card-delta.neutral {
@@ -455,7 +462,7 @@ button:not(:disabled) {
 }
 
 .metric-delta.bad {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .metric-delta.neutral {
@@ -707,11 +714,11 @@ button:not(:disabled) {
 }
 
 .transaction-amount.expense {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .transaction-amount.income {
-  color: var(--success);
+  color: var(--theme-income);
 }
 
 .sort-button {
@@ -886,11 +893,11 @@ button:not(:disabled) {
 }
 
 .chart-bar-income {
-  background: #22c55e;
+  background: var(--theme-income);
 }
 
 .chart-bar-expense {
-  background: #ef4444;
+  background: var(--theme-expense);
 }
 
 .chart-month-label {
@@ -922,11 +929,11 @@ button:not(:disabled) {
 }
 
 .chart-legend-income {
-  background: #22c55e;
+  background: var(--theme-income);
 }
 
 .chart-legend-expense {
-  background: #ef4444;
+  background: var(--theme-expense);
 }
 
 .chart-legend-average {
@@ -1406,13 +1413,13 @@ button:not(:disabled) {
 }
 
 .insight-card.good .insight-icon {
-  color: var(--success);
-  background: rgb(34 197 94 / 12%);
+  color: var(--theme-income);
+  background: var(--theme-income-soft);
 }
 
 .insight-card.alert .insight-icon {
-  color: #ef4444;
-  background: rgb(239 68 68 / 12%);
+  color: var(--theme-expense);
+  background: var(--theme-expense-soft);
 }
 
 .insight-card.info .insight-icon {
@@ -1632,7 +1639,7 @@ button:not(:disabled) {
 }
 
 .calendar-day.has-income {
-  box-shadow: inset 0 0 0 1px rgb(22 163 106 / 12%);
+  box-shadow: inset 0 0 0 1px var(--theme-income-soft);
 }
 
 .calendar-day-number {
@@ -1706,7 +1713,7 @@ button:not(:disabled) {
 }
 
 .calendar-summary-tile.expense .calendar-summary-icon {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .calendar-summary-tile p,
@@ -1800,7 +1807,7 @@ button:not(:disabled) {
 }
 
 .expense-worse {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .expense-neutral {
