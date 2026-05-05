@@ -2,8 +2,9 @@
 
 import { CalendarPlus, Plus, Save, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
+import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { categoriesQueryKeys } from "@/features/categories/queryKeys";
@@ -18,6 +19,14 @@ type OverrideDraft = {
   day: string;
 };
 
+type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
+
 export default function IncomeSettingsPage() {
   const queryClient = useQueryClient();
   const [newMemberName, setNewMemberName] = useState("");
@@ -25,6 +34,7 @@ export default function IncomeSettingsPage() {
   const [newDay, setNewDay] = useState("25");
   const [newCategoryId, setNewCategoryId] = useState("");
   const [overrideDrafts, setOverrideDrafts] = useState<Record<string, OverrideDraft>>({});
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
 
   const incomeSettingsQuery = useQuery({ queryKey: incomeSettingsQueryKeys.all, queryFn: api.list_income_settings });
   const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
@@ -84,6 +94,33 @@ export default function IncomeSettingsPage() {
     deleteMutation.isPending ||
     overrideMutation.isPending ||
     deleteOverrideMutation.isPending;
+
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  async function handleDeleteIncomeSetting(setting: IncomeSettingDto) {
+    const action = await showMessageDialog({
+      title: "この収入設定を削除しますか？",
+      description: <p>対象「{setting.member_name}」の収入設定と月別変更が削除されます。</p>,
+      tone: "danger",
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "delete", label: "削除する", variant: "danger" },
+      ],
+    });
+    if (action === "delete") {
+      deleteMutation.mutate(setting.income_setting_id);
+    }
+  }
 
   function createIncomeSetting() {
     if (!defaultCategoryId) {
@@ -280,11 +317,7 @@ export default function IncomeSettingsPage() {
                       className="icon-button"
                       type="button"
                       aria-label={`${setting.member_name}を削除`}
-                      onClick={() => {
-                        if (window.confirm("この収入設定を削除しますか？")) {
-                          deleteMutation.mutate(setting.income_setting_id);
-                        }
-                      }}
+                      onClick={() => void handleDeleteIncomeSetting(setting)}
                       disabled={isBusy}
                     >
                       <Trash2 size={15} aria-hidden="true" />
@@ -360,6 +393,21 @@ export default function IncomeSettingsPage() {
           </div>
         )}
       </section>
+      {messageDialog ? (
+        <MessageDialog
+          open
+          title={messageDialog.title}
+          description={messageDialog.description}
+          actions={messageDialog.actions}
+          tone={messageDialog.tone}
+          onAction={messageDialog.onAction}
+          onOpenChange={(open) => {
+            if (!open) {
+              messageDialog.onAction("cancel");
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 }

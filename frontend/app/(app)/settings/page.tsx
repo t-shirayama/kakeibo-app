@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Download, Save, Trash2 } from "lucide-react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
+import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
+
+type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -17,6 +26,7 @@ export default function SettingsPage() {
     darkMode?: boolean;
   }>({});
   const [confirmationText, setConfirmationText] = useState("");
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const pageSize = draftSettings.pageSize ?? String(settingsQuery.data?.page_size ?? 10);
   const dateFormat = draftSettings.dateFormat ?? settingsQuery.data?.date_format ?? "yyyy/MM/dd";
   const darkMode = draftSettings.darkMode ?? settingsQuery.data?.dark_mode ?? false;
@@ -32,6 +42,33 @@ export default function SettingsPage() {
     mutationFn: () => api.delete_all_data(confirmationText),
   });
   const exportMutation = useMutation({ mutationFn: api.export_user_data });
+
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  async function handleDeleteAllData() {
+    const action = await showMessageDialog({
+      title: "全データを削除しますか？",
+      description: <p>明細、カテゴリ、アップロード履歴、保存済みPDF原本、ユーザー情報が削除されます。</p>,
+      tone: "danger",
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "delete", label: "削除する", variant: "danger" },
+      ],
+    });
+    if (action === "delete") {
+      deleteMutation.mutate(undefined);
+    }
+  }
 
   return (
     <>
@@ -122,17 +159,28 @@ export default function SettingsPage() {
             className="button danger"
             type="button"
             disabled={confirmationText !== "DELETE" || deleteMutation.isPending}
-            onClick={() => {
-              if (window.confirm("全データを削除しますか？")) {
-                deleteMutation.mutate(undefined);
-              }
-            }}
+            onClick={() => void handleDeleteAllData()}
           >
             <Trash2 size={15} aria-hidden="true" />
             {deleteMutation.isPending ? "削除中" : "全データを削除"}
           </button>
         </div>
       </section>
+      {messageDialog ? (
+        <MessageDialog
+          open
+          title={messageDialog.title}
+          description={messageDialog.description}
+          actions={messageDialog.actions}
+          tone={messageDialog.tone}
+          onAction={messageDialog.onAction}
+          onOpenChange={(open) => {
+            if (!open) {
+              messageDialog.onAction("cancel");
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 }

@@ -49,6 +49,10 @@ textarea {
   font: inherit;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 .app-frame {
   height: 100dvh;
   min-height: 0;

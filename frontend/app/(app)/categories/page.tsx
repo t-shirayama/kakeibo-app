@@ -4,18 +4,28 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Edit3, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryEditModal } from "@/components/category-edit-modal";
+import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api, type CategoryRequest } from "@/lib/api";
 import type { CategoryDto } from "@/lib/types";
 
+type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
+
 export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const queryClient = useQueryClient();
   const categoriesQuery = useQuery({
     queryKey: ["categories", "include-inactive"],
@@ -54,6 +64,33 @@ export default function CategoriesPage() {
   );
   const editorError = createMutation.error || updateMutation.error;
   const apiError = categoriesQuery.error || editorError || statusMutation.error || deleteMutation.error;
+
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  async function handleDeleteCategory(category: CategoryDto) {
+    const action = await showMessageDialog({
+      title: "このカテゴリを削除しますか？",
+      description: <p>カテゴリ「{category.name}」を削除すると、一覧に表示されなくなります。</p>,
+      tone: "danger",
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "delete", label: "削除する", variant: "danger" },
+      ],
+    });
+    if (action === "delete") {
+      deleteMutation.mutate(category.category_id);
+    }
+  }
 
   return (
     <div className="categories-page">
@@ -126,11 +163,7 @@ export default function CategoriesPage() {
                       className="icon-button"
                       type="button"
                       aria-label={`${category.name}を削除`}
-                      onClick={() => {
-                        if (window.confirm("このカテゴリを削除しますか？")) {
-                          deleteMutation.mutate(category.category_id);
-                        }
-                      }}
+                      onClick={() => void handleDeleteCategory(category)}
                       disabled={deleteMutation.isPending}
                     >
                       <Trash2 size={15} aria-hidden="true" />
@@ -236,6 +269,21 @@ export default function CategoriesPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+      {messageDialog ? (
+        <MessageDialog
+          open
+          title={messageDialog.title}
+          description={messageDialog.description}
+          actions={messageDialog.actions}
+          tone={messageDialog.tone}
+          onAction={messageDialog.onAction}
+          onOpenChange={(open) => {
+            if (!open) {
+              messageDialog.onAction("cancel");
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }

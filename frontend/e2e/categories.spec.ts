@@ -33,8 +33,9 @@ test("shows category colors and creates a category", async ({ page }) => {
   await editedRow.getByRole("button", { name: "有効化" }).click();
   await expect(editedRow).toContainText("有効");
 
-  page.once("dialog", (dialog) => dialog.accept());
   await editedRow.getByRole("button", { name: "E2Eカテゴリ 編集済みを削除" }).click();
+  await expect(page.getByRole("heading", { name: "このカテゴリを削除しますか？" })).toBeVisible();
+  await page.getByRole("button", { name: "削除する" }).click();
   await expect(page.getByText("E2Eカテゴリ 編集済み")).toHaveCount(0);
 
   await page.getByRole("button", { name: "編集", exact: true }).click();
