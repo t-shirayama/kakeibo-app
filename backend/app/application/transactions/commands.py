@@ -30,3 +30,4 @@ class CategoryCommand:
     name: str
     color: str
     description: str | None = None
+    monthly_budget: int | None = None

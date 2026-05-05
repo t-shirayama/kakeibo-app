@@ -6,6 +6,7 @@ export const categories: CategoryDto[] = [
     name: "食費",
     color: "#ff6b7a",
     description: "スーパー、コンビニ、カフェ",
+    monthly_budget: 45000,
     is_active: true,
   },
   {
@@ -13,6 +14,7 @@ export const categories: CategoryDto[] = [
     name: "日用品",
     color: "#eea932",
     description: "Amazon、ドラッグストア",
+    monthly_budget: 12000,
     is_active: true,
   },
   {
@@ -20,6 +22,7 @@ export const categories: CategoryDto[] = [
     name: "交通費",
     color: "#38a7e0",
     description: "JR、Suica、地下鉄",
+    monthly_budget: 15000,
     is_active: true,
   },
   {
@@ -27,6 +30,7 @@ export const categories: CategoryDto[] = [
     name: "娯楽",
     color: "#9c72de",
     description: "映画、配信、書籍",
+    monthly_budget: 10000,
     is_active: true,
   },
 ];

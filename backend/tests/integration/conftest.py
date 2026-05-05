@@ -52,6 +52,7 @@ def integration_upload_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 @pytest.fixture(scope="session", autouse=True)
 def mysql_schema() -> Iterator[None]:
     try:
+        Base.metadata.drop_all(engine)
         Base.metadata.create_all(engine)
     except OperationalError as exc:
         pytest.skip(f"MySQL integration database is not available: {exc}")

@@ -35,12 +35,14 @@ class FakeFinanceRepository:
                 user_id=USER_ID,
                 name="食費",
                 color="#EF4444",
+                monthly_budget=MoneyJPY(30000),
             ),
             DAILY_ID: Category(
                 id=DAILY_ID,
                 user_id=USER_ID,
                 name="日用品",
                 color="#8B5CF6",
+                monthly_budget=MoneyJPY(10000),
             ),
         }
         self.transactions: dict[UUID, Transaction] = {}
@@ -194,6 +196,7 @@ class FakeFinanceRepository:
             name=category.name,
             color=category.color,
             description=category.description,
+            monthly_budget=category.monthly_budget,
             is_active=is_active,
         )
         self.categories[category_id] = updated
@@ -268,7 +271,7 @@ def make_category_use_cases(repository: FakeFinanceRepository) -> CategoryUseCas
 
 
 def make_report_use_cases(repository: FakeFinanceRepository) -> ReportUseCases:
-    return ReportUseCases(repository, TransactionWorkbookExporter())
+    return ReportUseCases(repository, repository, TransactionWorkbookExporter())
 
 
 def test_create_transaction_falls_back_to_uncategorized() -> None:
@@ -320,12 +323,14 @@ def test_update_category_changes_name_color_and_description() -> None:
     category = use_cases.update_category(
         user_id=USER_ID,
         category_id=FOOD_ID,
-        command=CategoryCommand(name="外食", color="#123456", description="外食費"),
+        command=CategoryCommand(name="外食", color="#123456", description="外食費", monthly_budget=42000),
     )
 
     assert category.name == "外食"
     assert category.color == "#123456"
     assert category.description == "外食費"
+    assert category.monthly_budget is not None
+    assert category.monthly_budget.amount == 42000
     assert category.is_active is True
 
 
@@ -395,6 +400,10 @@ def test_dashboard_summary_compares_previous_month() -> None:
     assert summary.total_expense == 1200
     assert summary.expense_change == 700
     assert summary.transaction_count == 1
+    assert summary.budget_summary.total_budget == 40000
+    assert summary.budget_summary.actual_expense == 1200
+    assert summary.category_budget_summaries[0].name == "食費"
+    assert summary.category_budget_summaries[0].remaining_amount == 28800
     assert [item.period for item in summary.monthly_summaries] == [
         "2025-12",
         "2026-01",

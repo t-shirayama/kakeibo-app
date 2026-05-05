@@ -452,6 +452,7 @@ class CategoryRepository:
             name=category.name,
             color=category.color,
             description=category.description,
+            monthly_budget=category.monthly_budget.amount if category.monthly_budget else None,
             is_active=category.is_active,
         )
         self._session.add(model)
@@ -466,6 +467,7 @@ class CategoryRepository:
         model.name = category.name
         model.color = category.color
         model.description = category.description
+        model.monthly_budget = category.monthly_budget.amount if category.monthly_budget else None
         model.is_active = category.is_active
         model.updated_at = datetime.now(UTC)
         self._session.commit()
@@ -580,5 +582,6 @@ def _to_category(model: CategoryModel) -> Category:
         name=model.name,
         color=model.color,
         description=model.description,
+        monthly_budget=MoneyJPY(model.monthly_budget) if model.monthly_budget is not None else None,
         is_active=model.is_active,
     )

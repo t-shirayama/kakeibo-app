@@ -14,8 +14,9 @@ describe("ReportDashboardPage integration", () => {
 
     expect((await screen.findAllByText(/260,000/)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/52,800/).length).toBeGreaterThan(0);
-    expect(screen.getByText("食費が支出の68%を占めています")).toBeInTheDocument();
+    expect(screen.getByText(/予算は.*800.*超過しています/)).toBeInTheDocument();
     expect(screen.getAllByText("交通費").length).toBeGreaterThan(0);
+    expect(screen.getByText("食費が支出の68%を占めています")).toBeInTheDocument();
   });
 
   it("月次サマリーAPIのエラーを表示する", async () => {

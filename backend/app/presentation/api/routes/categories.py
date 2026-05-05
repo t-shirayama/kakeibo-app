@@ -21,6 +21,7 @@ class CategoryResponse(BaseModel):
     name: str
     color: str
     description: str | None
+    monthly_budget: int | None
     is_active: bool
 
 
@@ -28,6 +29,7 @@ class CategoryRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     color: str = Field(min_length=1, max_length=20)
     description: str | None = Field(default=None, max_length=255)
+    monthly_budget: int | None = Field(default=None, ge=0)
 
 
 class CategoryStatusRequest(BaseModel):
@@ -57,6 +59,7 @@ def create_category(
                 name=request.name,
                 color=request.color,
                 description=request.description,
+                monthly_budget=request.monthly_budget,
             ),
         )
     except TransactionCategoryError as exc:
@@ -79,6 +82,7 @@ def update_category(
                 name=request.name,
                 color=request.color,
                 description=request.description,
+                monthly_budget=request.monthly_budget,
             ),
         )
     except TransactionCategoryError as exc:
@@ -127,5 +131,6 @@ def _category_response(category: Category) -> CategoryResponse:
         name=category.name,
         color=category.color,
         description=category.description,
+        monthly_budget=category.monthly_budget.amount if category.monthly_budget else None,
         is_active=category.is_active,
     )

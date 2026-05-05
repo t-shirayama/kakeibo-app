@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] 予算管理機能を追加し、予算超過と進捗を確認できるようにする
+  - 対応: カテゴリへ `monthly_budget` を追加し、`backend/alembic/versions/20260505_0005_category_budgets.py` でスキーマとサンプルデータを更新した。カテゴリAPIとカテゴリ管理画面で月次予算の追加・編集・解除をできるようにし、ダッシュボードAPIと `frontend/src/features/reports/report-dashboard-page.tsx` に予算合計、支出実績、残額または超過額、進捗率、カテゴリ別予算進捗を追加した。あわせて `docs/specs/domain-model.md`、`docs/specs/api-specs.md`、`docs/specs/db-schema.md`、`docs/requirements/dashboard.md`、`docs/requirements/categories.md`、`docs/e2e/dashboard.md`、`docs/e2e/categories.md` を現行仕様へ同期した。
+  - 確認: `docker compose run --rm backend python scripts/generate_openapi_client.py`、`docker compose run --rm backend python -m pytest tests/unit/domain/test_entities.py tests/unit/application/test_transactions.py tests/unit/infrastructure/test_repositories.py tests/unit/presentation/test_api.py`、`docker compose run --rm backend python -m pytest tests/integration/test_api_critical_paths.py`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run test:integration`、`docker compose run --rm --no-deps frontend npm run build`、`docker compose run --rm e2e npm run test:e2e -- dashboard.spec.ts categories.spec.ts` を実行し、すべて通過した。
+  - 根拠: `docs/tasks/open.md` の優先度A「予算管理機能を追加し、予算超過と進捗を確認できるようにする」。
+
 - [x] E2E のhelperと代表シナリオを整理し、重複をIntegration Testへ寄せる
   - 対応: `frontend/e2e/helpers/navigation.ts` に未ログイン redirect 確認 helper、`frontend/e2e/helpers/date.ts` に年月操作 helper、`frontend/e2e/helpers/transactions.ts` に複数明細追加 helper、`frontend/e2e/helpers/upload.ts` にアップロード完了待ち helper を追加し、calendar / categories / dashboard / transactions / upload / auth の各 spec へ適用した。認証の `page.route()` 依存だった CSRF 403 再試行と 401 後 refresh 失敗の導線は E2E から外し、`frontend/src/test/integration/api/auth-refresh.it.test.ts` と既存の login integration test で受け持つ形へ整理した。あわせて `docs/e2e/index.md`、`docs/e2e/auth.md`、`docs/e2e/transactions.md`、`docs/e2e/upload.md`、`docs/specs/development-workflow.md` を現状に合わせて更新した。
   - 確認: `docker compose run --rm --no-deps frontend npm run test:integration -- auth-refresh.it.test.ts login-page.it.test.tsx` と `docker compose run --rm e2e -- auth.spec.ts calendar.spec.ts dashboard.spec.ts transactions.spec.ts upload.spec.ts categories.spec.ts` で対象の Integration Test / E2E を確認した。E2Eは representative flow に絞り、モック分岐は Frontend Integration Test へ移した。

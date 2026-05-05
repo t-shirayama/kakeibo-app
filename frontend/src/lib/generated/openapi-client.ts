@@ -54,10 +54,31 @@ export type Body_upload_pdf_api_uploads_post = {
   file: string;
 };
 
+export type BudgetSummaryResponse = {
+  total_budget: number;
+  actual_expense: number;
+  remaining_amount: number;
+  progress_ratio: number;
+  is_over_budget: boolean;
+  configured_category_count: number;
+};
+
+export type CategoryBudgetSummaryResponse = {
+  category_id: string;
+  name: string;
+  color: string;
+  budget_amount: number;
+  actual_amount: number;
+  remaining_amount: number;
+  progress_ratio: number;
+  is_over_budget: boolean;
+};
+
 export type CategoryRequest = {
   name: string;
   color: string;
   description?: string | null;
+  monthly_budget?: number | null;
 };
 
 export type CategoryResponse = {
@@ -65,6 +86,7 @@ export type CategoryResponse = {
   name: string;
   color: string;
   description: string | null;
+  monthly_budget: number | null;
   is_active: boolean;
 };
 
@@ -100,6 +122,8 @@ export type DashboardSummaryResponse = {
   income_change: number;
   balance_change: number;
   transaction_count_change: number;
+  budget_summary: BudgetSummaryResponse;
+  category_budget_summaries: Array<CategoryBudgetSummaryResponse>;
   category_summaries: Array<CategorySummaryResponse>;
   monthly_summaries: Array<PeriodSummaryResponse>;
 };

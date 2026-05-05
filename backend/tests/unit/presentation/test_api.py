@@ -205,6 +205,7 @@ def test_income_settings_create_override_and_apply_due_transaction(sqlite_sessio
                 name="給与",
                 color="#16a36a",
                 description="毎月の収入",
+                monthly_budget=None,
                 is_active=True,
             )
         )
@@ -376,6 +377,66 @@ def test_transaction_list_defaults_to_page_size_10(sqlite_session_factory: sessi
     assert payload["page_size"] == 10
     assert payload["total"] == 12
     assert len(payload["items"]) == 10
+
+
+def test_category_api_exposes_monthly_budget_and_dashboard_budget_summary(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
+    budgeted_category_id = "10101010-1111-2222-3333-444444444444"
+    with SessionLocal() as session:
+        add_user(session)
+        session.add(
+            CategoryModel(
+                id=budgeted_category_id,
+                user_id=str(USER_ID),
+                name="食費",
+                color="#EF4444",
+                description="月次予算あり",
+                monthly_budget=30000,
+                is_active=True,
+            )
+        )
+        session.add(
+            TransactionModel(
+                id="50505050-1111-2222-3333-444444444444",
+                user_id=str(USER_ID),
+                category_id=budgeted_category_id,
+                transaction_date=date(2026, 5, 2),
+                shop_name="予算確認スーパー",
+                amount=12000,
+                transaction_type="expense",
+            )
+        )
+        session.commit()
+
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
+    app.dependency_overrides[get_current_user] = override_user
+    client = TestClient(app)
+    csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
+    try:
+        categories_response = client.get("/api/categories", params={"include_inactive": "true"})
+        update_response = client.put(
+            f"/api/categories/{budgeted_category_id}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "name": "食費",
+                "color": "#EF4444",
+                "description": "予算更新",
+                "monthly_budget": 35000,
+            },
+        )
+        dashboard_response = client.get("/api/dashboard/summary", params={"year": 2026, "month": 5})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert categories_response.status_code == 200
+    assert categories_response.json()[0]["monthly_budget"] == 30000
+    assert update_response.status_code == 200
+    assert update_response.json()["monthly_budget"] == 35000
+    assert dashboard_response.status_code == 200
+    payload = dashboard_response.json()
+    assert payload["budget_summary"]["total_budget"] == 35000
+    assert payload["budget_summary"]["actual_expense"] == 12000
+    assert payload["category_budget_summaries"][0]["progress_ratio"] == 12000 / 35000
 
 
 def test_audit_log_endpoint_lists_filtered_rows(sqlite_session_factory: sessionmaker) -> None:

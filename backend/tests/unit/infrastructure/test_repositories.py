@@ -245,7 +245,7 @@ def test_uncategorized_filter_includes_transactions_with_inactive_categories(db_
 def test_category_repository_can_disable_and_enable_category(db_session: Session) -> None:
     add_user(db_session)
     repository = CategoryRepository(db_session)
-    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    category = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444", monthly_budget=MoneyJPY(30000)))
 
     disabled = repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=False)
     inactive_categories = repository.list_categories(user_id=USER_ID, include_inactive=True)
@@ -253,6 +253,8 @@ def test_category_repository_can_disable_and_enable_category(db_session: Session
     enabled = repository.set_category_active(user_id=USER_ID, category_id=category.id, is_active=True)
 
     assert disabled.is_active is False
+    assert disabled.monthly_budget is not None
+    assert disabled.monthly_budget.amount == 30000
     assert [category.name for category in inactive_categories] == ["食費"]
     assert active_categories == []
     assert enabled.is_active is True

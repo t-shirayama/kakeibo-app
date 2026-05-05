@@ -15,6 +15,28 @@ class CategorySummary:
 
 
 @dataclass(frozen=True, slots=True)
+class BudgetSummary:
+    total_budget: int
+    actual_expense: int
+    remaining_amount: int
+    progress_ratio: float
+    is_over_budget: bool
+    configured_category_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryBudgetSummary:
+    category_id: UUID
+    name: str
+    color: str
+    budget_amount: int
+    actual_amount: int
+    remaining_amount: int
+    progress_ratio: float
+    is_over_budget: bool
+
+
+@dataclass(frozen=True, slots=True)
 class PeriodSummary:
     period: str
     total_expense: int
@@ -47,6 +69,8 @@ class DashboardSummary:
     income_change: int
     balance_change: int
     transaction_count_change: int
+    budget_summary: BudgetSummary
+    category_budget_summaries: list[CategoryBudgetSummary]
     category_summaries: list[CategorySummary]
     monthly_summaries: list[PeriodSummary]
 

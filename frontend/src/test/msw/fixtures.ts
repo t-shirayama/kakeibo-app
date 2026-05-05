@@ -29,6 +29,7 @@ export const mockCategories: CategoryResponse[] = [
     name: "食費",
     color: "#f97316",
     description: "毎日の食事",
+    monthly_budget: 40000,
     is_active: true,
   },
   {
@@ -36,6 +37,7 @@ export const mockCategories: CategoryResponse[] = [
     name: "交通費",
     color: "#0ea5e9",
     description: "移動費",
+    monthly_budget: 12000,
     is_active: true,
   },
 ];
@@ -124,6 +126,36 @@ export function dashboardSummary(yearMonth = "2026-05"): DashboardSummaryRespons
     income_change: yearMonth === "2026-04" ? 0 : 10000,
     balance_change: yearMonth === "2026-04" ? 3000 : -800,
     transaction_count_change: yearMonth === "2026-04" ? -2 : 3,
+    budget_summary: {
+      total_budget: 52000,
+      actual_expense: yearMonth === "2026-04" ? 42000 : 52800,
+      remaining_amount: yearMonth === "2026-04" ? 10000 : -800,
+      progress_ratio: yearMonth === "2026-04" ? 42000 / 52000 : 52800 / 52000,
+      is_over_budget: yearMonth !== "2026-04",
+      configured_category_count: 2,
+    },
+    category_budget_summaries: [
+      {
+        category_id: "cat-food",
+        name: "食費",
+        color: "#f97316",
+        budget_amount: 40000,
+        actual_amount: yearMonth === "2026-04" ? 28000 : 36000,
+        remaining_amount: yearMonth === "2026-04" ? 12000 : 4000,
+        progress_ratio: yearMonth === "2026-04" ? 0.7 : 0.9,
+        is_over_budget: false,
+      },
+      {
+        category_id: "cat-transport",
+        name: "交通費",
+        color: "#0ea5e9",
+        budget_amount: 12000,
+        actual_amount: yearMonth === "2026-04" ? 14000 : 16800,
+        remaining_amount: yearMonth === "2026-04" ? -2000 : -4800,
+        progress_ratio: yearMonth === "2026-04" ? 1.17 : 1.4,
+        is_over_budget: true,
+      },
+    ],
     category_summaries: [
       {
         category_id: "cat-food",

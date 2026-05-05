@@ -176,6 +176,7 @@ class CategoryUseCases:
                 name=command.name,
                 color=command.color,
                 description=command.description,
+                monthly_budget=MoneyJPY(command.monthly_budget) if command.monthly_budget is not None else None,
             )
         )
 
@@ -195,6 +196,7 @@ class CategoryUseCases:
                 name=command.name,
                 color=command.color,
                 description=command.description,
+                monthly_budget=MoneyJPY(command.monthly_budget) if command.monthly_budget is not None else None,
                 is_active=category.is_active,
             )
         )

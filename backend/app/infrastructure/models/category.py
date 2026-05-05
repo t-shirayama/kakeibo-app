@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import CHAR, Boolean, ForeignKey, String, UniqueConstraint
+from sqlalchemy import CHAR, Boolean, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.models.base import Base, SoftDeleteMixin, TimestampMixin
@@ -15,4 +15,5 @@ class CategoryModel(TimestampMixin, SoftDeleteMixin, Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     color: Mapped[str] = mapped_column(String(20), nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    monthly_budget: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

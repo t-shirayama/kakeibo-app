@@ -668,6 +668,12 @@ textarea {
   border: 1px solid #d8e0ea;
 }
 
+.badge.budget-over {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
 .muted {
   color: var(--muted);
 }
@@ -1035,6 +1041,110 @@ textarea {
   gap: 10px;
 }
 
+.dashboard-side-stack {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+.budget-overview-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f6;
+  border-radius: 12px;
+}
+
+.budget-overview-card.is-over {
+  background: #fff7f7;
+  border-color: #fecaca;
+}
+
+.budget-overview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.budget-overview-header strong,
+.budget-overview-header p {
+  margin: 0;
+}
+
+.budget-overview-header p {
+  margin-top: 4px;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.budget-overview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.budget-overview-metrics div {
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 10px;
+}
+
+.budget-overview-metrics dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.budget-overview-metrics dd {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.budget-progress-list {
+  display: grid;
+  gap: 8px;
+}
+
+.budget-progress-row {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #e5edf7;
+}
+
+.budget-progress-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.budget-progress-title,
+.budget-progress-values {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.budget-progress-values {
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.budget-empty-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .insight-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1140,8 +1250,6 @@ textarea {
 
 .report-dashboard-page .insight-list {
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: none;
 }
 
 .report-dashboard-page .data-table th,
@@ -2011,7 +2119,8 @@ textarea {
   .income-setting-main,
   .income-override-row,
   .category-pie-layout,
-  .calendar-selected-day-summary {
+  .calendar-selected-day-summary,
+  .budget-overview-metrics {
     grid-template-columns: 1fr;
   }
 

@@ -107,7 +107,7 @@ def test_transaction_create_list_update_delete_through_api_and_mysql(authenticat
 def test_monthly_report_aggregates_transactions_through_api_and_mysql(authenticated_api_client) -> None:
     category_response = authenticated_api_client.post(
         "/api/categories",
-        json={"name": "月次IT", "color": "#0ea5e9"},
+        json={"name": "月次IT", "color": "#0ea5e9", "monthly_budget": 4000},
     )
     assert category_response.status_code == 200
     category_id = category_response.json()["category_id"]
@@ -154,6 +154,9 @@ def test_monthly_report_aggregates_transactions_through_api_and_mysql(authentica
     assert dashboard_payload["total_income"] == 5000
     assert dashboard_payload["balance"] == 3800
     assert dashboard_payload["expense_change"] == -8799
+    assert dashboard_payload["budget_summary"]["total_budget"] == 4000
+    assert dashboard_payload["budget_summary"]["remaining_amount"] == 2800
+    assert dashboard_payload["category_budget_summaries"][0]["actual_amount"] == 1200
 
 
 def test_category_status_change_normalizes_existing_transactions_to_uncategorized(authenticated_api_client) -> None:

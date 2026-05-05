@@ -61,6 +61,7 @@ class Category:
     name: str
     color: str
     description: str | None = None
+    monthly_budget: MoneyJPY | None = None
     is_active: bool = True
 
     def __post_init__(self) -> None:
@@ -68,6 +69,8 @@ class Category:
             raise ValueError("Category name is required.")
         if not self.color.strip():
             raise ValueError("Category color is required.")
+        if self.monthly_budget is not None and self.monthly_budget.amount < 0:
+            raise ValueError("Category monthly budget must be greater than or equal to 0.")
 
     def deactivate(self) -> "Category":
         return Category(
@@ -76,6 +79,7 @@ class Category:
             name=self.name,
             color=self.color,
             description=self.description,
+            monthly_budget=self.monthly_budget,
             is_active=False,
         )
 

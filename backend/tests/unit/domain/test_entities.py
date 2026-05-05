@@ -66,6 +66,11 @@ def test_category_requires_name_and_color() -> None:
         Category(id=uuid4(), user_id=USER_ID, name="Food", color=" ")
 
 
+def test_category_budget_must_be_non_negative() -> None:
+    with pytest.raises(ValueError, match="monthly budget"):
+        Category(id=uuid4(), user_id=USER_ID, name="Food", color="#FFFFFF", monthly_budget=MoneyJPY(-1))
+
+
 def test_category_names_must_be_unique_per_user_case_insensitive() -> None:
     categories = [
         Category(id=uuid4(), user_id=USER_ID, name="Food", color="#EF4444"),

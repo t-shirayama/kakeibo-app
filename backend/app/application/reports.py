@@ -5,14 +5,16 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.report_models import (
+    BudgetSummary,
     CategorySummary,
+    CategoryBudgetSummary,
     DashboardSummary,
     PeriodSummary,
     Report,
     TransactionExportFilters,
 )
 from app.application.transaction_views import TransactionWithCategory
-from app.domain.entities import Transaction, TransactionType
+from app.domain.entities import Category, Transaction, TransactionType
 
 
 class ReportRepositoryProtocol(Protocol):
@@ -26,6 +28,11 @@ class ReportRepositoryProtocol(Protocol):
         date_to: date | None = None,
         limit: int | None = None,
     ) -> list[TransactionWithCategory]:
+        raise NotImplementedError
+
+
+class ReportCategoryRepositoryProtocol(Protocol):
+    def list_categories(self, *, user_id: UUID, include_inactive: bool = False) -> list[Category]:
         raise NotImplementedError
 
 
@@ -45,9 +52,11 @@ class ReportUseCases:
     def __init__(
         self,
         repository: ReportRepositoryProtocol,
+        category_repository: ReportCategoryRepositoryProtocol,
         workbook_exporter: TransactionWorkbookExporterProtocol,
     ) -> None:
         self._repository = repository
+        self._category_repository = category_repository
         self._workbook_exporter = workbook_exporter
 
     def dashboard_summary(self, *, user_id: UUID, year: int, month: int) -> DashboardSummary:
@@ -69,6 +78,7 @@ class ReportUseCases:
             date_from=trend_start,
             date_to=end_date,
         )
+        categories = self._category_repository.list_categories(user_id=user_id, include_inactive=False)
         current_summary = _period_summary(f"{year:04d}-{month:02d}", current)
         previous_summary = _period_summary(previous_start.strftime("%Y-%m"), previous)
         return DashboardSummary(
@@ -81,6 +91,8 @@ class ReportUseCases:
             income_change=current_summary.total_income - previous_summary.total_income,
             balance_change=current_summary.balance - previous_summary.balance,
             transaction_count_change=current_summary.transaction_count - previous_summary.transaction_count,
+            budget_summary=_budget_summary(current, categories),
+            category_budget_summaries=_category_budget_summaries(current, categories),
             category_summaries=_category_summaries(current),
             monthly_summaries=_monthly_summaries(trend, trend_start, end_date),
         )
@@ -240,6 +252,52 @@ def _category_summaries(rows: list[TransactionWithCategory]) -> list[CategorySum
         )
         for category_id, (name, color, amount) in sorted(totals.items(), key=lambda item: item[1][2], reverse=True)
     ]
+
+
+def _budget_summary(rows: list[TransactionWithCategory], categories: list[Category]) -> BudgetSummary:
+    configured_categories = [category for category in categories if category.monthly_budget is not None]
+    total_budget = sum(category.monthly_budget.amount for category in configured_categories if category.monthly_budget is not None)
+    actual_expense = sum(_expense_amount(row.transaction) for row in rows)
+    remaining_amount = total_budget - actual_expense
+    progress_ratio = (actual_expense / total_budget) if total_budget > 0 else 0
+    return BudgetSummary(
+        total_budget=total_budget,
+        actual_expense=actual_expense,
+        remaining_amount=remaining_amount,
+        progress_ratio=progress_ratio,
+        is_over_budget=total_budget > 0 and actual_expense > total_budget,
+        configured_category_count=len(configured_categories),
+    )
+
+
+def _category_budget_summaries(rows: list[TransactionWithCategory], categories: list[Category]) -> list[CategoryBudgetSummary]:
+    actual_by_category: dict[UUID, int] = {}
+    for row in rows:
+        amount = _expense_amount(row.transaction)
+        if amount == 0:
+            continue
+        actual_by_category[row.display_category_id] = actual_by_category.get(row.display_category_id, 0) + amount
+
+    summaries: list[CategoryBudgetSummary] = []
+    for category in categories:
+        if category.monthly_budget is None:
+            continue
+        actual_amount = actual_by_category.get(category.id, 0)
+        budget_amount = category.monthly_budget.amount
+        remaining_amount = budget_amount - actual_amount
+        summaries.append(
+            CategoryBudgetSummary(
+                category_id=category.id,
+                name=category.name,
+                color=category.color,
+                budget_amount=budget_amount,
+                actual_amount=actual_amount,
+                remaining_amount=remaining_amount,
+                progress_ratio=(actual_amount / budget_amount) if budget_amount > 0 else 0,
+                is_over_budget=budget_amount > 0 and actual_amount > budget_amount,
+            )
+        )
+    return sorted(summaries, key=lambda item: (not item.is_over_budget, -item.progress_ratio, -item.actual_amount, item.name))
 
 
 def _monthly_summaries(rows: list[TransactionWithCategory], start_date: date, end_date: date) -> list[PeriodSummary]:

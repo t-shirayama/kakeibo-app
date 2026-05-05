@@ -39,7 +39,7 @@ export function CategoryEditModal({
             </Dialog.Close>
           </div>
           <Dialog.Description id="category-edit-description" className="sr-only">
-            カテゴリ名、色、説明を入力してカテゴリを保存します。
+            カテゴリ名、色、説明、月次予算を入力してカテゴリを保存します。
           </Dialog.Description>
 
           <form
@@ -52,6 +52,7 @@ export function CategoryEditModal({
                 name: String(formData.get("name") ?? ""),
                 color: String(formData.get("color") ?? "#2f7df6"),
                 description: String(formData.get("description") || "") || null,
+                monthly_budget: normalizeBudget(formData.get("monthly_budget")),
               });
             }}
           >
@@ -68,6 +69,18 @@ export function CategoryEditModal({
               <label htmlFor="category-description">説明</label>
               <input id="category-description" name="description" type="text" defaultValue={category?.description ?? ""} />
             </div>
+            <div className="form-field horizontal">
+              <label htmlFor="category-monthly-budget">月次予算</label>
+              <input
+                id="category-monthly-budget"
+                name="monthly_budget"
+                type="number"
+                min="0"
+                step="1"
+                inputMode="numeric"
+                defaultValue={category?.monthly_budget ?? ""}
+              />
+            </div>
 
             <div className="modal-actions">
               <Dialog.Close className="button secondary" type="button">
@@ -82,4 +95,12 @@ export function CategoryEditModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+function normalizeBudget(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }

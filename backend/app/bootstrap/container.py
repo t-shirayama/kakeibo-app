@@ -45,8 +45,9 @@ def build_audit_log_use_cases(session: Session) -> AuditLogUseCases:
 
 def build_report_use_cases(session: Session) -> ReportUseCases:
     return ReportUseCases(
-        TransactionQueryRepository(session),
-        TransactionWorkbookExporter(),
+        repository=TransactionQueryRepository(session),
+        category_repository=CategoryRepository(session),
+        workbook_exporter=TransactionWorkbookExporter(),
     )
 
 

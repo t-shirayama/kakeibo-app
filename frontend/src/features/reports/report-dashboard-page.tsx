@@ -22,6 +22,24 @@ type DashboardSummary = {
   income_change: number;
   balance_change: number;
   transaction_count_change: number;
+  budget_summary: {
+    total_budget: number;
+    actual_expense: number;
+    remaining_amount: number;
+    progress_ratio: number;
+    is_over_budget: boolean;
+    configured_category_count: number;
+  };
+  category_budget_summaries: Array<{
+    category_id: string;
+    name: string;
+    color: string;
+    budget_amount: number;
+    actual_amount: number;
+    remaining_amount: number;
+    progress_ratio: number;
+    is_over_budget: boolean;
+  }>;
   category_summaries: Array<{ category_id: string; name: string; color: string; amount: number; ratio: number }>;
   monthly_summaries: Array<{ period: string; total_expense: number; total_income: number; balance: number; transaction_count: number }>;
 };
@@ -59,6 +77,8 @@ export function ReportDashboardPage() {
   const monthlySummary = summary?.monthly_summaries ?? [];
   const comparisonRows = useMemo(() => buildCategoryComparisonRows(categorySummary, previousSummary?.category_summaries ?? []), [categorySummary, previousSummary?.category_summaries]);
   const insightItems = useMemo(() => buildInsights(summary), [summary]);
+  const budgetSummary = summary?.budget_summary;
+  const budgetItems = summary?.category_budget_summaries ?? [];
   const savingsRate = calculateSavingsRate(summary?.total_income ?? 0, summary?.balance ?? 0);
   const previousSavingsRate = calculateSavingsRate(previousSummary?.total_income ?? 0, previousSummary?.balance ?? 0);
   const hasChartData = monthlySummary.some((month) => month.total_expense > 0 || month.total_income > 0);
@@ -180,21 +200,72 @@ export function ReportDashboardPage() {
           <h2 className="panel-title">今月の気づき</h2>
           {summaryQuery.isLoading ? (
             <LoadingState />
-          ) : insightItems.length === 0 ? (
-            <EmptyState title="気づきを表示できません" description="明細が登録されると、この月の傾向をここに表示します。" />
           ) : (
-            <div className="insight-list">
-              {insightItems.map((insight) => (
-                <article className={`insight-card ${insight.tone}`} key={insight.title}>
-                  <div className="insight-icon" aria-hidden="true">
-                    {insight.icon}
+            <div className="dashboard-side-stack">
+              <section className={`budget-overview-card ${budgetSummary?.is_over_budget ? "is-over" : ""}`} aria-label="予算進捗">
+                <div className="budget-overview-header">
+                  <div>
+                    <strong>予算進捗</strong>
+                    <p>{describeBudgetStatus(budgetSummary)}</p>
+                  </div>
+                  <span className={`badge ${budgetSummary?.is_over_budget ? "budget-over" : "inactive"}`}>
+                    {formatProgressRatio(budgetSummary?.progress_ratio ?? 0)}
+                  </span>
+                </div>
+                <dl className="budget-overview-metrics">
+                  <div>
+                    <dt>予算合計</dt>
+                    <dd>{formatCurrency(budgetSummary?.total_budget ?? 0)}</dd>
                   </div>
                   <div>
-                    <strong>{insight.title}</strong>
-                    <p>{insight.description}</p>
+                    <dt>支出実績</dt>
+                    <dd>{formatCurrency(budgetSummary?.actual_expense ?? 0)}</dd>
                   </div>
-                </article>
-              ))}
+                  <div>
+                    <dt>{(budgetSummary?.remaining_amount ?? 0) >= 0 ? "残り" : "超過"}</dt>
+                    <dd className={(budgetSummary?.remaining_amount ?? 0) < 0 ? "expense-worse" : "expense-improved"}>
+                      {formatCurrency(Math.abs(budgetSummary?.remaining_amount ?? 0))}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="budget-progress-list" aria-label="カテゴリ別予算進捗">
+                  {budgetItems.length === 0 ? (
+                    <p className="budget-empty-text">カテゴリ管理で月次予算を設定すると、ここに進捗を表示します。</p>
+                  ) : (
+                    budgetItems.map((item) => (
+                      <article className="budget-progress-row" key={item.category_id}>
+                        <div className="budget-progress-title">
+                          <span className="swatch" style={{ background: item.color }} />
+                          <strong>{item.name}</strong>
+                        </div>
+                        <div className="budget-progress-values">
+                          <span>{formatCurrency(item.actual_amount)} / {formatCurrency(item.budget_amount)}</span>
+                          <span className={item.is_over_budget ? "expense-worse" : "expense-improved"}>
+                            {item.is_over_budget ? `超過 ${formatCurrency(Math.abs(item.remaining_amount))}` : `残り ${formatCurrency(item.remaining_amount)}`}
+                          </span>
+                        </div>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
+              {insightItems.length === 0 ? (
+                <EmptyState title="気づきを表示できません" description="明細が登録されると、この月の傾向をここに表示します。" />
+              ) : (
+                <div className="insight-list">
+                  {insightItems.map((insight) => (
+                    <article className={`insight-card ${insight.tone}`} key={insight.title}>
+                      <div className="insight-icon" aria-hidden="true">
+                        {insight.icon}
+                      </div>
+                      <div>
+                        <strong>{insight.title}</strong>
+                        <p>{insight.description}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -344,6 +415,16 @@ function buildInsights(summary?: DashboardSummary) {
   return insights;
 }
 
+function describeBudgetStatus(summary?: DashboardSummary["budget_summary"]) {
+  if (!summary || summary.configured_category_count === 0 || summary.total_budget <= 0) {
+    return "月次予算が未設定です。";
+  }
+  if (summary.is_over_budget) {
+    return `予算は${formatCurrency(Math.abs(summary.remaining_amount))}超過しています`;
+  }
+  return `予算内です。残り${formatCurrency(summary.remaining_amount)}です`;
+}
+
 function calculateSavingsRate(income: number, balance: number) {
   if (income <= 0) {
     return 0;
@@ -381,6 +462,10 @@ function formatPointDelta(value: number) {
     return `${value.toFixed(1)}pt`;
   }
   return "0.0pt";
+}
+
+function formatProgressRatio(value: number) {
+  return `${Math.round(value * 100)}%`;
 }
 
 function getDeltaClassName(value: number) {

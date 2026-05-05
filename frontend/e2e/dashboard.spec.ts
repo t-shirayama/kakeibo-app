@@ -29,6 +29,9 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
   await expect(page.getByLabel("グラフ凡例").getByText("平均支出", { exact: true })).toBeVisible();
   await expect(page.locator(".chart-average-line")).toBeVisible();
   await expect(page.getByRole("heading", { name: "今月の気づき" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "予算進捗" })).toBeVisible();
+  await expect(page.getByText(/予算(内です|は.*超過しています)/)).toBeVisible();
+  await expect(page.getByLabel("カテゴリ別予算進捗").getByText("食費")).toBeVisible();
   await expect(page.locator(".insight-card")).toHaveCount(3);
   await expect(page.getByRole("heading", { name: "カテゴリ別支出（前月比）" })).toBeVisible();
   await expectCategoryAmountsToBeDescending(page);

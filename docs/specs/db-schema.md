@@ -68,6 +68,7 @@ UUIDはMySQL上では `CHAR(36)` として保存する。
 | name | string | カテゴリ名 |
 | color | string | 表示色 |
 | description | string | 説明 |
+| monthly_budget | integer | 月次予算。未設定時はNULL |
 | is_active | boolean | 有効状態 |
 | created_at | datetime | 作成日時 |
 | updated_at | datetime | 更新日時 |
