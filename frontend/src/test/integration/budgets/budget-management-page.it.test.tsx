@@ -4,7 +4,7 @@ import { BudgetManagementPage } from "@/features/budgets/budget-management-page"
 import { api } from "@/lib/api";
 import { renderWithRoute, setupIntegrationUser } from "@/test/integration/helpers";
 import { dashboardSummary, mockCategories } from "@/test/msw/fixtures";
-import { setMockUrl } from "@/test/navigation";
+import { getMockRouter, setMockUrl } from "@/test/navigation";
 
 describe("BudgetManagementPage integration", () => {
   it("予算設定タブでカテゴリ別の月次予算を更新して一覧へ反映する", async () => {
@@ -48,6 +48,8 @@ describe("BudgetManagementPage integration", () => {
     const view = renderWithRoute(<BudgetManagementPage />, "/budgets?month=2026-05");
     const user = setupIntegrationUser();
     await user.click(screen.getByRole("button", { name: "予実確認" }));
+    await waitFor(() => expect(getMockRouter().replace).toHaveBeenCalledWith("/budgets?month=2026-05&tab=actuals"));
+    view.rerender(<BudgetManagementPage />);
 
     expect(await screen.findByText("2026年5月の予算進捗")).toBeInTheDocument();
     expect(screen.getByText(/予算は.*800.*超過しています/)).toBeInTheDocument();
