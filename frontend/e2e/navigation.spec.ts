@@ -9,6 +9,7 @@ const routes = [
   ["予算管理", "/budgets"],
   ["アップロード", "/upload"],
   ["カテゴリ管理", "/categories"],
+  ["監査ログ", "/audit-logs"],
   ["設定", "/settings"],
 ] as const;
 

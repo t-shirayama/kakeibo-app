@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   CalendarDays,
+  ClipboardList,
   FileText,
   FileUp,
   ListTree,
@@ -26,6 +27,7 @@ const navItems = [
 ];
 
 const utilityNavItems = [
+  { href: "/audit-logs", label: "監査ログ", icon: ClipboardList },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 
