@@ -328,4 +328,4 @@ def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Sessio
     )
 
     assert storage.deleted_paths == [stored_file_path]
-    assert db_session.get(UserModel, str(USER_ID)).deleted_at is not None
+    assert db_session.get(UserModel, str(USER_ID)).deleted_at is None

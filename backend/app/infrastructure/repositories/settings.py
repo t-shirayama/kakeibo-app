@@ -13,7 +13,6 @@ from app.infrastructure.models.password_reset_token import PasswordResetTokenMod
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.transaction import TransactionModel
 from app.infrastructure.models.upload import UploadModel
-from app.infrastructure.models.user import UserModel
 from app.infrastructure.models.user_setting import UserSettingModel
 
 
@@ -80,11 +79,6 @@ class SettingsRepository:
         ).all()
         for override in income_overrides:
             self._session.delete(override)
-
-        user = self._session.get(UserModel, str(user_id))
-        if user is not None and user.deleted_at is None:
-            user.deleted_at = now
-            user.updated_at = now
 
         refresh_tokens = self._session.scalars(
             select(RefreshTokenModel).where(

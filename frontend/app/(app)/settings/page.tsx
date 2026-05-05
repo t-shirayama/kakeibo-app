@@ -58,7 +58,7 @@ export default function SettingsPage() {
   async function handleDeleteAllData() {
     const action = await showMessageDialog({
       title: "全データを削除しますか？",
-      description: <p>明細、カテゴリ、アップロード履歴、保存済みPDF原本、ユーザー情報が削除されます。</p>,
+      description: <p>明細、カテゴリ、アップロード履歴、収入設定、保存済みPDF原本が削除されます。</p>,
       tone: "danger",
       actions: [
         { id: "cancel", label: "キャンセル", variant: "secondary" },
@@ -144,7 +144,7 @@ export default function SettingsPage() {
           <AlertTriangle size={20} aria-hidden="true" />
           <div>
             <h2 className="panel-title">全データ削除</h2>
-            <p>明細、カテゴリ、アップロード履歴、保存済みPDF原本、ユーザー情報を削除対象にします。</p>
+            <p>明細、カテゴリ、アップロード履歴、収入設定、保存済みPDF原本を削除対象にします。</p>
           </div>
         </div>
         <div className="delete-controls">
