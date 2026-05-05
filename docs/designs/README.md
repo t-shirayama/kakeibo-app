@@ -30,3 +30,12 @@
 ```powershell
 docker compose run --rm -e DOC_SCREENSHOT_CAPTURE=1 e2e npx playwright test docs-screenshots.spec.ts
 ```
+
+更新時は次の順番を守る。
+
+1. 既存の現行スクリーンショットを `archive/screen-updates/<YYYY-MM-DD>/` へ退避する。
+2. `frontend/e2e/docs-screenshots.spec.ts` を正として新しい画像を生成する。
+3. 生成した PNG を `docs/designs/` へ反映する。
+4. この一覧と README の画面イメージを同じ作業内で更新する。
+
+撮影比率や対象画面は、原則として `frontend/e2e/docs-screenshots.spec.ts` に集約し、画面追加時は同ファイルとこの一覧を同時に更新する。

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kakeibo Screen Screenshot Maintenance"
+  short_description: "Update, archive, and sync app screen screenshots"
+  default_prompt: "Use $kakeibo-screen-screenshot-maintenance to refresh the current app screenshots and sync the related docs."
+policy:
+  allow_implicit_invocation: true
