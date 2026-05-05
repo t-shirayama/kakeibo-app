@@ -30,7 +30,7 @@ jobs:
       - name: ドキュメント未確定事項チェック
         shell: bash
         run: |
-          matches="$(rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml" | rg -v 'rg "確認事項\|未決定事項\|TODO\|TBD\|要確認" docs \.codex -g "\*\.md" -g "\*\.toml"' || true)"
+          matches="$(rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml" | rg -v 'rg "確認事項.*docs \.codex -g "\*\.md" -g "\*\.toml"' || true)"
           if [ -n "$matches" ]; then
             echo "$matches"
             echo "未確定事項が残っています。"

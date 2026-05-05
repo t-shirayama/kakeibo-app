@@ -42,6 +42,7 @@
 - フロントエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:unit`、Integration Test だけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:integration` を使う。どちらもバックエンドやMySQL起動に依存させない。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとする。
 - Alembic適用確認は `docker compose run --rm backend python -m alembic upgrade head` を使う。
+- `frontend/Dockerfile.e2e`、`frontend/package.json`、`frontend/package-lock.json`、`docker-compose.yml` を変更した場合は、CIへ出す前に `docker compose build e2e` でE2E実行環境の build を確認する。
 
 ## CI と自動化
 
@@ -51,6 +52,7 @@
 - `test` では Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを分けて実行する。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
 - バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
+- clone 後は `scripts/install-git-hooks.ps1` または `scripts/install-git-hooks.sh` で `core.hooksPath=.githooks` を設定し、`push` 前に `requirements.lock` 整合性チェックと、E2E関連変更時の `docker compose build e2e` を自動実行する。
 - 依存更新は Dependabot で管理し、少なくとも `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile の更新PRを週次で自動作成する。
 
 ## ドキュメント品質チェック

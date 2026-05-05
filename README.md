@@ -97,6 +97,20 @@ docker compose up
 docker compose up --build
 ```
 
+clone 後に一度だけ Git hooks を有効化します。
+
+Windows PowerShell:
+
+```powershell
+.\scripts\install-git-hooks.ps1
+```
+
+macOS / Linux:
+
+```bash
+./scripts/install-git-hooks.sh
+```
+
 確認先:
 
 - フロントエンド: http://localhost:3000
@@ -128,6 +142,11 @@ npm run test:e2e
 - `frontend/Dockerfile.dev`: `docker compose up` や `docker compose run --rm --no-deps frontend ...` で使う通常開発用
 - `frontend/Dockerfile.e2e`: `docker compose run --rm e2e` で使う Playwright + E2E用バックエンド実行環境付き
 - `frontend/Dockerfile.prod`: 本番相当の `next build` / `next start` を確認するためのビルド用
+
+Git hooks を有効化すると、`push` 前に次を自動確認します。
+
+- `backend/pyproject.toml` か `backend/requirements.lock` を含む変更がある場合: `docker compose run --rm backend python scripts/generate_requirements_lock.py --check`
+- `frontend/Dockerfile.e2e`、`frontend/package.json`、`frontend/package-lock.json`、`docker-compose.yml` を含む変更がある場合: `docker compose build e2e`
 
 ### 本番デプロイ前のCookie確認
 
@@ -236,6 +255,12 @@ docker compose run --rm backend python scripts/generate_openapi_client.py
 
 ```powershell
 docker compose run --rm backend python scripts/generate_requirements_lock.py
+```
+
+`frontend/Dockerfile.e2e`、`frontend/package.json`、`frontend/package-lock.json`、`docker-compose.yml` を変更した場合は、CI前に次を実行します。
+
+```powershell
+docker compose build e2e
 ```
 
 未確定事項チェックは、CIではこのコマンドをベースにしつつ、ルール文書に記載されたコマンド自体の説明行だけ除外して判定します。

@@ -1,0 +1,51 @@
+#!/bin/sh
+set -eu
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+resolve_base_ref() {
+  if upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)"; then
+    printf '%s' "$upstream_ref"
+    return 0
+  fi
+
+  if git show-ref --verify --quiet refs/remotes/origin/main; then
+    printf '%s' "origin/main"
+    return 0
+  fi
+
+  return 1
+}
+
+collect_changed_files() {
+  if base_ref="$(resolve_base_ref)"; then
+    git diff --name-only "$base_ref"...HEAD
+    return 0
+  fi
+
+  git ls-files
+}
+
+CHANGED_FILES="$(collect_changed_files)"
+
+needs_requirements_lock_check=false
+needs_e2e_build=false
+
+if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^backend/(pyproject\.toml|requirements\.lock|scripts/generate_requirements_lock\.py)$'; then
+  needs_requirements_lock_check=true
+fi
+
+if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(frontend/(Dockerfile\.e2e|package\.json|package-lock\.json)|docker-compose\.yml)$'; then
+  needs_e2e_build=true
+fi
+
+if [ "$needs_requirements_lock_check" = true ]; then
+  echo "pre-push: backend requirements.lock の整合性を確認します。"
+  docker compose run --rm backend python scripts/generate_requirements_lock.py --check
+fi
+
+if [ "$needs_e2e_build" = true ]; then
+  echo "pre-push: E2E イメージの build を確認します。"
+  docker compose build e2e
+fi
