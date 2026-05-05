@@ -17,13 +17,6 @@
 
 ## 優先度B
 
-- [ ] Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する
-  - 目的: ドメインルール、純粋関数、表示用ヘルパーの退行を軽量な単体テストで早期に検出できるようにする。
-  - 対象: `backend/tests/unit/`、`frontend/src/test/unit/`、`frontend/src/lib/`、`backend/tests/unit/conftest.py`、必要に応じて `docs/specs/development-workflow.md`
-  - 対応: 金額、日付、カテゴリ表示、ユーザー分離に関わる純粋ロジックの未カバー箇所を追加する。重複fixtureやテストデータ生成処理は、可読性を落とさない範囲で共通helperへ寄せる。
-  - 完了条件: backend / frontend の unit test が独立して実行でき、重複したテストデータ作成が減り、共通helperの利用方針がドキュメントまたはテスト内の構造で分かる。
-  - 根拠: テスト層分割後、unit test のカバレッジと保守性を継続的に高めるため。
-
 - [ ] Integration Test の共通fixtureとAPI/画面helperを整備する
   - 目的: 結合テスト追加時の準備処理を共通化し、シナリオごとの差分だけを読みやすくする。
   - 対象: `backend/tests/integration/`、`frontend/src/test/integration/`、`frontend/src/test/msw/`、必要に応じて `docs/specs/development-workflow.md`

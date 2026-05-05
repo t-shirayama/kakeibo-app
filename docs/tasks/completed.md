@@ -4,6 +4,11 @@
 
 ## 最近の完了タスク
 
+- [x] Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する
+  - 対応: `backend/tests/unit/application/test_auth_security.py` にパスワードポリシーの失敗理由、トークンハッシュ、CSRF のセッション不一致、refresh rotation の unit test を追加し、`backend/tests/unit/domain/test_money_jpy.py` に `UtcDateTime` の検証を追加した。`backend/tests/unit/conftest.py` に in-memory SQLite の `sqlite_session_factory` fixture を追加して、`backend/tests/unit/presentation/test_api.py` の重複していたDB準備処理を helper と共通 fixture に寄せた。フロントエンドでは `frontend/src/test/unit/lib/format.test.ts` と `frontend/src/test/unit/lib/transaction-category.test.ts` を拡充し、カテゴリ表示入力の小さな helper へ重複を寄せた。
+  - 確認: `docker compose run --rm --no-deps backend python -m pytest tests/unit` が 63 件通過し、`docker compose run --rm --no-deps frontend npm run test:unit` が 6 件通過した。フロントエンドは初回に `vitest: not found` となったため、`docker compose run --rm --no-deps frontend npm install` を実行して `frontend-node-modules` を更新後に再実行した。
+  - 根拠: `docs/tasks/open.md` の優先度B「Unit Test を拡充し、重複fixtureと小さなヘルパーを整理する」。
+
 - [x] Unit / Integration / E2E のテスト戦略を棚卸しし、拡充計画を最新化する
   - 対応: `backend/tests/unit/`、`backend/tests/integration/`、`frontend/src/test/unit/`、`frontend/src/test/integration/`、`frontend/e2e/` を棚卸しし、各テスト層の責務、重複しやすい観点、未カバー領域、helper 化の優先箇所を整理した。あわせて `docs/specs/development-workflow.md` に 2026-05 時点のテスト資産、層ごとの責務、拡充順、タスク化の判断基準を追記し、`docs/e2e/index.md` に E2E に残す観点、Integration Test へ寄せる観点、helper の責務、直近の見直し順を反映した。
   - 確認: `docs/tasks/open.md` の後続タスクが Unit / Integration / E2E の順で実行可能な粒度になっていることを見直し、ドキュメント更新後に未確定事項チェックを実行した。

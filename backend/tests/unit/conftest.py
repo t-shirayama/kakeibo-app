@@ -11,7 +11,7 @@ from app.infrastructure.models import Base
 
 
 @pytest.fixture
-def db_session() -> Iterator[Session]:
+def sqlite_session_factory() -> Iterator[sessionmaker]:
     # リポジトリテストはMySQLに依存させず、インメモリSQLiteで永続化境界だけを検証する。
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
@@ -21,6 +21,12 @@ def db_session() -> Iterator[Session]:
     )
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    yield SessionLocal
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def db_session(sqlite_session_factory: sessionmaker) -> Iterator[Session]:
+    SessionLocal = sqlite_session_factory
     with SessionLocal() as session:
         yield session
-    Base.metadata.drop_all(engine)

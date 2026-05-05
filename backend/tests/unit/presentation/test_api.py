@@ -7,14 +7,11 @@ from uuid import UUID
 from zipfile import ZipFile
 
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from app.application.auth.ports import UserRecord
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
-from app.infrastructure.models import Base
 from app.infrastructure.models.audit_log import AuditLogModel
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
@@ -25,6 +22,29 @@ from app.presentation.api.dependencies import get_current_user
 
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
+
+
+def add_user(session: Session, *, email: str = "user@example.com", password_hash: str = "hash") -> None:
+    session.add(
+        UserModel(
+            id=str(USER_ID),
+            email=email,
+            password_hash=password_hash,
+            is_admin=False,
+        )
+    )
+
+
+def build_session_override(session_local: sessionmaker):
+    def override_session() -> Iterator[Session]:
+        with session_local() as session:
+            yield session
+
+    return override_session
+
+
+def override_user() -> UserRecord:
+    return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
 
 
 def test_health_and_csrf_endpoints() -> None:
@@ -41,34 +61,16 @@ def test_health_and_csrf_endpoints() -> None:
     assert csrf_response.headers["pragma"] == "no-cache"
 
 
-def test_password_reset_start_hides_token_in_production(monkeypatch) -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_password_reset_start_hides_token_in_production(monkeypatch, sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     with SessionLocal() as session:
-        session.add(
-            UserModel(
-                id=str(USER_ID),
-                email="user@example.com",
-                password_hash="hash",
-                is_admin=False,
-            )
-        )
+        add_user(session)
         session.commit()
-
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
 
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-32-bytes-minimum!!")
     get_settings.cache_clear()
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     client = TestClient(app)
     csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
     try:
@@ -94,37 +96,18 @@ def test_password_reset_start_hides_token_in_production(monkeypatch) -> None:
     with SessionLocal() as session:
         reset_tokens = session.query(PasswordResetTokenModel).all()
         assert len(reset_tokens) == 1
-    Base.metadata.drop_all(engine)
 
 
-def test_password_reset_start_returns_token_in_test_environment(monkeypatch) -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_password_reset_start_returns_token_in_test_environment(monkeypatch, sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     with SessionLocal() as session:
-        session.add(
-            UserModel(
-                id=str(USER_ID),
-                email="user@example.com",
-                password_hash="hash",
-                is_admin=False,
-            )
-        )
+        add_user(session)
         session.commit()
-
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
 
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-32-bytes-minimum!!")
     get_settings.cache_clear()
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     client = TestClient(app)
     csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
     try:
@@ -142,7 +125,6 @@ def test_password_reset_start_returns_token_in_test_environment(monkeypatch) -> 
     assert body["status"] == "ok"
     assert isinstance(body["reset_token"], str)
     assert body["reset_token"]
-    Base.metadata.drop_all(engine)
 
 
 def test_malformed_upload_multipart_returns_api_error_without_internal_error() -> None:
@@ -167,24 +149,12 @@ def test_malformed_upload_multipart_returns_api_error_without_internal_error() -
     assert "Internal server error" not in response.text
 
 
-def test_password_reset_rejects_csrf_token_from_different_session(monkeypatch) -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
-
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
-
+def test_password_reset_rejects_csrf_token_from_different_session(monkeypatch, sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-32-bytes-minimum!!")
     get_settings.cache_clear()
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     client_a = TestClient(app)
     client_b = TestClient(app)
     token_a = client_a.get("/api/auth/csrf").json()["csrf_token"]
@@ -198,7 +168,6 @@ def test_password_reset_rejects_csrf_token_from_different_session(monkeypatch) -
     finally:
         app.dependency_overrides.clear()
         get_settings.cache_clear()
-        Base.metadata.drop_all(engine)
 
     assert response.status_code == 403
     payload = response.json()
@@ -206,59 +175,29 @@ def test_password_reset_rejects_csrf_token_from_different_session(monkeypatch) -
     assert payload["error"]["message"] == "CSRF token does not match this session."
 
 
-def test_settings_endpoint_with_overridden_user() -> None:
+def test_settings_endpoint_with_overridden_user(sqlite_session_factory: sessionmaker) -> None:
     # APIテストでは認証依存を差し替え、画面が必要とするレスポンス形だけを確認する。
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    SessionLocal = sqlite_session_factory
     with SessionLocal() as session:
-        session.add(
-            UserModel(
-                id=str(USER_ID),
-                email="user@example.com",
-                password_hash="hash",
-                is_admin=False,
-            )
-        )
+        add_user(session)
         session.commit()
 
-    def override_session() -> Iterator[Session]:
-        # FastAPIの依存注入に合わせ、テスト用DBセッションをyieldで渡す。
-        with SessionLocal() as session:
-            yield session
-
-    def override_user() -> UserRecord:
-        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
-
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     app.dependency_overrides[get_current_user] = override_user
     try:
         response = TestClient(app).get("/api/settings")
     finally:
         app.dependency_overrides.clear()
-        Base.metadata.drop_all(engine)
 
     assert response.status_code == 200
     assert response.json()["currency"] == "JPY"
 
 
-def test_income_settings_create_override_and_apply_due_transaction() -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_income_settings_create_override_and_apply_due_transaction(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     category_id = "22222222-2222-2222-2222-222222222222"
     with SessionLocal() as session:
-        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        add_user(session)
         session.add(
             CategoryModel(
                 id=category_id,
@@ -271,14 +210,7 @@ def test_income_settings_create_override_and_apply_due_transaction() -> None:
         )
         session.commit()
 
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
-
-    def override_user() -> UserRecord:
-        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
-
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     app.dependency_overrides[get_current_user] = override_user
     client = TestClient(app)
     csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
@@ -310,22 +242,14 @@ def test_income_settings_create_override_and_apply_due_transaction() -> None:
         assert rows[0].transaction_type == "income"
         assert rows[0].amount == 320000
         assert rows[0].source_format == "income_setting"
-        Base.metadata.drop_all(engine)
 
 
-def test_transaction_export_endpoint_applies_search_filters() -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_transaction_export_endpoint_applies_search_filters(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     daily_id = "22222222-2222-2222-2222-222222222222"
     food_id = "33333333-3333-3333-3333-333333333333"
     with SessionLocal() as session:
-        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        add_user(session)
         session.add_all(
             [
                 CategoryModel(id=daily_id, user_id=str(USER_ID), name="日用品", color="#8B5CF6", is_active=True),
@@ -352,14 +276,7 @@ def test_transaction_export_endpoint_applies_search_filters() -> None:
         )
         session.commit()
 
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
-
-    def override_user() -> UserRecord:
-        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
-
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     app.dependency_overrides[get_current_user] = override_user
     try:
         response = TestClient(app).get(
@@ -373,7 +290,6 @@ def test_transaction_export_endpoint_applies_search_filters() -> None:
         )
     finally:
         app.dependency_overrides.clear()
-        Base.metadata.drop_all(engine)
 
     assert response.status_code == 200
     with ZipFile(BytesIO(response.content)) as archive:
@@ -387,19 +303,12 @@ def test_transaction_export_endpoint_applies_search_filters() -> None:
     assert "成城石井" not in workbook_text
 
 
-def test_transaction_list_response_normalizes_inactive_category_for_display() -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_transaction_list_response_normalizes_inactive_category_for_display(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     inactive_id = "66666666-6666-6666-6666-666666666666"
     uncategorized_id = "77777777-7777-7777-7777-777777777777"
     with SessionLocal() as session:
-        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        add_user(session)
         session.add_all(
             [
                 CategoryModel(id=inactive_id, user_id=str(USER_ID), name="食費", color="#EF4444", is_active=False),
@@ -417,20 +326,12 @@ def test_transaction_list_response_normalizes_inactive_category_for_display() ->
         )
         session.commit()
 
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
-
-    def override_user() -> UserRecord:
-        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
-
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     app.dependency_overrides[get_current_user] = override_user
     try:
         response = TestClient(app).get("/api/transactions")
     finally:
         app.dependency_overrides.clear()
-        Base.metadata.drop_all(engine)
 
     assert response.status_code == 200
     item = response.json()["items"][0]
@@ -440,18 +341,11 @@ def test_transaction_list_response_normalizes_inactive_category_for_display() ->
     assert item["category_color"] == "#6B7280"
 
 
-def test_transaction_list_defaults_to_page_size_10() -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_transaction_list_defaults_to_page_size_10(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     category_id = "99999999-9999-9999-9999-999999999999"
     with SessionLocal() as session:
-        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        add_user(session)
         session.add(CategoryModel(id=category_id, user_id=str(USER_ID), name="食費", color="#EF4444", is_active=True))
         session.add_all(
             [
@@ -469,20 +363,12 @@ def test_transaction_list_defaults_to_page_size_10() -> None:
         )
         session.commit()
 
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
-
-    def override_user() -> UserRecord:
-        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
-
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     app.dependency_overrides[get_current_user] = override_user
     try:
         response = TestClient(app).get("/api/transactions")
     finally:
         app.dependency_overrides.clear()
-        Base.metadata.drop_all(engine)
 
     assert response.status_code == 200
     payload = response.json()
@@ -492,17 +378,10 @@ def test_transaction_list_defaults_to_page_size_10() -> None:
     assert len(payload["items"]) == 10
 
 
-def test_audit_log_endpoint_lists_filtered_rows() -> None:
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        future=True,
-    )
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+def test_audit_log_endpoint_lists_filtered_rows(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
     with SessionLocal() as session:
-        session.add(UserModel(id=str(USER_ID), email="user@example.com", password_hash="hash", is_admin=False))
+        add_user(session)
         session.add_all(
             [
                 AuditLogModel(
@@ -525,20 +404,12 @@ def test_audit_log_endpoint_lists_filtered_rows() -> None:
         )
         session.commit()
 
-    def override_session() -> Iterator[Session]:
-        with SessionLocal() as session:
-            yield session
-
-    def override_user() -> UserRecord:
-        return UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
-
-    app.dependency_overrides[get_db_session] = override_session
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
     app.dependency_overrides[get_current_user] = override_user
     try:
         response = TestClient(app).get("/api/audit-logs", params={"action": "upload.failed"})
     finally:
         app.dependency_overrides.clear()
-        Base.metadata.drop_all(engine)
 
     assert response.status_code == 200
     payload = response.json()
