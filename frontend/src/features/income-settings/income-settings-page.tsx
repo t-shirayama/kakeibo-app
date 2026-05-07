@@ -2,8 +2,9 @@
 
 import { CalendarPlus, Plus, Save, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
+import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { categoriesQueryKeys } from "@/features/categories/queryKeys";
@@ -18,30 +19,36 @@ type OverrideDraft = {
   day: string;
 };
 
+type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
+
 export default function IncomeSettingsPage() {
   const queryClient = useQueryClient();
+  const currentMonth = getCurrentYearMonth();
   const [newMemberName, setNewMemberName] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newDay, setNewDay] = useState("25");
   const [newCategoryId, setNewCategoryId] = useState("");
+  const [newStartMonth, setNewStartMonth] = useState(currentMonth);
+  const [newEndMonth, setNewEndMonth] = useState("");
   const [overrideDrafts, setOverrideDrafts] = useState<Record<string, OverrideDraft>>({});
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
 
   const incomeSettingsQuery = useQuery({ queryKey: incomeSettingsQueryKeys.all, queryFn: api.list_income_settings });
   const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
-  const categories = categoriesQuery.data ?? [];
-  const incomeSettings = incomeSettingsQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const incomeSettings = useMemo(() => incomeSettingsQuery.data ?? [], [incomeSettingsQuery.data]);
   const categoryById = useMemo(() => new Map(categories.map((category) => [category.category_id, category])), [categories]);
   const defaultCategoryId = newCategoryId || categories.find((category) => category.name.includes("給与"))?.category_id || categories[0]?.category_id || "";
 
   const createMutation = useMutation({
     mutationFn: api.create_income_setting,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all });
-      setNewMemberName("");
-      setNewAmount("");
-      setNewDay("25");
-      setNewCategoryId("");
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: incomeSettingsQueryKeys.all }),
   });
   const updateMutation = useMutation({
     mutationFn: ({ incomeSettingId, request }: { incomeSettingId: string; request: IncomeSettingRequest }) =>
@@ -85,6 +92,33 @@ export default function IncomeSettingsPage() {
     overrideMutation.isPending ||
     deleteOverrideMutation.isPending;
 
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  async function handleDeleteIncomeSetting(setting: IncomeSettingDto) {
+    const action = await showMessageDialog({
+      title: "この収入設定を削除しますか？",
+      description: <p>対象「{setting.member_name}」の収入設定と月別変更が削除されます。</p>,
+      tone: "danger",
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "delete", label: "削除する", variant: "danger" },
+      ],
+    });
+    if (action === "delete") {
+      deleteMutation.mutate(setting.income_setting_id);
+    }
+  }
+
   function createIncomeSetting() {
     if (!defaultCategoryId) {
       return;
@@ -94,6 +128,8 @@ export default function IncomeSettingsPage() {
       category_id: defaultCategoryId,
       base_amount: Number(newAmount),
       base_day: Number(newDay),
+      start_month: newStartMonth,
+      end_month: newEndMonth || null,
     });
   }
 
@@ -105,6 +141,8 @@ export default function IncomeSettingsPage() {
         category_id: String(formData.get("category_id") ?? ""),
         base_amount: Number(formData.get("base_amount") ?? 0),
         base_day: Number(formData.get("base_day") ?? 1),
+        start_month: String(formData.get("start_month") ?? currentMonth),
+        end_month: normalizeOptionalMonth(formData.get("end_month")),
       },
     });
   }
@@ -134,7 +172,7 @@ export default function IncomeSettingsPage() {
 
   return (
     <>
-      <PageHeader title="収入設定" subtitle="家族ごとの毎月収入を登録し、発生日に明細へ自動追加します。" />
+      <PageHeader title="収入設定" subtitle="家族ごとの毎月収入を登録し、指定期間の発生日に合わせて明細へ自動追加します。" />
 
       {apiError ? <ApiErrorAlert error={apiError} /> : null}
 
@@ -157,7 +195,7 @@ export default function IncomeSettingsPage() {
                 <label htmlFor="new-income-amount">毎月の金額</label>
                 <input
                   id="new-income-amount"
-                  className="input"
+                  className="input numeric-input-plain"
                   type="number"
                   inputMode="numeric"
                   min="0"
@@ -176,6 +214,26 @@ export default function IncomeSettingsPage() {
                   max="31"
                   value={newDay}
                   onChange={(event) => setNewDay(event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="new-income-start-month">登録開始月</label>
+                <input
+                  id="new-income-start-month"
+                  className="input"
+                  type="month"
+                  value={newStartMonth}
+                  onChange={(event) => setNewStartMonth(event.target.value)}
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="new-income-end-month">登録終了月</label>
+                <input
+                  id="new-income-end-month"
+                  className="input"
+                  type="month"
+                  value={newEndMonth}
+                  onChange={(event) => setNewEndMonth(event.target.value)}
                 />
               </div>
             </div>
@@ -199,10 +257,10 @@ export default function IncomeSettingsPage() {
               className="button"
               type="button"
               onClick={createIncomeSetting}
-              disabled={!newMemberName.trim() || !newAmount || !defaultCategoryId || isBusy}
+              disabled={!newMemberName.trim() || !newAmount || !defaultCategoryId || createMutation.isPending}
             >
               <Plus size={15} aria-hidden="true" />
-              追加
+              {createMutation.isPending ? "追加中" : "追加"}
             </button>
           </div>
         </div>
@@ -213,7 +271,13 @@ export default function IncomeSettingsPage() {
             <div className="settings-row">
               <div>
                 <h2>毎月の明細</h2>
-                <p>発生日を迎えた月の収入明細を、重複しないよう自動で追加します。</p>
+                <p>登録開始月から登録終了月までの範囲で、発生日を迎えた月の収入明細を重複しないよう自動で追加します。</p>
+              </div>
+            </div>
+            <div className="settings-row">
+              <div>
+                <h2>期間指定と過去月の登録</h2>
+                <p>登録開始月を過去の月にすると、指定期間内で発生日を過ぎている月の収入もまとめて自動登録します。登録終了月を空欄にすると継続扱いです。</p>
               </div>
             </div>
             <div className="settings-row">
@@ -248,7 +312,7 @@ export default function IncomeSettingsPage() {
                   >
                     <input className="input" name="member_name" aria-label="対象" defaultValue={setting.member_name} />
                     <input
-                      className="input"
+                      className="input numeric-input-plain"
                       name="base_amount"
                       aria-label={`${setting.member_name}の毎月の金額`}
                       type="number"
@@ -266,6 +330,20 @@ export default function IncomeSettingsPage() {
                       max="31"
                       defaultValue={setting.base_day}
                     />
+                    <input
+                      className="input"
+                      name="start_month"
+                      aria-label={`${setting.member_name}の登録開始月`}
+                      type="month"
+                      defaultValue={setting.start_month}
+                    />
+                    <input
+                      className="input"
+                      name="end_month"
+                      aria-label={`${setting.member_name}の登録終了月`}
+                      type="month"
+                      defaultValue={setting.end_month ?? ""}
+                    />
                     <select className="select" name="category_id" aria-label={`${setting.member_name}のカテゴリ`} defaultValue={setting.category_id}>
                       {categories.map((item) => (
                         <option value={item.category_id} key={item.category_id}>
@@ -280,11 +358,7 @@ export default function IncomeSettingsPage() {
                       className="icon-button"
                       type="button"
                       aria-label={`${setting.member_name}を削除`}
-                      onClick={() => {
-                        if (window.confirm("この収入設定を削除しますか？")) {
-                          deleteMutation.mutate(setting.income_setting_id);
-                        }
-                      }}
+                      onClick={() => void handleDeleteIncomeSetting(setting)}
                       disabled={isBusy}
                     >
                       <Trash2 size={15} aria-hidden="true" />
@@ -293,6 +367,7 @@ export default function IncomeSettingsPage() {
                   <div className="income-setting-summary">
                     <span>{formatCurrency(setting.base_amount)}</span>
                     <span>毎月{setting.base_day}日</span>
+                    <span>{formatIncomeSettingPeriod(setting.start_month, setting.end_month)}</span>
                     <IncomeCategoryBadge category={category} />
                   </div>
                   <div className="income-override-row">
@@ -305,7 +380,7 @@ export default function IncomeSettingsPage() {
                       onChange={(event) => updateOverrideDraft(setting, { targetMonth: event.target.value })}
                     />
                     <input
-                      className="input"
+                      className="input numeric-input-plain"
                       type="number"
                       inputMode="numeric"
                       min="0"
@@ -360,16 +435,50 @@ export default function IncomeSettingsPage() {
           </div>
         )}
       </section>
+      {messageDialog ? (
+        <MessageDialog
+          open
+          title={messageDialog.title}
+          description={messageDialog.description}
+          actions={messageDialog.actions}
+          tone={messageDialog.tone}
+          onAction={messageDialog.onAction}
+          onOpenChange={(open) => {
+            if (!open) {
+              messageDialog.onAction("cancel");
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 }
 
 function defaultOverrideDraft(setting: IncomeSettingDto): OverrideDraft {
   return {
-    targetMonth: new Date().toISOString().slice(0, 7),
+    targetMonth: getCurrentYearMonth(),
     amount: String(setting.base_amount),
     day: String(setting.base_day),
   };
+}
+
+function normalizeOptionalMonth(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+  return value;
+}
+
+function formatIncomeSettingPeriod(startMonth: string, endMonth: string | null) {
+  return endMonth ? `${startMonth} - ${endMonth}` : `${startMonth} から継続`;
+}
+
+function getCurrentYearMonth() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date()).slice(0, 7);
 }
 
 function IncomeCategoryBadge({ category }: { category: CategoryDto | undefined }) {

@@ -65,6 +65,10 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
 
   await page.getByRole("button", { name: "フィルタ解除" }).click();
   await expect(page).not.toHaveURL(/keyword=/);
+  await expect(page).toHaveURL(/period=all/);
+  await expect(page.getByLabel("開始日")).toHaveValue("");
+  await expect(page.getByLabel("終了日")).toHaveValue("");
+  await expect(page.getByLabel("適用中のフィルタ").getByText("条件なし")).toBeVisible();
   await setTransactionDateRange(page, "2026-01-01", "2026-12-31");
   await page.getByLabel("カテゴリ絞り込み").selectOption({ label: "すべてのカテゴリ" });
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();

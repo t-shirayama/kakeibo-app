@@ -12,6 +12,7 @@ from app.application.common import Page
 from app.application.settings import SettingsUseCases
 from app.domain.entities import Category, Transaction, TransactionType, UploadStatus
 from app.domain.value_objects import MoneyJPY
+from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.upload import UploadModel
@@ -260,6 +261,29 @@ def test_category_repository_can_disable_and_enable_category(db_session: Session
     assert enabled.is_active is True
 
 
+def test_category_repository_restores_soft_deleted_category_with_same_name(db_session: Session) -> None:
+    add_user(db_session)
+    repository = CategoryRepository(db_session)
+    original = repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
+
+    repository.deactivate_category(user_id=USER_ID, category_id=original.id)
+
+    restored = repository.create_category(
+        Category(
+            id=uuid4(),
+            user_id=USER_ID,
+            name="未分類",
+            color="#94A3B8",
+            description="復元された未分類",
+        )
+    )
+
+    assert restored.id == original.id
+    assert restored.color == "#94A3B8"
+    assert restored.description == "復元された未分類"
+    assert restored.is_active is True
+
+
 def test_auth_repository_returns_token_expiration_as_utc_aware_datetime(db_session: Session) -> None:
     add_user(db_session)
     refresh_expires_at = datetime(2026, 5, 6, 9, 0)
@@ -296,6 +320,9 @@ def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Sessio
     hasher = PasswordHasher()
     password_hash = hasher.hash_password("StrongPass123!")
     add_user(db_session, password_hash=password_hash)
+    category_repository = CategoryRepository(db_session)
+    uncategorized = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="未分類", color="#6B7280"))
+    removable = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
     stored_file_path = f"storage/uploads/{USER_ID}/upload/original.pdf"
     db_session.add(
         UploadModel(
@@ -328,4 +355,6 @@ def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Sessio
     )
 
     assert storage.deleted_paths == [stored_file_path]
-    assert db_session.get(UserModel, str(USER_ID)).deleted_at is not None
+    assert db_session.get(UserModel, str(USER_ID)).deleted_at is None
+    assert db_session.get(CategoryModel, str(uncategorized.id)).deleted_at is None
+    assert db_session.get(CategoryModel, str(removable.id)).deleted_at is not None

@@ -337,6 +337,63 @@ def test_pdf_upload_records_failed_status_when_parser_raises(authenticated_api_c
     assert transactions_response.json()["total"] == 0
 
 
+def test_pdf_upload_restores_uncategorized_after_delete_all_user_data(
+    authenticated_api_client,
+    integration_user,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeParser:
+        def parse(self, pdf_bytes: bytes) -> list[ImportedCardTransaction]:
+            return [
+                ImportedCardTransaction(
+                    transaction_date=date(2026, 4, 28),
+                    shop_name="全削除後ストア",
+                    card_user_name="本人",
+                    payment_method="1回払い",
+                    amount=MoneyJPY(842),
+                    source_row_number=1,
+                    source_page_number=1,
+                    source_format="rakuten_card_pdf",
+                    source_hash="restore-after-delete-all",
+                )
+            ]
+
+    monkeypatch.setattr(bootstrap_container, "RakutenCardPdfParser", FakeParser)
+
+    delete_response = authenticated_api_client.client.request(
+        "DELETE",
+        "/api/settings/data",
+        headers={"X-CSRF-Token": authenticated_api_client.csrf_token},
+        json={"password": integration_user.password},
+    )
+    assert delete_response.status_code == 200
+
+    relogin_response = authenticated_api_client.client.post(
+        "/api/auth/login",
+        headers={"X-CSRF-Token": fetch_csrf_token(authenticated_api_client.client)},
+        json={"email": integration_user.email, "password": integration_user.password},
+    )
+    assert relogin_response.status_code == 200
+
+    upload_response = authenticated_api_client.post(
+        "/api/uploads",
+        files={"file": ("rakuten-statement.pdf", _build_rakuten_statement_pdf(), "application/pdf")},
+    )
+
+    assert upload_response.status_code == 200
+    payload = upload_response.json()
+    assert payload["status"] == "completed"
+    assert payload["imported_count"] == 1
+
+    categories_response = authenticated_api_client.get("/api/categories")
+    assert categories_response.status_code == 200
+    assert [item["name"] for item in categories_response.json()] == ["未分類"]
+
+    transactions_response = authenticated_api_client.get("/api/transactions", params={"page_size": 10})
+    assert transactions_response.status_code == 200
+    assert transactions_response.json()["items"][0]["category_name"] == "未分類"
+
+
 def test_category_and_upload_list_are_scoped_to_authenticated_user(authenticated_api_client, integration_user) -> None:
     other_user_id = uuid4()
     with db_session.SessionLocal() as session:

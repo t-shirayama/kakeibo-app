@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kakeibo Test Rerun And Fix"
+  short_description: "Rerun repo test suites and repair failures"
+  default_prompt: "Use $kakeibo-test-rerun-and-fix to rerun the full test suites for this repository, fix failures, and report the final verification results."
+policy:
+  allow_implicit_invocation: true

@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.application.auth.ports import UserRecord
+from app.application.income_settings import IncomeSettingCommand
+from app.bootstrap.container import build_income_settings_use_cases
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.models.audit_log import AuditLogModel
@@ -219,30 +221,80 @@ def test_income_settings_create_override_and_apply_due_transaction(sqlite_sessio
         create_response = client.post(
             "/api/income-settings",
             headers={"X-CSRF-Token": csrf_token},
-            json={"member_name": "夫", "category_id": category_id, "base_amount": 300000, "base_day": 1},
+            json={
+                "member_name": "夫",
+                "category_id": category_id,
+                "base_amount": 300000,
+                "base_day": 1,
+                "start_month": "2030-05",
+                "end_month": None,
+            },
         )
         assert create_response.status_code == 200
         income_setting_id = create_response.json()["income_setting_id"]
+        assert create_response.json()["start_month"] == "2030-05"
+        assert create_response.json()["end_month"] is None
 
         override_response = client.put(
-            f"/api/income-settings/{income_setting_id}/overrides/2026-05",
+            f"/api/income-settings/{income_setting_id}/overrides/2030-05",
             headers={"X-CSRF-Token": csrf_token},
             json={"amount": 320000, "day": 1},
         )
         assert override_response.status_code == 200
         assert override_response.json()["overrides"][0]["amount"] == 320000
 
-        list_response = client.get("/api/income-settings")
-        assert list_response.status_code == 200
     finally:
         app.dependency_overrides.clear()
 
     with SessionLocal() as session:
+        build_income_settings_use_cases(session).apply_due_transactions(user_id=USER_ID, today=date(2030, 5, 15))
         rows = session.query(TransactionModel).filter(TransactionModel.user_id == str(USER_ID)).all()
         assert len(rows) == 1
         assert rows[0].transaction_type == "income"
         assert rows[0].amount == 320000
         assert rows[0].source_format == "income_setting"
+
+
+def test_income_settings_apply_past_due_transactions_within_period(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
+    category_id = "12121212-2222-3333-4444-555555555555"
+    with SessionLocal() as session:
+        add_user(session)
+        session.add(
+            CategoryModel(
+                id=category_id,
+                user_id=str(USER_ID),
+                name="給与",
+                color="#16a36a",
+                description="期間付き収入",
+                monthly_budget=None,
+                is_active=True,
+            )
+        )
+        session.commit()
+        use_cases = build_income_settings_use_cases(session)
+        use_cases.create_setting(
+            user_id=USER_ID,
+            command=IncomeSettingCommand(
+                member_name="期間付き収入",
+                category_id=UUID(category_id),
+                base_amount=250000,
+                base_day=10,
+                start_month=date(2030, 3, 1),
+                end_month=date(2030, 5, 1),
+            ),
+        )
+        use_cases.apply_due_transactions(user_id=USER_ID, today=date(2030, 5, 15))
+
+        rows = (
+            session.query(TransactionModel)
+            .filter(TransactionModel.user_id == str(USER_ID), TransactionModel.transaction_type == "income")
+            .order_by(TransactionModel.transaction_date.asc())
+            .all()
+        )
+
+        assert [row.transaction_date for row in rows] == [date(2030, 3, 10), date(2030, 4, 10), date(2030, 5, 10)]
+        assert all(row.shop_name == "期間付き収入 収入" for row in rows)
 
 
 def test_transaction_export_endpoint_applies_search_filters(sqlite_session_factory: sessionmaker) -> None:

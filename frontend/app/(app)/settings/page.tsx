@@ -1,12 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Download, Save, Trash2 } from "lucide-react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
+import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
+
+type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -17,11 +26,7 @@ export default function SettingsPage() {
     darkMode?: boolean;
   }>({});
   const [confirmationText, setConfirmationText] = useState("");
-  const [auditAction, setAuditAction] = useState("");
-  const [auditResourceType, setAuditResourceType] = useState("");
-  const [auditDateFrom, setAuditDateFrom] = useState("");
-  const [auditDateTo, setAuditDateTo] = useState("");
-  const [auditPage, setAuditPage] = useState(1);
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
   const pageSize = draftSettings.pageSize ?? String(settingsQuery.data?.page_size ?? 10);
   const dateFormat = draftSettings.dateFormat ?? settingsQuery.data?.date_format ?? "yyyy/MM/dd";
   const darkMode = draftSettings.darkMode ?? settingsQuery.data?.dark_mode ?? false;
@@ -37,22 +42,33 @@ export default function SettingsPage() {
     mutationFn: () => api.delete_all_data(confirmationText),
   });
   const exportMutation = useMutation({ mutationFn: api.export_user_data });
-  const auditLogsQuery = useQuery({
-    queryKey: ["audit-logs", auditAction, auditResourceType, auditDateFrom, auditDateTo, auditPage],
-    queryFn: () =>
-      api.list_audit_logs({
-        page: auditPage,
-        page_size: 10,
-        action: auditAction || undefined,
-        resource_type: auditResourceType || undefined,
-        date_from: auditDateFrom || undefined,
-        date_to: auditDateTo || undefined,
-      }),
-  });
-  const auditTotalPages = Math.max(1, Math.ceil((auditLogsQuery.data?.total ?? 0) / 10));
-  const auditRows = auditLogsQuery.data?.items ?? [];
-  const auditActions = useMemo(() => Array.from(new Set(auditRows.map((item) => item.action))), [auditRows]);
-  const auditResourceTypes = useMemo(() => Array.from(new Set(auditRows.map((item) => item.resource_type))), [auditRows]);
+
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  async function handleDeleteAllData() {
+    const action = await showMessageDialog({
+      title: "全データを削除しますか？",
+      description: <p>明細、未分類以外のカテゴリ、アップロード履歴、収入設定、保存済みPDF原本が削除されます。</p>,
+      tone: "danger",
+      actions: [
+        { id: "cancel", label: "キャンセル", variant: "secondary" },
+        { id: "delete", label: "削除する", variant: "danger" },
+      ],
+    });
+    if (action === "delete") {
+      deleteMutation.mutate(undefined);
+    }
+  }
 
   return (
     <>
@@ -123,94 +139,12 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="card panel section-gap">
-        <div className="panel-header">
-          <div>
-            <h2 className="panel-title">監査ログ</h2>
-            <p className="panel-caption">明細更新、削除、アップロード失敗などの重要操作を確認できます。</p>
-          </div>
-        </div>
-        {auditLogsQuery.error ? <ApiErrorAlert error={auditLogsQuery.error} /> : null}
-        <div className="filter-grid audit-filter-grid">
-          <div className="filter-field">
-            <label htmlFor="audit-action">操作種別</label>
-            <input id="audit-action" className="input wide" aria-label="操作種別" value={auditAction} onChange={(event) => { setAuditAction(event.target.value); setAuditPage(1); }} list="audit-action-suggestions" />
-            <datalist id="audit-action-suggestions">
-              {auditActions.map((action) => (
-                <option key={action} value={action} />
-              ))}
-            </datalist>
-          </div>
-          <div className="filter-field">
-            <label htmlFor="audit-resource-type">対象種別</label>
-            <input id="audit-resource-type" className="input wide" aria-label="対象種別" value={auditResourceType} onChange={(event) => { setAuditResourceType(event.target.value); setAuditPage(1); }} list="audit-resource-suggestions" />
-            <datalist id="audit-resource-suggestions">
-              {auditResourceTypes.map((resourceType) => (
-                <option key={resourceType} value={resourceType} />
-              ))}
-            </datalist>
-          </div>
-          <div className="filter-field">
-            <label htmlFor="audit-date-from">開始日</label>
-            <input id="audit-date-from" className="input wide" type="date" aria-label="監査ログ開始日" value={auditDateFrom} onChange={(event) => { setAuditDateFrom(event.target.value); setAuditPage(1); }} />
-          </div>
-          <div className="filter-field">
-            <label htmlFor="audit-date-to">終了日</label>
-            <input id="audit-date-to" className="input wide" type="date" aria-label="監査ログ終了日" value={auditDateTo} onChange={(event) => { setAuditDateTo(event.target.value); setAuditPage(1); }} />
-          </div>
-        </div>
-
-        {auditLogsQuery.isLoading ? (
-          <LoadingState />
-        ) : auditRows.length === 0 ? (
-          <p className="calendar-panel-empty">条件に一致する監査ログはありません。</p>
-        ) : (
-          <>
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>日時</th>
-                    <th>操作</th>
-                    <th>対象</th>
-                    <th>実行ユーザー</th>
-                    <th>詳細</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditRows.map((row) => (
-                    <tr key={row.audit_log_id}>
-                      <td>{formatAuditDate(row.created_at)}</td>
-                      <td>{row.action}</td>
-                      <td>{row.resource_type}</td>
-                      <td>{row.user_email}</td>
-                      <td>{formatAuditDetails(row.details)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="pagination-bar" aria-label="監査ログページネーション">
-              <button className="button secondary compact" type="button" onClick={() => setAuditPage((value) => Math.max(1, value - 1))} disabled={auditPage <= 1}>
-                前へ
-              </button>
-              <span className="pagination-summary">
-                {auditPage} / {auditTotalPages} ページ
-              </span>
-              <button className="button secondary compact" type="button" onClick={() => setAuditPage((value) => Math.min(auditTotalPages, value + 1))} disabled={auditPage >= auditTotalPages}>
-                次へ
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-
       <section className="card panel danger-panel section-gap">
         <div className="danger-heading">
           <AlertTriangle size={20} aria-hidden="true" />
           <div>
             <h2 className="panel-title">全データ削除</h2>
-            <p>明細、カテゴリ、アップロード履歴、保存済みPDF原本、ユーザー情報を削除対象にします。</p>
+            <p>明細、未分類以外のカテゴリ、アップロード履歴、収入設定、保存済みPDF原本を削除対象にします。</p>
           </div>
         </div>
         <div className="delete-controls">
@@ -225,36 +159,28 @@ export default function SettingsPage() {
             className="button danger"
             type="button"
             disabled={confirmationText !== "DELETE" || deleteMutation.isPending}
-            onClick={() => {
-              if (window.confirm("全データを削除しますか？")) {
-                deleteMutation.mutate(undefined);
-              }
-            }}
+            onClick={() => void handleDeleteAllData()}
           >
             <Trash2 size={15} aria-hidden="true" />
             {deleteMutation.isPending ? "削除中" : "全データを削除"}
           </button>
         </div>
       </section>
+      {messageDialog ? (
+        <MessageDialog
+          open
+          title={messageDialog.title}
+          description={messageDialog.description}
+          actions={messageDialog.actions}
+          tone={messageDialog.tone}
+          onAction={messageDialog.onAction}
+          onOpenChange={(open) => {
+            if (!open) {
+              messageDialog.onAction("cancel");
+            }
+          }}
+        />
+      ) : null}
     </>
   );
-}
-
-function formatAuditDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-}
-
-function formatAuditDetails(details: Record<string, unknown>) {
-  const entries = Object.entries(details);
-  if (entries.length === 0) {
-    return "-";
-  }
-  return entries
-    .slice(0, 3)
-    .map(([key, value]) => `${key}: ${String(value)}`)
-    .join(" / ");
 }

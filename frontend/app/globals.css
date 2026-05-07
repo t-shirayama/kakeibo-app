@@ -13,6 +13,13 @@
   --muted-strong: #46566d;
   --primary: #2f7df6;
   --primary-soft: #eaf2ff;
+  --theme-income: #22c55e;
+  --theme-income-soft: rgb(34 197 94 / 14%);
+  --theme-expense: #ef4444;
+  --theme-expense-strong: #dc2626;
+  --theme-expense-soft: rgb(239 68 68 / 12%);
+  --theme-balance: #f59e0b;
+  --theme-balance-soft: rgb(245 158 11 / 14%);
   --success: #16a36a;
   --danger: #ff6b7a;
   --warning: #eea932;
@@ -47,6 +54,10 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
 }
 
 .app-frame {
@@ -364,18 +375,18 @@ textarea {
 }
 
 .summary-card-icon.income {
-  color: var(--success);
-  background: rgb(34 197 94 / 14%);
+  color: var(--theme-income);
+  background: var(--theme-income-soft);
 }
 
 .summary-card-icon.expense {
-  color: #ef4444;
-  background: rgb(239 68 68 / 12%);
+  color: var(--theme-expense);
+  background: var(--theme-expense-soft);
 }
 
 .summary-card-icon.balance {
-  color: #f59e0b;
-  background: rgb(245 158 11 / 14%);
+  color: var(--theme-balance);
+  background: var(--theme-balance-soft);
 }
 
 .summary-card-icon.saving {
@@ -414,7 +425,7 @@ textarea {
 }
 
 .summary-card-delta.bad {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .summary-card-delta.neutral {
@@ -451,7 +462,7 @@ textarea {
 }
 
 .metric-delta.bad {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .metric-delta.neutral {
@@ -579,6 +590,18 @@ textarea {
   width: min(330px, 100%);
 }
 
+.numeric-input-plain {
+  appearance: textfield;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.numeric-input-plain::-webkit-outer-spin-button,
+.numeric-input-plain::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
 .input.wide,
 .select.wide {
   width: 100%;
@@ -617,18 +640,18 @@ textarea {
     box-shadow 0.16s ease;
 }
 
-.transaction-row:focus-visible td,
-.transaction-row:focus-within td {
+.transaction-row:focus td,
+.transaction-row:focus-visible td {
   background: #f4f9ff;
 }
 
-.transaction-row:focus-visible td:first-child,
-.transaction-row:focus-within td:first-child {
+.transaction-row:focus td:first-child,
+.transaction-row:focus-visible td:first-child {
   box-shadow: inset 3px 0 0 #2563eb;
 }
 
-.transaction-row:focus-visible td:last-child,
-.transaction-row:focus-within td:last-child {
+.transaction-row:focus td:last-child,
+.transaction-row:focus-visible td:last-child {
   box-shadow: inset -1px 0 0 #dbeafe;
 }
 
@@ -693,11 +716,11 @@ textarea {
 }
 
 .transaction-amount.expense {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .transaction-amount.income {
-  color: var(--success);
+  color: var(--theme-income);
 }
 
 .sort-button {
@@ -742,6 +765,11 @@ textarea {
   padding: 14px 18px 0;
 }
 
+.transactions-pagination-bar {
+  justify-content: center;
+  padding-bottom: 18px;
+}
+
 .pagination-pages {
   display: inline-flex;
   flex-wrap: wrap;
@@ -776,12 +804,15 @@ textarea {
 .chart-shell {
   display: grid;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
 .chart-plot {
   display: grid;
   grid-template-columns: 44px 1fr;
-  min-height: 192px;
+  height: clamp(208px, 26vh, 236px);
+  min-height: 0;
 }
 
 .chart-y-axis {
@@ -802,7 +833,8 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
-  min-height: 192px;
+  height: 100%;
+  min-height: 0;
   padding: 0 8px;
   border-left: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -851,7 +883,8 @@ textarea {
   justify-content: center;
   gap: 5px;
   width: 100%;
-  min-height: 148px;
+  height: 100%;
+  min-height: 0;
   padding-top: 6px;
 }
 
@@ -862,11 +895,11 @@ textarea {
 }
 
 .chart-bar-income {
-  background: #22c55e;
+  background: var(--theme-income);
 }
 
 .chart-bar-expense {
-  background: #ef4444;
+  background: var(--theme-expense);
 }
 
 .chart-month-label {
@@ -898,11 +931,11 @@ textarea {
 }
 
 .chart-legend-income {
-  background: #22c55e;
+  background: var(--theme-income);
 }
 
 .chart-legend-expense {
-  background: #ef4444;
+  background: var(--theme-expense);
 }
 
 .chart-legend-average {
@@ -913,9 +946,78 @@ textarea {
   margin-top: 16px;
 }
 
+.transactions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.transactions-table-panel {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.transactions-table-wrap {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.transactions-table-wrap .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
+.budget-management-page {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.budget-management-page .page-header,
+.budget-management-page .section-gap {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.budget-management-page > .grid,
+.budget-management-page > .section-gap {
+  min-height: 0;
+}
+
+.categories-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.categories-page > .grid {
+  min-height: 0;
+}
+
 .category-list {
   display: grid;
+  align-content: start;
   gap: 12px;
+  grid-auto-rows: max-content;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
 }
 
 .category-row {
@@ -928,12 +1030,19 @@ textarea {
   border-radius: 8px;
 }
 
+.category-list-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
 .category-pie-layout {
   display: grid;
   grid-template-columns: minmax(180px, 0.76fr) minmax(220px, 1fr);
   align-items: center;
   gap: 16px;
-  min-height: 208px;
+  min-height: 232px;
   min-width: 0;
 }
 
@@ -941,7 +1050,7 @@ textarea {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(188px, 100%);
+  width: min(204px, 100%);
   min-width: 0;
   aspect-ratio: 1;
   justify-self: center;
@@ -1007,7 +1116,7 @@ textarea {
   gap: 8px;
   align-content: start;
   min-height: 0;
-  max-height: 208px;
+  max-height: 232px;
   padding-right: 6px;
   overflow-y: auto;
   overscroll-behavior: none;
@@ -1110,12 +1219,17 @@ textarea {
 .budget-progress-list {
   display: grid;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 12px;
 }
 
 .budget-progress-row {
   display: grid;
   gap: 6px;
   padding-top: 10px;
+  padding-right: 4px;
   border-top: 1px solid #e5edf7;
 }
 
@@ -1128,11 +1242,26 @@ textarea {
 .budget-progress-values {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 
+.budget-progress-title {
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.budget-progress-title strong {
+  display: block;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
 .budget-progress-values {
+  justify-content: space-between;
+  padding-right: 4px;
   color: var(--muted-strong);
   font-size: 12px;
   font-weight: 800;
@@ -1143,6 +1272,150 @@ textarea {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.6;
+}
+
+.budget-tab-list {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  background: #f4f8ff;
+  border: 1px solid #dbe7f6;
+  border-radius: 10px;
+}
+
+.budget-tab-button {
+  min-height: 34px;
+  padding: 0 14px;
+  color: var(--muted-strong);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.budget-tab-button.active {
+  color: var(--primary);
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgb(47 125 246 / 18%);
+}
+
+.budget-setting-list {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  grid-auto-rows: max-content;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+.budget-setting-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #edf2f7;
+  border-radius: 10px;
+}
+
+.budget-setting-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.budget-setting-title strong,
+.budget-setting-title p {
+  margin: 0;
+}
+
+.budget-setting-title p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.budget-setting-values {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.budget-setting-values strong {
+  font-size: 14px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-summary-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.budget-stat-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f6;
+  border-radius: 12px;
+}
+
+.budget-stat-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.budget-stat-card strong {
+  font-size: 18px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.inset-panel {
+  padding: 16px;
+  background: #fbfcff;
+}
+
+.budget-actuals-panel,
+.budget-settings-panel,
+.budget-actuals-content,
+.budget-progress-panel {
+  min-height: 0;
+}
+
+.budget-settings-panel,
+.budget-actuals-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.budget-actuals-content {
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.budget-progress-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.read-only-field {
+  display: inline-flex;
+  align-items: center;
+}
+
+.modal-note {
+  margin: 0;
+  font-size: 12px;
 }
 
 .insight-card {
@@ -1176,13 +1449,13 @@ textarea {
 }
 
 .insight-card.good .insight-icon {
-  color: var(--success);
-  background: rgb(34 197 94 / 12%);
+  color: var(--theme-income);
+  background: var(--theme-income-soft);
 }
 
 .insight-card.alert .insight-icon {
-  color: #ef4444;
-  background: rgb(239 68 68 / 12%);
+  color: var(--theme-expense);
+  background: var(--theme-expense-soft);
 }
 
 .insight-card.info .insight-icon {
@@ -1243,9 +1516,16 @@ textarea {
 
 .report-dashboard-page .dashboard-comparison-table-wrap {
   flex: 1;
-  max-height: 208px;
+  max-height: 236px;
   overflow-y: auto;
   overscroll-behavior: none;
+}
+
+.report-dashboard-page .dashboard-comparison-table-wrap .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
 }
 
 .report-dashboard-page .insight-list {
@@ -1254,7 +1534,7 @@ textarea {
 
 .report-dashboard-page .data-table th,
 .report-dashboard-page .data-table td {
-  padding: 10px 12px;
+  padding: 12px 12px;
 }
 
 .report-dashboard-page .month-input {
@@ -1270,10 +1550,22 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.86fr);
   gap: 14px;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.calendar-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-page .page-header {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .calendar-page .panel {
@@ -1291,11 +1583,26 @@ textarea {
 .calendar-sidebar {
   display: grid;
   gap: 14px;
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-board-panel {
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.calendar-month-summary-panel {
+  min-height: 0;
+}
+
+.calendar-selected-day-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-weekdays {
@@ -1368,7 +1675,7 @@ textarea {
 }
 
 .calendar-day.has-income {
-  box-shadow: inset 0 0 0 1px rgb(22 163 106 / 12%);
+  box-shadow: inset 0 0 0 1px var(--theme-income-soft);
 }
 
 .calendar-day-number {
@@ -1431,18 +1738,29 @@ textarea {
   background: #fff5f5;
 }
 
+.calendar-summary-tile.balance {
+  background: #fff8eb;
+}
+
 .calendar-summary-icon {
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
-  color: var(--primary);
   background: #ffffff;
   border-radius: 999px;
 }
 
+.calendar-summary-icon.income {
+  color: var(--theme-income);
+}
+
 .calendar-summary-tile.expense .calendar-summary-icon {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
+}
+
+.calendar-summary-icon.balance {
+  color: var(--theme-balance);
 }
 
 .calendar-summary-tile p,
@@ -1465,14 +1783,19 @@ textarea {
 
 .calendar-transaction-list {
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 8px;
-  max-height: 260px;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
 }
 
 .calendar-transaction-row {
   display: grid;
   gap: 5px;
+  min-height: 72px;
   padding: 9px 10px;
   border: 1px solid #edf2f7;
   border-radius: 8px;
@@ -1534,7 +1857,7 @@ textarea {
 }
 
 .expense-worse {
-  color: #dc2626;
+  color: var(--theme-expense-strong);
 }
 
 .expense-neutral {
@@ -1543,7 +1866,7 @@ textarea {
 
 .income-form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -1563,7 +1886,7 @@ textarea {
 .income-setting-main,
 .income-override-row {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(120px, 0.7fr) minmax(88px, 0.45fr) minmax(140px, 0.8fr) auto auto;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 0.7fr) minmax(88px, 0.45fr) minmax(128px, 0.6fr) minmax(128px, 0.6fr) minmax(140px, 0.8fr) auto auto;
   align-items: center;
   gap: 10px;
 }
@@ -2124,6 +2447,23 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .budget-tab-list {
+    width: 100%;
+  }
+
+  .budget-tab-button {
+    flex: 1;
+  }
+
+  .budget-setting-row {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-setting-values,
+  .budget-setting-row .row-actions {
+    justify-items: start;
+  }
+
   .category-pie-layout {
     min-height: 0;
   }
@@ -2151,6 +2491,11 @@ textarea {
     justify-content: flex-start;
     padding-right: 0;
     padding-left: 0;
+  }
+
+  .transactions-pagination-bar {
+    justify-content: center;
+    padding-bottom: 20px;
   }
 
   .income-override-row {

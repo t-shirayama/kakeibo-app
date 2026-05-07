@@ -44,6 +44,8 @@ class IncomeSettingsRepository:
             category_id=str(command.category_id),
             base_amount=command.base_amount,
             base_day=command.base_day,
+            start_month=command.start_month,
+            end_month=command.end_month,
         )
         self._session.add(model)
         self._session.commit()
@@ -56,6 +58,8 @@ class IncomeSettingsRepository:
         model.category_id = str(command.category_id)
         model.base_amount = command.base_amount
         model.base_day = command.base_day
+        model.start_month = command.start_month
+        model.end_month = command.end_month
         model.updated_at = datetime.now(UTC)
         self._session.commit()
         self._session.refresh(model)
@@ -130,6 +134,8 @@ class IncomeSettingsRepository:
             category_id=UUID(model.category_id),
             base_amount=model.base_amount,
             base_day=model.base_day,
+            start_month=model.start_month,
+            end_month=model.end_month,
             overrides=[
                 IncomeOverride(
                     override_id=UUID(row.id),

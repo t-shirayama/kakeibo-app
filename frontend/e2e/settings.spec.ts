@@ -8,9 +8,6 @@ test("shows, updates, and preserves destructive settings controls", async ({ pag
   await expect(page.getByLabel("表示通貨")).toHaveValue("JPY");
   await expect(page.getByLabel("1ページあたりの件数")).toHaveValue("10");
   await expect(page.getByLabel("日付形式")).toHaveValue("yyyy/MM/dd");
-  await expect(page.getByRole("heading", { name: "監査ログ" })).toBeVisible();
-  await expect(page.getByLabel("操作種別")).toBeVisible();
-  await expect(page.getByLabel("対象種別")).toBeVisible();
 
   await page.getByLabel("1ページあたりの件数").selectOption("50");
   await page.getByLabel("日付形式").selectOption("yyyy-MM-dd");

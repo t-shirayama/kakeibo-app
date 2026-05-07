@@ -11,8 +11,15 @@ test.beforeAll(async () => {
 });
 
 test("captures current application screenshots for docs", async ({ page }) => {
-  const pageTargets = [
+  const requestedTargets = new Set(
+    (process.env.DOC_SCREENSHOT_ONLY ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+  const allPageTargets = [
     { fileName: "dashboard.png", path: "/dashboard?month=2026-04", heading: "ダッシュボード" },
+    { fileName: "budgets.png", path: "/budgets?month=2026-04&tab=actuals", heading: "予算管理" },
     { fileName: "calendar.png", path: "/calendar?month=2026-04", heading: "カレンダー" },
     {
       fileName: "transactions.png",
@@ -22,10 +29,12 @@ test("captures current application screenshots for docs", async ({ page }) => {
     { fileName: "income-settings.png", path: "/income-settings", heading: "収入設定" },
     { fileName: "upload.png", path: "/upload", heading: "アップロード" },
     { fileName: "categories.png", path: "/categories", heading: "カテゴリ管理" },
+    { fileName: "audit-logs.png", path: "/audit-logs", heading: "監査ログ" },
     { fileName: "settings.png", path: "/settings", heading: "設定" },
   ] as const;
+  const pageTargets = allPageTargets.filter((target) => requestedTargets.size === 0 || requestedTargets.has(target.fileName.replace(".png", "")));
 
-  await page.setViewportSize({ width: 1440, height: 1280 });
+  await page.setViewportSize({ width: 1440, height: 900 });
 
   for (const target of pageTargets) {
     await page.goto(target.path);
@@ -33,7 +42,7 @@ test("captures current application screenshots for docs", async ({ page }) => {
     await expect(page.getByText("読み込み中です")).toHaveCount(0, { timeout: 15_000 });
     await page.screenshot({
       path: path.join(outputDir, target.fileName),
-      fullPage: true,
+      fullPage: false,
     });
   }
 

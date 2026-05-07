@@ -13,6 +13,7 @@ type CategoryEditModalProps = {
   onSubmit: (request: CategoryRequest) => Promise<void>;
   error?: Error | null;
   isSubmitting?: boolean;
+  showMonthlyBudget?: boolean;
 };
 
 export function CategoryEditModal({
@@ -22,6 +23,7 @@ export function CategoryEditModal({
   onSubmit,
   error,
   isSubmitting = false,
+  showMonthlyBudget = true,
 }: CategoryEditModalProps) {
   const title = category ? "カテゴリを編集" : "カテゴリを追加";
   const submitLabel = category ? "保存" : "追加";
@@ -52,7 +54,7 @@ export function CategoryEditModal({
                 name: String(formData.get("name") ?? ""),
                 color: String(formData.get("color") ?? "#2f7df6"),
                 description: String(formData.get("description") || "") || null,
-                monthly_budget: normalizeBudget(formData.get("monthly_budget")),
+                monthly_budget: showMonthlyBudget ? normalizeBudget(formData.get("monthly_budget")) : category?.monthly_budget ?? null,
               });
             }}
           >
@@ -69,18 +71,20 @@ export function CategoryEditModal({
               <label htmlFor="category-description">説明</label>
               <input id="category-description" name="description" type="text" defaultValue={category?.description ?? ""} />
             </div>
-            <div className="form-field horizontal">
-              <label htmlFor="category-monthly-budget">月次予算</label>
-              <input
-                id="category-monthly-budget"
-                name="monthly_budget"
-                type="number"
-                min="0"
-                step="1"
-                inputMode="numeric"
-                defaultValue={category?.monthly_budget ?? ""}
-              />
-            </div>
+            {showMonthlyBudget ? (
+              <div className="form-field horizontal">
+                <label htmlFor="category-monthly-budget">月次予算</label>
+                <input
+                  id="category-monthly-budget"
+                  className="numeric-input-plain"
+                  name="monthly_budget"
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  defaultValue={category?.monthly_budget ?? ""}
+                />
+              </div>
+            ) : null}
 
             <div className="modal-actions">
               <Dialog.Close className="button secondary" type="button">

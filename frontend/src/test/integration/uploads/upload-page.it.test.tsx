@@ -1,14 +1,19 @@
+import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import UploadPage from "@/features/uploads/upload-page";
 import { api } from "@/lib/api";
+import { clear_csrf_token } from "@/lib/csrf";
 import type { UploadJobDto } from "@/lib/types";
 import { renderWithRoute, setupIntegrationUser } from "@/test/integration/helpers";
 import { mockUploadJobs } from "@/test/msw/fixtures";
+import { apiUrl, jsonError } from "@/test/msw/http";
+import { server } from "@/test/msw/server";
 
 describe("UploadPage integration", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    clear_csrf_token();
   });
 
   it("アップロード履歴と失敗時の再試行導線を表示する", async () => {
@@ -98,5 +103,61 @@ describe("UploadPage integration", () => {
     await user.click(retryButton);
 
     await waitFor(() => expect(uploadCalls).toEqual(["retry-source.pdf", "retry-source.pdf"]));
+  });
+
+  it("CSRF期限切れの403を受けたらトークン再取得後に同じアップロードを再試行する", async () => {
+    let csrfFetchCount = 0;
+    const receivedTokens: string[] = [];
+
+    server.use(
+      http.get(apiUrl("/api/auth/csrf"), () => {
+        csrfFetchCount += 1;
+        return HttpResponse.json({ csrf_token: `upload-token-${csrfFetchCount}` });
+      }),
+      http.post(apiUrl("/api/uploads"), async ({ request }) => {
+        receivedTokens.push(request.headers.get("x-csrf-token") ?? "");
+        if (receivedTokens.length === 1) {
+          return jsonError("CSRF session is required.", 403);
+        }
+        return HttpResponse.json({
+          upload_id: "upload-5",
+          file_name: "csrf-retry.pdf",
+          stored_file_path: "storage/uploads/sample/upload-5/original.pdf",
+          status: "completed",
+          imported_count: 2,
+          error_message: null,
+          uploaded_at: "2026-05-03 13:45",
+        });
+      }),
+    );
+
+    vi.spyOn(api, "list_uploads")
+      .mockResolvedValueOnce(mockUploadJobs)
+      .mockResolvedValueOnce([
+        {
+          upload_id: "upload-5",
+          file_name: "csrf-retry.pdf",
+          stored_file_path: "storage/uploads/sample/upload-5/original.pdf",
+          status: "completed",
+          imported_count: 2,
+          error_message: null,
+          uploaded_at: "2026-05-03 13:45",
+        },
+        ...mockUploadJobs,
+      ]);
+
+    renderWithRoute(<UploadPage />, "/upload");
+
+    expect(await screen.findByText("2026_04_楽天カード.pdf")).toBeInTheDocument();
+    fireEvent.drop(screen.getByLabelText("PDFファイルのドロップゾーン"), {
+      dataTransfer: {
+        files: [new File(["%PDF-1.4 csrf"], "csrf-retry.pdf", { type: "application/pdf" })],
+      },
+    });
+
+    await waitFor(() => expect(receivedTokens).toEqual(["upload-token-1", "upload-token-2"]));
+    expect(csrfFetchCount).toBe(2);
+    expect(await screen.findByText("csrf-retry.pdf")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

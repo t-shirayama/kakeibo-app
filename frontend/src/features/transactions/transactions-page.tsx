@@ -116,12 +116,12 @@ export default function TransactionsPage() {
   });
   const exportMutation = useMutation({ mutationFn: api.export_transactions });
 
-  const categories = categoriesQuery.data ?? [];
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.category_id, category])),
     [categories],
   );
-  const transactions = transactionsQuery.data?.items ?? [];
+  const transactions = useMemo(() => transactionsQuery.data?.items ?? [], [transactionsQuery.data?.items]);
   const total = transactionsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / currentParams.pageSize));
   const searchSuggestions = useMemo(() => {
@@ -147,13 +147,6 @@ export default function TransactionsPage() {
   );
   const apiError = transactionsQuery.error || categoriesQuery.error || settingsQuery.error || deleteMutation.error || exportMutation.error;
   const isSaving = saveMutation.isPending || isPreparingSave;
-  const hasActiveFilters = Boolean(
-    currentParams.keyword.trim() ||
-      currentParams.categoryFilter ||
-      currentParams.dateFrom !== defaultDateRange.date_from ||
-      currentParams.dateTo !== defaultDateRange.date_to,
-  );
-
   function updateParams(
     updates: Partial<{
       keyword: string;
@@ -182,6 +175,9 @@ export default function TransactionsPage() {
     };
     currentParamsRef.current = values;
 
+    if ("dateFrom" in updates || "dateTo" in updates) {
+      next.delete("period");
+    }
     setOrDelete(next, "keyword", values.keyword);
     setOrDelete(next, "date_from", values.dateFrom);
     setOrDelete(next, "date_to", values.dateTo);
@@ -208,8 +204,8 @@ export default function TransactionsPage() {
     const next = new URLSearchParams(searchParams.toString());
     currentParamsRef.current = {
       keyword: "",
-      dateFrom: defaultDateRange.date_from,
-      dateTo: defaultDateRange.date_to,
+      dateFrom: "",
+      dateTo: "",
       categoryFilter: "",
       page: 1,
       pageSize: defaultPageSize,
@@ -218,8 +214,9 @@ export default function TransactionsPage() {
     };
     next.delete("keyword");
     next.delete("category_id");
-    next.set("date_from", defaultDateRange.date_from);
-    next.set("date_to", defaultDateRange.date_to);
+    next.delete("date_from");
+    next.delete("date_to");
+    next.set("period", "all");
     next.set("page", "1");
     next.set("page_size", String(defaultPageSize));
     next.set("sort_field", "date");
@@ -298,7 +295,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <>
+    <div className="transactions-page">
       <PageHeader
         title="明細一覧"
         subtitle="取り込んだ明細を検索、絞り込み、手動追加できます。"
@@ -403,7 +400,7 @@ export default function TransactionsPage() {
           <div className="filter-chips" aria-label="適用中のフィルタ">
             {activeFilterChips.length > 0 ? activeFilterChips.map((chip) => <span className="filter-chip" key={chip}>{chip}</span>) : <span className="filter-chip muted-chip">条件なし</span>}
           </div>
-          <button className="button secondary compact" type="button" onClick={clearFilters} disabled={!hasActiveFilters}>
+          <button className="button secondary compact" type="button" onClick={clearFilters}>
             <X size={14} aria-hidden="true" />
             フィルタ解除
           </button>
@@ -416,76 +413,78 @@ export default function TransactionsPage() {
         <span>1ページ {currentParams.pageSize}件</span>
       </div>
 
-      <section className="card table-wrap">
+      <section className="card transactions-table-panel">
         {transactionsQuery.isLoading || categoriesQuery.isLoading || settingsQuery.isLoading ? (
           <LoadingState />
         ) : transactions.length === 0 ? (
           <EmptyState title="明細がありません" description="検索条件を変更するか、手動で明細を追加してください。" />
         ) : (
           <>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>
-                    <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${currentParams.sortField === "date" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
-                      日付
-                      <SortIcon active={currentParams.sortField === "date"} direction={currentParams.sortDirection} />
-                    </button>
-                  </th>
-                  <th>店名</th>
-                  <th>カテゴリ</th>
-                  <th className="amount-column">
-                    <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${currentParams.sortField === "amount" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
-                      金額
-                      <SortIcon active={currentParams.sortField === "amount"} direction={currentParams.sortDirection} />
-                    </button>
-                  </th>
-                  <th>支払い方法</th>
-                  <th>メモ</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((transaction) => (
-                  <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
-                    <td>{transaction.transaction_date}</td>
-                    <td>{transaction.shop_name}</td>
-                    <td>
-                      <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
-                        {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
-                      </span>
-                    </td>
-                    <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
-                    <td>{transaction.payment_method ?? "-"}</td>
-                    <td>{transaction.memo ?? "-"}</td>
-                    <td>
-                      <div className="row-actions">
-                        <button
-                          className="icon-button"
-                          type="button"
-                          aria-label="明細を編集"
-                          onClick={() => {
-                            setEditingTransaction(transaction);
-                            setIsEditorOpen(true);
-                          }}
-                        >
-                          <Edit3 size={15} aria-hidden="true" />
-                        </button>
-                        <button
-                          className="icon-button"
-                          type="button"
-                          aria-label="明細を削除"
-                          onClick={() => void handleDelete(transaction.transaction_id)}
-                        >
-                          <Trash2 size={15} aria-hidden="true" />
-                        </button>
-                      </div>
-                    </td>
+            <div className="table-wrap transactions-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <button className="sort-button" type="button" onClick={() => handleSort("date")} aria-label={`取引日でソート ${currentParams.sortField === "date" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
+                        日付
+                        <SortIcon active={currentParams.sortField === "date"} direction={currentParams.sortDirection} />
+                      </button>
+                    </th>
+                    <th>店名</th>
+                    <th>カテゴリ</th>
+                    <th className="amount-column">
+                      <button className="sort-button amount-sort-button" type="button" onClick={() => handleSort("amount")} aria-label={`取引額でソート ${currentParams.sortField === "amount" ? sortDirectionLabel(currentParams.sortDirection) : ""}`.trim()}>
+                        金額
+                        <SortIcon active={currentParams.sortField === "amount"} direction={currentParams.sortDirection} />
+                      </button>
+                    </th>
+                    <th>支払い方法</th>
+                    <th>メモ</th>
+                    <th>操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="pagination-bar" aria-label="ページネーション">
+                </thead>
+                <tbody>
+                  {transactions.map((transaction) => (
+                    <tr key={transaction.transaction_id} className="transaction-row" tabIndex={0}>
+                      <td>{transaction.transaction_date}</td>
+                      <td>{transaction.shop_name}</td>
+                      <td>
+                        <span className="badge" style={getCategoryBadgeStyle(getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).color)}>
+                          {getTransactionCategoryDisplay(transaction, categoryById.get(transaction.category_id)).name}
+                        </span>
+                      </td>
+                      <td className={`amount amount-column transaction-amount ${transaction.transaction_type}`}>{formatCurrency(transaction.amount)}</td>
+                      <td>{transaction.payment_method ?? "-"}</td>
+                      <td>{transaction.memo ?? "-"}</td>
+                      <td>
+                        <div className="row-actions">
+                          <button
+                            className="icon-button"
+                            type="button"
+                            aria-label="明細を編集"
+                            onClick={() => {
+                              setEditingTransaction(transaction);
+                              setIsEditorOpen(true);
+                            }}
+                          >
+                            <Edit3 size={15} aria-hidden="true" />
+                          </button>
+                          <button
+                            className="icon-button"
+                            type="button"
+                            aria-label="明細を削除"
+                            onClick={() => void handleDelete(transaction.transaction_id)}
+                          >
+                            <Trash2 size={15} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="pagination-bar transactions-pagination-bar" aria-label="ページネーション">
               <button className="button secondary compact" type="button" onClick={() => updateParams({ page: currentParams.page - 1 })} disabled={currentParams.page <= 1}>
                 <ChevronLeft size={14} aria-hidden="true" />
                 前へ
@@ -544,7 +543,7 @@ export default function TransactionsPage() {
           }}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -557,10 +556,13 @@ function parseSearchParams(
   const sortDirection = searchParams.get("sort_direction") === "asc" ? "asc" : "desc";
   const parsedPage = Number(searchParams.get("page") ?? "1");
   const parsedPageSize = Number(searchParams.get("page_size") ?? String(defaultPageSize));
+  const explicitDateFrom = searchParams.get("date_from");
+  const explicitDateTo = searchParams.get("date_to");
+  const hasExplicitDateFilter = explicitDateFrom !== null || explicitDateTo !== null || searchParams.get("period") === "all";
   return {
     keyword: searchParams.get("keyword") ?? "",
-    dateFrom: searchParams.get("date_from") ?? defaultDateRange.date_from,
-    dateTo: searchParams.get("date_to") ?? defaultDateRange.date_to,
+    dateFrom: hasExplicitDateFilter ? explicitDateFrom ?? "" : defaultDateRange.date_from,
+    dateTo: hasExplicitDateFilter ? explicitDateTo ?? "" : defaultDateRange.date_to,
     categoryFilter: searchParams.get("category_id") ?? "",
     page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
     pageSize: [10, 20, 50].includes(parsedPageSize) ? parsedPageSize : defaultPageSize,
@@ -575,10 +577,12 @@ function buildNormalizedSearchParams(
   defaultPageSize: number,
 ) {
   const normalized = new URLSearchParams(searchParams.toString());
-  if (!normalized.get("date_from")) {
+  const hasExplicitDateFilter =
+    normalized.has("date_from") || normalized.has("date_to") || normalized.get("period") === "all";
+  if (!hasExplicitDateFilter && !normalized.get("date_from")) {
     normalized.set("date_from", defaultDateRange.date_from);
   }
-  if (!normalized.get("date_to")) {
+  if (!hasExplicitDateFilter && !normalized.get("date_to")) {
     normalized.set("date_to", defaultDateRange.date_to);
   }
   if (!normalized.get("page")) {

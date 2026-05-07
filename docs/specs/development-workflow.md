@@ -19,11 +19,14 @@
 - PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import.md` を更新する。
 - 用語を追加・変更した場合は `docs/specs/glossary.md` を更新する。
 - E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/e2e/index.md` と該当する `docs/e2e/` 配下のシナリオを更新する。
+- 現行画面のスクリーンショットを更新した場合は、既存の現行画像を `docs/designs/archive/screen-updates/<YYYY-MM-DD>/` へ退避し、`docs/designs/README.md` と README の画面イメージも同じ作業内で更新する。
 
 ## テスト更新ルール
 
 - コードを変更した場合は、影響する単体テスト、Backend / Frontend Integration Test、E2Eを同じ作業内で更新する。
 - テストを更新しない場合は、既存テストで同じリスクを検証できる理由を明確にする。
+- フロントエンドのコードを変更した場合は、少なくとも `docker compose run --rm --no-deps frontend npm run lint`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` を実行してから完了とする。
+- 画面スクリーンショットを更新する場合は、`frontend/e2e/docs-screenshots.spec.ts` の撮影条件を正とし、手動で別条件の画像を混在させない。
 - ドメイン層の不変条件と計算ロジックは優先して単体テストを書く。
 - ユースケースはリポジトリを差し替えて、主要な成功ケースと失敗ケースを検証する。
 - インフラ層は変換処理、永続化、外部サービス連携の境界を中心にテストする。

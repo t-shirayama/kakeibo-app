@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   CalendarDays,
+  ClipboardList,
   FileText,
   FileUp,
   ListTree,
+  PiggyBank,
   type LucideIcon,
   NotebookText,
   Settings,
@@ -19,11 +21,13 @@ const navItems = [
   { href: "/calendar", label: "カレンダー", icon: CalendarDays },
   { href: "/transactions", label: "明細一覧", icon: FileText },
   { href: "/income-settings", label: "収入設定", icon: WalletCards },
+  { href: "/budgets", label: "予算管理", icon: PiggyBank },
   { href: "/upload", label: "アップロード", icon: FileUp },
   { href: "/categories", label: "カテゴリ管理", icon: ListTree },
 ];
 
 const utilityNavItems = [
+  { href: "/audit-logs", label: "監査ログ", icon: ClipboardList },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 

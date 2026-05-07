@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, CreditCard, ReceiptText, Wallet } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, CreditCard, Plus, ReceiptText, Wallet } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ApiErrorAlert } from "@/components/api-error-alert";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
+import { TransactionEditModal } from "@/components/transaction-edit-modal";
 import { calendarQueryKeys } from "@/features/calendar/queryKeys";
+import { categoriesQueryKeys } from "@/features/categories/queryKeys";
 import { api } from "@/lib/api";
 import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { formatCurrency } from "@/lib/format";
@@ -30,15 +32,26 @@ export function CalendarPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const selectedYearMonth = normalizeYearMonth(searchParams.get("month")) ?? getCurrentYearMonth();
   const [selectedDate, setSelectedDate] = useState(getTodayDateString);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const range = useMemo(() => getMonthDateRange(selectedYearMonth), [selectedYearMonth]);
+  const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
   const transactionsQuery = useQuery({
     queryKey: calendarQueryKeys.transactions(range.date_from, range.date_to),
     queryFn: () => api.list_all_transactions(range),
   });
+  const saveMutation = useMutation({
+    mutationFn: api.create_transaction,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: calendarQueryKeys.all });
+      setIsEditorOpen(false);
+    },
+  });
 
   const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
+  const categories = categoriesQuery.data ?? [];
   const calendarDays = useMemo(() => buildCalendarDays(selectedYearMonth, transactions), [selectedYearMonth, transactions]);
   const monthlySummary = useMemo(() => buildMonthlySummary(transactions), [transactions]);
   const effectiveSelectedDate = useMemo(
@@ -87,6 +100,10 @@ export function CalendarPage() {
     window.location.assign(`/transactions?${next.toString()}`);
   }
 
+  async function handleCreateTransaction(request: Parameters<typeof api.create_transaction>[0]) {
+    await saveMutation.mutateAsync(request);
+  }
+
   return (
     <div className="calendar-page">
       <PageHeader
@@ -110,9 +127,9 @@ export function CalendarPage() {
         }
       />
 
-      {transactionsQuery.error ? <ApiErrorAlert error={transactionsQuery.error} /> : null}
+      {transactionsQuery.error || categoriesQuery.error ? <ApiErrorAlert error={transactionsQuery.error || categoriesQuery.error} /> : null}
 
-      {transactionsQuery.isLoading ? (
+      {transactionsQuery.isLoading || categoriesQuery.isLoading ? (
         <section className="card panel">
           <LoadingState />
         </section>
@@ -149,8 +166,12 @@ export function CalendarPage() {
                     onClick={() => setSelectedDate(day.date)}
                   >
                     <span className="calendar-day-number">{day.day}</span>
-                    <span className="calendar-day-expense-label">支出</span>
-                    <strong className="calendar-day-expense">{day.expense_total === 0 ? "¥0" : formatCurrency(day.expense_total)}</strong>
+                    {day.expense_total > 0 ? (
+                      <>
+                        <span className="calendar-day-expense-label">支出</span>
+                        <strong className="calendar-day-expense">{formatCurrency(day.expense_total)}</strong>
+                      </>
+                    ) : null}
                     <span className="calendar-day-meta">{formatCalendarDayMeta(day)}</span>
                   </button>
                 ) : (
@@ -161,25 +182,36 @@ export function CalendarPage() {
           </section>
 
           <aside className="calendar-sidebar">
-            <section className="card panel">
+            <section className="card panel calendar-month-summary-panel">
               <h2 className="panel-title">月間サマリー</h2>
               <div className="calendar-summary-grid" aria-label="月間サマリー">
                 <SummaryTile icon={<Wallet size={16} aria-hidden="true" />} label="収入" value={formatCurrency(monthlySummary.total_income)} tone="income" />
                 <SummaryTile icon={<CreditCard size={16} aria-hidden="true" />} label="支出" value={formatCurrency(monthlySummary.total_expense)} tone="expense" />
-                <SummaryTile icon={<ReceiptText size={16} aria-hidden="true" />} label="収支" value={formatCurrency(monthlySummary.balance)} tone={monthlySummary.balance >= 0 ? "income" : "expense"} />
+                <SummaryTile icon={<ReceiptText size={16} aria-hidden="true" />} label="収支" value={formatCurrency(monthlySummary.balance)} tone="balance" />
               </div>
             </section>
 
-            <section className="card panel">
+            <section className="card panel calendar-selected-day-panel">
               <div className="panel-header">
                 <div>
                   <h2 className="panel-title">選択日の明細</h2>
                   <p className="panel-caption">{selectedDaySummary ? formatDateLabel(selectedDaySummary.date) : "日付を選択してください"}</p>
                 </div>
                 {selectedDaySummary ? (
-                  <button className="text-link-button" type="button" onClick={() => openTransactions(selectedDaySummary.date, selectedDaySummary.date)}>
-                    明細一覧で確認
-                  </button>
+                  <div className="row-actions">
+                    <button
+                      className="button compact"
+                      type="button"
+                      onClick={() => setIsEditorOpen(true)}
+                      disabled={categories.length === 0 || saveMutation.isPending}
+                    >
+                      <Plus size={14} aria-hidden="true" />
+                      明細追加
+                    </button>
+                    <button className="text-link-button" type="button" onClick={() => openTransactions(selectedDaySummary.date, selectedDaySummary.date)}>
+                      明細一覧で確認
+                    </button>
+                  </div>
                 ) : null}
               </div>
 
@@ -213,6 +245,17 @@ export function CalendarPage() {
           </aside>
         </div>
       )}
+
+      <TransactionEditModal
+        categories={categories}
+        initialTransactionDate={selectedDaySummary?.date}
+        open={isEditorOpen}
+        transaction={null}
+        error={saveMutation.error}
+        isSubmitting={saveMutation.isPending}
+        onSubmit={handleCreateTransaction}
+        onOpenChange={setIsEditorOpen}
+      />
     </div>
   );
 }
@@ -226,11 +269,11 @@ function SummaryTile({
   icon: ReactNode;
   label: string;
   value: string;
-  tone: "income" | "expense";
+  tone: "income" | "expense" | "balance";
 }) {
   return (
     <article className={`calendar-summary-tile ${tone}`}>
-      <div className="calendar-summary-icon" aria-hidden="true">
+      <div className={`calendar-summary-icon ${tone}`} aria-hidden="true">
         {icon}
       </div>
       <div>
@@ -398,7 +441,7 @@ function formatDateParam(date: Date) {
 
 function formatCalendarDayMeta(day: DailyCalendarSummary) {
   if (day.transaction_count === 0) {
-    return day.income_total > 0 ? "- / 収入あり" : "-";
+    return day.income_total > 0 ? "収入あり" : "";
   }
 
   return `${day.transaction_count}件${day.income_total > 0 ? " / 収入あり" : ""}`;

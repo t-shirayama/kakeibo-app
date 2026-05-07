@@ -13,7 +13,6 @@ from app.infrastructure.models.password_reset_token import PasswordResetTokenMod
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.transaction import TransactionModel
 from app.infrastructure.models.upload import UploadModel
-from app.infrastructure.models.user import UserModel
 from app.infrastructure.models.user_setting import UserSettingModel
 
 
@@ -66,7 +65,7 @@ class SettingsRepository:
 
     def soft_delete_user_data(self, *, user_id: UUID) -> None:
         now = datetime.now(UTC)
-        for model_class in (TransactionModel, CategoryModel, UploadModel, IncomeSettingModel):
+        for model_class in (TransactionModel, UploadModel, IncomeSettingModel):
             rows = self._session.scalars(
                 select(model_class).where(model_class.user_id == str(user_id), model_class.deleted_at.is_(None))
             ).all()
@@ -75,16 +74,22 @@ class SettingsRepository:
                 if hasattr(row, "updated_at"):
                     row.updated_at = now
 
+        category_rows = self._session.scalars(
+            select(CategoryModel).where(
+                CategoryModel.user_id == str(user_id),
+                CategoryModel.deleted_at.is_(None),
+                CategoryModel.name != "未分類",
+            )
+        ).all()
+        for row in category_rows:
+            row.deleted_at = now
+            row.updated_at = now
+
         income_overrides = self._session.scalars(
             select(IncomeSettingOverrideModel).where(IncomeSettingOverrideModel.user_id == str(user_id))
         ).all()
         for override in income_overrides:
             self._session.delete(override)
-
-        user = self._session.get(UserModel, str(user_id))
-        if user is not None and user.deleted_at is None:
-            user.deleted_at = now
-            user.updated_at = now
 
         refresh_tokens = self._session.scalars(
             select(RefreshTokenModel).where(

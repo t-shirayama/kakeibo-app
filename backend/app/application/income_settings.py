@@ -22,6 +22,8 @@ class IncomeSettingCommand:
     category_id: UUID
     base_amount: int
     base_day: int
+    start_month: date
+    end_month: date | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +49,8 @@ class IncomeSetting:
     category_id: UUID
     base_amount: int
     base_day: int
+    start_month: date
+    end_month: date | None
     overrides: list[IncomeOverride]
 
 
@@ -90,12 +94,16 @@ class IncomeSettingsUseCases:
 
     def create_setting(self, *, user_id: UUID, command: IncomeSettingCommand) -> IncomeSetting:
         self._validate_command(user_id=user_id, command=command)
-        return self._repository.create_setting(user_id=user_id, command=command)
+        setting = self._repository.create_setting(user_id=user_id, command=command)
+        self.apply_due_transactions(user_id=user_id)
+        return setting
 
     def update_setting(self, *, user_id: UUID, income_setting_id: UUID, command: IncomeSettingCommand) -> IncomeSetting:
         self._ensure_setting(user_id=user_id, income_setting_id=income_setting_id)
         self._validate_command(user_id=user_id, command=command)
-        return self._repository.update_setting(user_id=user_id, income_setting_id=income_setting_id, command=command)
+        setting = self._repository.update_setting(user_id=user_id, income_setting_id=income_setting_id, command=command)
+        self.apply_due_transactions(user_id=user_id)
+        return setting
 
     def delete_setting(self, *, user_id: UUID, income_setting_id: UUID) -> None:
         self._ensure_setting(user_id=user_id, income_setting_id=income_setting_id)
@@ -119,33 +127,34 @@ class IncomeSettingsUseCases:
 
     def apply_due_transactions(self, *, user_id: UUID, today: date | None = None) -> int:
         current_date = today or date.today()
-        target_month = current_date.replace(day=1)
+        current_month = current_date.replace(day=1)
         created_count = 0
         for setting in self._repository.list_settings(user_id=user_id):
-            amount, day = self._effective_values(setting=setting, target_month=target_month)
-            transaction_date = _safe_month_day(target_month=target_month, day=day)
-            if current_date < transaction_date:
-                continue
-            source_hash = _income_source_hash(setting.income_setting_id, target_month)
-            if self._transaction_repository.source_hash_exists(user_id=user_id, source_hash=source_hash):
-                continue
-            self._transaction_repository.create_transaction(
-                Transaction(
-                    id=self._transaction_repository.next_id(),
-                    user_id=user_id,
-                    category_id=setting.category_id,
-                    transaction_date=transaction_date,
-                    shop_name=f"{setting.member_name} 収入",
-                    amount=MoneyJPY(amount),
-                    transaction_type=TransactionType.INCOME,
-                    payment_method="自動登録",
-                    card_user_name=setting.member_name,
-                    memo="収入設定から自動登録",
-                    source_format="income_setting",
-                    source_hash=source_hash,
+            for target_month in _iter_target_months(setting=setting, current_month=current_month):
+                amount, day = self._effective_values(setting=setting, target_month=target_month)
+                transaction_date = _safe_month_day(target_month=target_month, day=day)
+                if current_date < transaction_date:
+                    continue
+                source_hash = _income_source_hash(setting.income_setting_id, target_month)
+                if self._transaction_repository.source_hash_exists(user_id=user_id, source_hash=source_hash):
+                    continue
+                self._transaction_repository.create_transaction(
+                    Transaction(
+                        id=self._transaction_repository.next_id(),
+                        user_id=user_id,
+                        category_id=setting.category_id,
+                        transaction_date=transaction_date,
+                        shop_name=f"{setting.member_name} 収入",
+                        amount=MoneyJPY(amount),
+                        transaction_type=TransactionType.INCOME,
+                        payment_method="自動登録",
+                        card_user_name=setting.member_name,
+                        memo="収入設定から自動登録",
+                        source_format="income_setting",
+                        source_hash=source_hash,
+                    )
                 )
-            )
-            created_count += 1
+                created_count += 1
         return created_count
 
     def _ensure_setting(self, *, user_id: UUID, income_setting_id: UUID) -> IncomeSetting:
@@ -158,6 +167,8 @@ class IncomeSettingsUseCases:
         if not command.member_name.strip():
             raise IncomeSettingsError("Member name is required.")
         self._validate_amount_and_day(amount=command.base_amount, day=command.base_day)
+        if command.end_month and command.end_month < command.start_month:
+            raise IncomeSettingsError("End month must be greater than or equal to start month.")
         category = self._category_repository.get_category(user_id=user_id, category_id=command.category_id)
         if category is None or not category.is_active:
             raise IncomeSettingsError("Category not found or inactive.")
@@ -183,3 +194,16 @@ def _safe_month_day(*, target_month: date, day: int) -> date:
 
 def _income_source_hash(income_setting_id: UUID, target_month: date) -> str:
     return sha256(f"income_setting:{income_setting_id}:{target_month:%Y-%m}".encode()).hexdigest()
+
+
+def _iter_target_months(*, setting: IncomeSetting, current_month: date) -> list[date]:
+    last_month = min(current_month, setting.end_month) if setting.end_month else current_month
+    if last_month < setting.start_month:
+        return []
+
+    months: list[date] = []
+    target_month = setting.start_month
+    while target_month <= last_month:
+        months.append(target_month)
+        target_month = add_months(target_month, 1)
+    return months
