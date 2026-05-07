@@ -35,6 +35,9 @@ export default defineConfig({
       testIgnore: /auth\.setup\.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        launchOptions: {
+          args: ["--lang=ja-JP"],
+        },
         storageState: "e2e/.auth/sample-user.json",
       },
     },
