@@ -22,6 +22,10 @@ backend/
 
 細分化したファイルは、変更理由が異なる責務を分けるために置く。`__init__.py` は原則として外部公開する型やユースケースの再エクスポートに限定し、業務処理を書かない。
 
+### app 直下
+
+- `main.py`: FastAPIアプリケーション生成、CORS、共通エラーハンドラ、APIルーター登録を担当する。
+
 ### bootstrap
 
 - `container.py`: Repository、Storage、Parser、Security実装を組み立て、application層のユースケースへ注入する。
@@ -92,9 +96,21 @@ backend/
 
 - `config.py`: 環境変数からアプリ設定を読み込む。
 - `db/session.py`: SQLAlchemy Engine、Session、FastAPI依存関係用のDBセッションを提供する。
-- `models/`: SQLAlchemy ORMモデルをテーブル単位で置く。`base.py` はBase、タイムスタンプ、論理削除Mixinを置く。
 - `parsers/rakuten_card_pdf_parser.py`: PyMuPDFを使った楽天カードPDF明細の具象パーサを置く。
 - `storage.py`: PDF原本などのローカルファイル保存・削除の具象実装を置く。
+
+### infrastructure/models
+
+- `base.py`: SQLAlchemy Base、UTC現在時刻、タイムスタンプMixin、論理削除Mixinを置く。
+- `user.py`: ユーザーのORMモデルを置く。
+- `user_setting.py`: ユーザー画面設定のORMモデルを置く。
+- `category.py`: カテゴリのORMモデルを置く。
+- `transaction.py`: 明細のORMモデルを置く。
+- `upload.py`: PDFアップロード履歴のORMモデルを置く。
+- `audit_log.py`: 監査ログのORMモデルを置く。
+- `income_setting.py`: 収入設定と月別上書きのORMモデルを置く。
+- `refresh_token.py`: リフレッシュトークンのORMモデルを置く。
+- `password_reset_token.py`: パスワードリセットトークンのORMモデルを置く。
 
 ### infrastructure/repositories
 
@@ -128,8 +144,22 @@ backend/
 - `api/router.py`: APIルーターを集約する。
 - `api/dependencies.py`: 認証、CSRF、DBセッションなどFastAPI依存関係を置く。
 - `api/cookies.py`: 認証Cookieの設定・削除を担当する。
-- `api/routes/*.py`: エンドポイント単位のHTTP入出力、DTO変換、ステータスコード変換を担当する。業務判断はapplication層へ委譲する。
 - `api/routes/*_dtos.py`: 複数ルートで共有するレスポンスDTOと変換処理を置く。
+
+### presentation/api/routes
+
+- `health.py`: ヘルスチェックエンドポイントを置く。
+- `auth.py`: CSRF取得、初期管理者作成、ユーザー作成、ログイン、リフレッシュ、ログアウト、パスワードリセットのHTTP入出力を担当する。
+- `settings.py`: 画面設定取得・更新、データエクスポート、ユーザーデータ全削除のHTTP入出力を担当する。
+- `transactions.py`: 明細一覧、作成、取得、更新、削除、同一店舗カテゴリ更新、明細ExcelエクスポートのHTTP入出力を担当する。
+- `transaction_dtos.py`: 明細APIのリクエスト・レスポンスDTOと変換処理を置く。
+- `categories.py`: カテゴリ一覧、作成、更新、有効化・無効化、削除のHTTP入出力を担当する。
+- `reports.py`: 月次、週次、年次、カテゴリ集計レポートのHTTP入出力を担当する。
+- `dashboard.py`: ダッシュボード集計と最近の明細のHTTP入出力を担当する。
+- `report_dtos.py`: レポート・ダッシュボード系レスポンスDTOと変換処理を置く。
+- `uploads.py`: PDFアップロード履歴の一覧、取得、削除のHTTP入出力を担当する。
+- `income_settings.py`: 収入設定と月別上書きのHTTP入出力を担当する。
+- `audit_logs.py`: 監査ログ一覧のHTTP入出力を担当する。
 
 ## レイヤ責務
 
