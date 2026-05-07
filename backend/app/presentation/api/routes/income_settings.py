@@ -144,11 +144,6 @@ def delete_income_override(
         raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
     return _setting_response(setting)
 
-
-def apply_due_income_transactions(*, user_id: UUID, session: Session) -> int:
-    return _use_cases(session).apply_due_transactions(user_id=user_id)
-
-
 def _use_cases(session: Session) -> IncomeSettingsUseCases:
     return build_income_settings_use_cases(session)
 
