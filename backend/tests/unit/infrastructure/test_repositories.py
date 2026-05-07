@@ -19,7 +19,9 @@ from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
 from app.infrastructure.repositories.auth import AuthRepository
 from app.infrastructure.repositories.settings import SettingsRepository
-from app.infrastructure.repositories.transactions import CategoryRepository, TransactionQueryRepository, TransactionRepository
+from app.infrastructure.repositories.categories import CategoryRepository
+from app.infrastructure.repositories.transaction_queries import TransactionQueryRepository
+from app.infrastructure.repositories.transaction_records import TransactionRepository
 
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")

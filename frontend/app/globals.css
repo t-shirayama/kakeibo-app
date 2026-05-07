@@ -26,6 +26,8 @@
   --info: #38a7e0;
   --violet: #9c72de;
   --radius: 8px;
+  --font-sans: "Noto Sans JP Variable", "Noto Sans JP", "M PLUS 1p", Meiryo, "Yu Gothic", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 * {
@@ -41,7 +43,7 @@ body {
 body {
   background: var(--background);
   color: var(--text);
-  font-family: Inter, Meiryo, "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+  font-family: var(--font-sans);
 }
 
 a {
@@ -54,6 +56,13 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
 }
 
 button:not(:disabled) {

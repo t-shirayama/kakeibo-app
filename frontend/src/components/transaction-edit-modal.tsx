@@ -50,7 +50,7 @@ export function TransactionEditModal({
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
               await onSubmit({
-                transaction_date: String(formData.get("transaction_date") ?? ""),
+                transaction_date: normalizeDateInput(String(formData.get("transaction_date") ?? "")),
                 shop_name: String(formData.get("shop_name") ?? ""),
                 amount: Number(formData.get("amount") ?? 0),
                 transaction_type: "expense",
@@ -63,7 +63,16 @@ export function TransactionEditModal({
             {error ? <ApiErrorAlert error={error} /> : null}
             <div className="form-field horizontal">
               <label htmlFor="transaction-date">日付</label>
-              <input id="transaction-date" name="transaction_date" type="date" defaultValue={transaction?.transaction_date ?? initialTransactionDate ?? ""} required />
+              <input
+                id="transaction-date"
+                name="transaction_date"
+                type="text"
+                inputMode="numeric"
+                pattern="\d{4}[/-]\d{2}[/-]\d{2}"
+                placeholder="yyyy/MM/dd"
+                defaultValue={formatDateInput(transaction?.transaction_date ?? initialTransactionDate ?? "")}
+                required
+              />
             </div>
             <div className="form-field horizontal">
               <label htmlFor="merchant-name">店名</label>
@@ -105,4 +114,12 @@ export function TransactionEditModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+function formatDateInput(value: string) {
+  return value.replaceAll("-", "/");
+}
+
+function normalizeDateInput(value: string) {
+  return value.replaceAll("/", "-");
 }

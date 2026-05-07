@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
 from app.application.reports import DashboardSummary, ReportUseCases
+from app.bootstrap.income_transactions import apply_due_income_transactions
 from app.bootstrap.container import build_report_use_cases
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user
-from app.presentation.api.routes.income_settings import apply_due_income_transactions
 from app.presentation.api.routes.report_dtos import (
     BudgetSummaryResponse,
     CategorySummaryResponse,

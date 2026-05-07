@@ -46,7 +46,7 @@ PDF抽出ライブラリは PyMuPDF を使う。
 
 アップロード済みPDFは原本として保存する。
 
-初期のPDF原本保存先はローカルの `storage/uploads/` とする。保存パスは `storage/uploads/{user_id}/{upload_id}/original.pdf` の相対パスとする。将来はS3互換ストレージへの移行を想定する。
+PDF原本保存先はローカルの `storage/uploads/` とする。保存パスは `storage/uploads/{user_id}/{upload_id}/original.pdf` の相対パスとする。
 
 PDF原本はユーザーが削除するまで保存する。
 

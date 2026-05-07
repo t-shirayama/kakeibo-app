@@ -1,80 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
-from hashlib import sha256
-from typing import Protocol
 from uuid import UUID
 
-from app.application.reports import add_months
+from app.application.income_settings.commands import IncomeOverrideCommand, IncomeSettingCommand
+from app.application.income_settings.models import IncomeSetting, IncomeSettingsError
+from app.application.income_settings.policies import (
+    effective_values,
+    income_source_hash,
+    iter_target_months,
+    safe_month_day,
+)
+from app.application.income_settings.ports import IncomeSettingsRepositoryProtocol
 from app.application.transactions import CategoryRepositoryProtocol, TransactionRepositoryProtocol
 from app.domain.entities import Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
-
-
-class IncomeSettingsError(ValueError):
-    pass
-
-
-@dataclass(frozen=True, slots=True)
-class IncomeSettingCommand:
-    member_name: str
-    category_id: UUID
-    base_amount: int
-    base_day: int
-    start_month: date
-    end_month: date | None
-
-
-@dataclass(frozen=True, slots=True)
-class IncomeOverrideCommand:
-    target_month: date
-    amount: int
-    day: int
-
-
-@dataclass(frozen=True, slots=True)
-class IncomeOverride:
-    override_id: UUID
-    target_month: date
-    amount: int
-    day: int
-
-
-@dataclass(frozen=True, slots=True)
-class IncomeSetting:
-    income_setting_id: UUID
-    user_id: UUID
-    member_name: str
-    category_id: UUID
-    base_amount: int
-    base_day: int
-    start_month: date
-    end_month: date | None
-    overrides: list[IncomeOverride]
-
-
-class IncomeSettingsRepositoryProtocol(Protocol):
-    def list_settings(self, *, user_id: UUID) -> list[IncomeSetting]:
-        raise NotImplementedError
-
-    def create_setting(self, *, user_id: UUID, command: IncomeSettingCommand) -> IncomeSetting:
-        raise NotImplementedError
-
-    def update_setting(self, *, user_id: UUID, income_setting_id: UUID, command: IncomeSettingCommand) -> IncomeSetting:
-        raise NotImplementedError
-
-    def delete_setting(self, *, user_id: UUID, income_setting_id: UUID) -> None:
-        raise NotImplementedError
-
-    def upsert_override(self, *, user_id: UUID, income_setting_id: UUID, command: IncomeOverrideCommand) -> None:
-        raise NotImplementedError
-
-    def delete_override(self, *, user_id: UUID, income_setting_id: UUID, target_month: date) -> None:
-        raise NotImplementedError
-
-    def get_setting(self, *, user_id: UUID, income_setting_id: UUID) -> IncomeSetting | None:
-        raise NotImplementedError
 
 
 class IncomeSettingsUseCases:
@@ -130,12 +70,12 @@ class IncomeSettingsUseCases:
         current_month = current_date.replace(day=1)
         created_count = 0
         for setting in self._repository.list_settings(user_id=user_id):
-            for target_month in _iter_target_months(setting=setting, current_month=current_month):
-                amount, day = self._effective_values(setting=setting, target_month=target_month)
-                transaction_date = _safe_month_day(target_month=target_month, day=day)
+            for target_month in iter_target_months(setting=setting, current_month=current_month):
+                amount, day = effective_values(setting=setting, target_month=target_month)
+                transaction_date = safe_month_day(target_month=target_month, day=day)
                 if current_date < transaction_date:
                     continue
-                source_hash = _income_source_hash(setting.income_setting_id, target_month)
+                source_hash = income_source_hash(setting.income_setting_id, target_month)
                 if self._transaction_repository.source_hash_exists(user_id=user_id, source_hash=source_hash):
                     continue
                 self._transaction_repository.create_transaction(
@@ -178,32 +118,3 @@ class IncomeSettingsUseCases:
             raise IncomeSettingsError("Amount must be greater than or equal to 0.")
         if day < 1 or day > 31:
             raise IncomeSettingsError("Day must be between 1 and 31.")
-
-    def _effective_values(self, *, setting: IncomeSetting, target_month: date) -> tuple[int, int]:
-        override = next((item for item in setting.overrides if item.target_month == target_month), None)
-        if override:
-            return override.amount, override.day
-        return setting.base_amount, setting.base_day
-
-
-def _safe_month_day(*, target_month: date, day: int) -> date:
-    next_month = add_months(target_month, 1)
-    last_day = (next_month - date.resolution).day
-    return target_month.replace(day=min(day, last_day))
-
-
-def _income_source_hash(income_setting_id: UUID, target_month: date) -> str:
-    return sha256(f"income_setting:{income_setting_id}:{target_month:%Y-%m}".encode()).hexdigest()
-
-
-def _iter_target_months(*, setting: IncomeSetting, current_month: date) -> list[date]:
-    last_month = min(current_month, setting.end_month) if setting.end_month else current_month
-    if last_month < setting.start_month:
-        return []
-
-    months: list[date] = []
-    target_month = setting.start_month
-    while target_month <= last_month:
-        months.append(target_month)
-        target_month = add_months(target_month, 1)
-    return months

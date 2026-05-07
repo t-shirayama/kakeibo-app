@@ -18,6 +18,8 @@ export default defineConfig({
   reporter: process.env.CI ? [["html"], ["github"]] : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL,
+    locale: "ja-JP",
+    timezoneId: "Asia/Tokyo",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -33,6 +35,9 @@ export default defineConfig({
       testIgnore: /auth\.setup\.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        launchOptions: {
+          args: ["--lang=ja-JP"],
+        },
         storageState: "e2e/.auth/sample-user.json",
       },
     },

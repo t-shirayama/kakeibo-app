@@ -14,14 +14,12 @@ from app.infrastructure.config import get_settings
 from app.infrastructure.parsers.rakuten_card_pdf_parser import RakutenCardPdfParser
 from app.infrastructure.repositories.audit_logs import AuditLogQueryRepository
 from app.infrastructure.repositories.auth import AuthRepository
+from app.infrastructure.repositories.categories import CategoryRepository
 from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
 from app.infrastructure.repositories.settings import SettingsRepository
-from app.infrastructure.repositories.transactions import (
-    AuditLogRepository,
-    CategoryRepository,
-    TransactionQueryRepository,
-    TransactionRepository,
-)
+from app.infrastructure.repositories.transaction_audit_logs import AuditLogRepository
+from app.infrastructure.repositories.transaction_queries import TransactionQueryRepository
+from app.infrastructure.repositories.transaction_records import TransactionRepository
 from app.infrastructure.repositories.uploads import UploadRepository
 from app.infrastructure.storage import LocalUploadStorage
 

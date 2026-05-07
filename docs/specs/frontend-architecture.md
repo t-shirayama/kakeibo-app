@@ -8,6 +8,8 @@ Next.js 側には業務判断を重複実装せず、ドメインルールはバ
 
 UIライブラリは shadcn/ui と Tailwind CSS を使う。
 
+UIフォントは `frontend/app/globals.css` のCSS変数を正とする。本文・UIは Fontsource 経由で自己ホストする `Noto Sans JP Variable` を優先し、コードや等幅表示は `JetBrains Mono`、`Fira Code` を優先する。
+
 サーバー状態管理は TanStack Query を使う。グローバル状態は最小限にする。
 
 APIクライアントはOpenAPIから自動生成する。
@@ -56,6 +58,7 @@ APIクライアントはOpenAPIから自動生成する。
 - TanStack Query の query key 定義は、原則として各 feature 配下の `queryKeys.ts` へ置き、画面側で配列を直書きしない。
 - `frontend/src/components` には複数画面で再利用する共通UIだけを置く。
 - `収入` `支出` `収支` のテーマカラーは `frontend/app/globals.css` の CSS 変数を正とし、金額表示やアイコンを含めて画面やコンポーネントで色コードを直書きして増やさない。
+- フォント指定は `frontend/app/globals.css` の `--font-sans` と `--font-mono` を正とし、個別画面やコンポーネントでフォントファミリーを直書きしない。
 
 ## API連携
 
