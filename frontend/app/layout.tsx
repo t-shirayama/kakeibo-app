@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HydrationMarker } from "@/components/hydration-marker";
 import { Providers } from "@/components/providers";
+import "@fontsource-variable/noto-sans-jp/wght.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

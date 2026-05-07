@@ -8,7 +8,7 @@ Next.js 側には業務判断を重複実装せず、ドメインルールはバ
 
 UIライブラリは shadcn/ui と Tailwind CSS を使う。
 
-UIフォントは `frontend/app/globals.css` のCSS変数を正とする。本文・UIは `Noto Sans JP`、`M PLUS 1p` を優先し、コードや等幅表示は `JetBrains Mono`、`Fira Code` を優先する。
+UIフォントは `frontend/app/globals.css` のCSS変数を正とする。本文・UIは Fontsource 経由で自己ホストする `Noto Sans JP Variable` を優先し、コードや等幅表示は `JetBrains Mono`、`Fira Code` を優先する。
 
 サーバー状態管理は TanStack Query を使う。グローバル状態は最小限にする。
 
