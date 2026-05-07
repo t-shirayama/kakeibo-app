@@ -5,12 +5,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from app.application.auth.csrf_service import CsrfTokenError, CsrfTokenService
-from app.application.auth.password_hasher import PasswordHasher
 from app.application.auth.password_policy import PasswordPolicy, PasswordPolicyError
 from app.application.auth.refresh_rotation import RefreshTokenRotationService
-from app.application.auth.token_hash import hash_token
 from app.domain.auth import RefreshToken
+from app.infrastructure.security import CsrfTokenError, CsrfTokenService, PasswordHasher, TokenHasher
 
 
 class FakeRefreshTokenRepository:
@@ -52,9 +50,10 @@ def test_password_hasher_verifies_password() -> None:
 
 
 def test_hash_token_is_deterministic_without_returning_raw_token() -> None:
-    hashed = hash_token("refresh-token")
+    hasher = TokenHasher()
+    hashed = hasher.hash_token("refresh-token")
 
-    assert hashed == hash_token("refresh-token")
+    assert hashed == hasher.hash_token("refresh-token")
     assert hashed != "refresh-token"
     assert len(hashed) == 64
 

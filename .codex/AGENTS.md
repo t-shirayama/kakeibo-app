@@ -49,7 +49,7 @@
 
 - 認証・セキュリティを変更する場合
   1. 仕様: `docs/specs/security.md`、必要に応じて `docs/specs/api-specs.md` と `docs/specs/project-rules.md`
-  2. 実装: `backend/app/application/auth/`、`backend/app/presentation/api/routes/auth.py`、`frontend/src/lib/auth.ts`、`frontend/src/lib/csrf.ts`
+  2. 実装: `backend/app/application/auth/`、`backend/app/infrastructure/security/`、`backend/app/presentation/api/routes/auth.py`、`frontend/src/lib/auth.ts`、`frontend/src/lib/csrf.ts`
   3. テスト: 認証/CSRFのバックエンドテスト、必要に応じて `frontend/e2e/auth.spec.ts`
   4. 生成物: 認証APIのDTOを変えた場合だけ `frontend/src/lib/generated/openapi-client.ts` を再生成する
 
@@ -61,6 +61,8 @@
 - 仕様、設計、画面要件、API、DB、セキュリティ、E2E、運用方針を変更した場合は、関連するドキュメントを同じ作業内で更新してください。
 - コードを修正した場合は、影響する単体テスト、APIテスト、E2Eを同じ作業内で更新してください。更新しない場合は、既存テストで同じリスクを検証できる理由を最終回答で説明してください。
 - リファクタリングを行う場合は、同じ構造・責務分離・共通化方針を適用できる類似箇所がないか確認し、同じテーマ内で安全に横展開できる範囲は同じ作業でそろえてください。横展開が別テーマになる場合は無理に混ぜず、最終回答で後続候補として明記してください。
+- バックエンドの責務分離では、JWT/CSRF/ハッシュ/DB/ファイル保存などの技術詳細をインフラ層へ寄せ、アプリケーション層はProtocol越しに呼び出してください。
+- ユーザーデータ全削除のような複数集約を横断する破壊的操作は、画面設定など単一機能のユースケースやリポジトリへ混在させず、専用のユースケースへ分離してください。
 - 無効化カテゴリを未分類表示に寄せるなど、表示にも影響する業務ルールは画面ごとに重複実装せず、バックエンドまたは `src/lib` / アプリケーション層の共有ヘルパーへ集約してください。
 - 動作確認やテストは、原則としてホスト環境のPython/NodeではなくDocker Composeのコンテナ内で実行してください。
 - フロントエンドの型チェックやビルドは `docker compose run --rm --no-deps frontend npm run typecheck` や `docker compose run --rm --no-deps frontend npm run build` を優先してください。

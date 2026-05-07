@@ -5,11 +5,9 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
 
-from app.application.auth.password_hasher import PasswordHasher
 from app.application.auth.ports import UserRecord
-from app.application.auth.token_hash import hash_token
 from app.application.common import Page
-from app.application.settings import SettingsUseCases
+from app.application.user_data import UserDataDeletionUseCases
 from app.domain.entities import Category, Transaction, TransactionType, UploadStatus
 from app.domain.value_objects import MoneyJPY
 from app.infrastructure.models.category import CategoryModel
@@ -18,13 +16,15 @@ from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
 from app.infrastructure.repositories.auth import AuthRepository
-from app.infrastructure.repositories.settings import SettingsRepository
 from app.infrastructure.repositories.categories import CategoryRepository
 from app.infrastructure.repositories.transaction_queries import TransactionQueryRepository
 from app.infrastructure.repositories.transaction_records import TransactionRepository
+from app.infrastructure.repositories.user_data import UserDataRepository
+from app.infrastructure.security import PasswordHasher, TokenHasher
 
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
+TOKEN_HASHER = TokenHasher()
 
 
 class FakeStorage:
@@ -294,7 +294,7 @@ def test_auth_repository_returns_token_expiration_as_utc_aware_datetime(db_sessi
         RefreshTokenModel(
             id="refresh-token-id",
             user_id=str(USER_ID),
-            token_hash=hash_token("refresh-token"),
+            token_hash=TOKEN_HASHER.hash_token("refresh-token"),
             expires_at=refresh_expires_at,
         )
     )
@@ -302,15 +302,15 @@ def test_auth_repository_returns_token_expiration_as_utc_aware_datetime(db_sessi
         PasswordResetTokenModel(
             id="password-reset-token-id",
             user_id=str(USER_ID),
-            token_hash=hash_token("password-reset-token"),
+            token_hash=TOKEN_HASHER.hash_token("password-reset-token"),
             expires_at=reset_expires_at,
         )
     )
     db_session.commit()
 
     repository = AuthRepository(db_session)
-    refresh_token = repository.get_active_refresh_token(hash_token("refresh-token"))
-    reset_token = repository.get_active_password_reset_token(hash_token("password-reset-token"))
+    refresh_token = repository.get_active_refresh_token(TOKEN_HASHER.hash_token("refresh-token"))
+    reset_token = repository.get_active_password_reset_token(TOKEN_HASHER.hash_token("password-reset-token"))
 
     assert refresh_token is not None
     assert refresh_token.expires_at.tzinfo is UTC
@@ -340,8 +340,8 @@ def test_settings_use_case_deletes_user_data_and_pdf_original(db_session: Sessio
     db_session.commit()
     storage = FakeStorage()
 
-    use_cases = SettingsUseCases(
-        repository=SettingsRepository(db_session),
+    use_cases = UserDataDeletionUseCases(
+        repository=UserDataRepository(db_session),
         storage=storage,  # type: ignore[arg-type]
         password_hasher=hasher,
     )

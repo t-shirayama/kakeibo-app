@@ -5,9 +5,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
-from app.bootstrap.container import build_report_use_cases, build_settings_use_cases
+from app.bootstrap.container import build_report_use_cases, build_settings_use_cases, build_user_data_deletion_use_cases
 from app.application.reports import ReportUseCases
 from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand, UserSettingsRecord
+from app.application.user_data import UserDataDeletionError, UserDataDeletionUseCases
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.cookies import delete_auth_cookie
@@ -85,12 +86,12 @@ def delete_all_user_data(
     session: Session = Depends(get_db_session),
 ) -> dict[str, str]:
     try:
-        _use_cases(session).delete_all_user_data(
+        _data_deletion_use_cases(session).delete_all_user_data(
             current_user=current_user,
             confirmation_text=request.confirmation_text,
             password=request.password,
         )
-    except SettingsError as exc:
+    except UserDataDeletionError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     settings = get_settings()
     delete_auth_cookie(response, settings.access_cookie_name, settings)
@@ -100,6 +101,10 @@ def delete_all_user_data(
 
 def _use_cases(session: Session) -> SettingsUseCases:
     return build_settings_use_cases(session)
+
+
+def _data_deletion_use_cases(session: Session) -> UserDataDeletionUseCases:
+    return build_user_data_deletion_use_cases(session)
 
 
 def _settings_response(settings: UserSettingsRecord) -> SettingsResponse:

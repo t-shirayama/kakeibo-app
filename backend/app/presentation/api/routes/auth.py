@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from jwt import PyJWTError
 from sqlalchemy.orm import Session
 
-from app.application.auth.csrf_service import CsrfTokenService
+from app.infrastructure.security import CsrfTokenService
 from app.application.auth.password_policy import PasswordPolicyError
 from app.application.auth.ports import UserRecord
 from app.application.auth.use_cases import AuthError, AuthTokens, AuthUseCases

@@ -7,6 +7,7 @@ from app.bootstrap.container import (
     build_report_use_cases,
     build_settings_use_cases,
     build_transaction_use_cases,
+    build_user_data_deletion_use_cases,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "build_report_use_cases",
     "build_settings_use_cases",
     "build_transaction_use_cases",
+    "build_user_data_deletion_use_cases",
 ]

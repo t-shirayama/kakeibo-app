@@ -13,7 +13,7 @@ from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.application.auth.password_hasher import PasswordHasher
+from app.infrastructure.security import PasswordHasher
 from app.infrastructure.config import get_settings
 import app.infrastructure.db.session as db_session
 from app.infrastructure.models import Base

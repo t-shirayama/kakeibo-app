@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.infrastructure.models.audit_log import AuditLogModel
 
 
-class AuditLogRepository:
-    # 監査ログの永続化だけを担当し、明細やカテゴリの業務判断は持ち込まない。
+class AuditLogRecordRepository:
+    # 監査ログの永続化だけを担当し、各機能の業務判断は持ち込まない。
     def __init__(self, session: Session) -> None:
         self._session = session
 

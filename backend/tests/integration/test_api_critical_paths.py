@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 import app.bootstrap.container as bootstrap_container
 import app.infrastructure.db.session as db_session
 from app.application.importing.pdf_importer import ImportedCardTransaction
-from app.application.auth.password_hasher import PasswordHasher
+from app.infrastructure.security import PasswordHasher
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
