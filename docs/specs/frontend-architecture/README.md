@@ -54,7 +54,9 @@ APIクライアントはOpenAPIから自動生成する。
 - `frontend/src/features/uploads` はPDFアップロード画面の実装を持つ。
 - `frontend/src/features/income-settings` は収入設定画面の実装を持つ。
 - `frontend/src/features/budgets` は予算管理画面の実装を持つ。
-- `frontend/src/features/settings` は設定画面で使う server state の key 定義など、設定画面に閉じた要素を持つ。
+- `frontend/src/features/categories` はカテゴリ管理画面の実装と、その画面専用の query key を持つ。
+- `frontend/src/features/audit-logs` は監査ログ画面の実装と、その画面専用の query key を持つ。
+- `frontend/src/features/settings` は設定画面の実装と、その画面専用の query key を持つ。
 - TanStack Query の query key 定義は、原則として各 feature 配下の `queryKeys.ts` へ置き、画面側で配列を直書きしない。
 - `frontend/src/components` には複数画面で再利用する共通UIだけを置く。
 - `収入` `支出` `収支` のテーマカラーは `frontend/app/globals.css` の CSS 変数を正とし、金額表示やアイコンを含めて画面やコンポーネントで色コードを直書きして増やさない。
