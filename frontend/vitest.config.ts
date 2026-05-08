@@ -13,7 +13,13 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/features/**/*-utils.ts", "src/lib/format.ts", "src/lib/transaction-category.ts", "src/lib/year-month.ts"],
+      include: [
+        "src/features/**/*-utils.ts",
+        "src/lib/api/error.ts",
+        "src/lib/format.ts",
+        "src/lib/transaction-category.ts",
+        "src/lib/year-month.ts",
+      ],
       exclude: ["src/lib/generated/**", "src/test/**"],
       thresholds: {
         statements: 80,

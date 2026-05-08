@@ -8,7 +8,8 @@ import { createTransactionApi } from "./features/transactions";
 import { createUploadApi } from "./features/uploads";
 import type { ApiClient } from "./types";
 
-export { ApiError } from "./error";
+export { ApiError, is_api_error, is_csrf_error, is_missing_csrf_session_error, normalize_api_error } from "./error";
+export type { ApiErrorShape } from "./error";
 export {
   api_blob,
   api_fetch,

@@ -1,11 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-
-export type ApiErrorShape = {
-  code?: string;
-  message?: string;
-  details?: unknown;
-  request_id?: string;
-};
+import { normalize_api_error, type ApiErrorShape } from "@/lib/api/error";
 
 type ApiErrorAlertProps = {
   error?: ApiErrorShape | Error | string | null;
@@ -13,21 +7,8 @@ type ApiErrorAlertProps = {
   onRetry?: () => void;
 };
 
-function normalizeError(error: ApiErrorAlertProps["error"]): ApiErrorShape {
-  if (!error) {
-    return { message: "予期しないエラーが発生しました。" };
-  }
-  if (typeof error === "string") {
-    return { message: error };
-  }
-  if (error instanceof Error) {
-    return { message: error.message };
-  }
-  return error;
-}
-
 export function ApiErrorAlert({ error, title = "APIエラー", onRetry }: ApiErrorAlertProps) {
-  const normalized = normalizeError(error);
+  const normalized = normalize_api_error(error);
 
   return (
     <div className="api-error-alert" role="alert">
