@@ -14,6 +14,7 @@ import { api, type CategoryRequest } from "@/lib/api";
 import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { formatCurrency } from "@/lib/format";
 import type { CategoryDto, DashboardSummaryDto } from "@/lib/types";
+import { addMonths, formatYearMonthLabel, getCurrentYearMonth, normalizeYearMonth, parseYearMonth } from "@/lib/year-month";
 
 type BudgetTab = "settings" | "actuals";
 
@@ -305,52 +306,11 @@ function buildCategoryUpdateRequest(category: CategoryDto, monthlyBudget: number
   };
 }
 
-function getCurrentYearMonth() {
-  const parts = new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(new Date());
-  const year = parts.find((part) => part.type === "year")?.value ?? String(new Date().getFullYear());
-  const month = parts.find((part) => part.type === "month")?.value ?? String(new Date().getMonth() + 1).padStart(2, "0");
-
-  return `${year}-${month}`;
-}
-
-function parseYearMonth(value: string) {
-  const [year, month] = value.split("-").map(Number);
-
-  return {
-    year: Number.isInteger(year) ? year : Number(getCurrentYearMonth().slice(0, 4)),
-    month: Number.isInteger(month) ? month : Number(getCurrentYearMonth().slice(5, 7)),
-  };
-}
-
-function normalizeYearMonth(value: string | null) {
-  if (!value || !/^\d{4}-\d{2}$/.test(value)) {
-    return null;
-  }
-  return value;
-}
-
 function normalizeBudgetTab(value: string | null): BudgetTab | null {
   if (value === "settings" || value === "actuals") {
     return value;
   }
   return null;
-}
-
-function addMonths(value: string, amount: number) {
-  const { year, month } = parseYearMonth(value);
-  const date = new Date(year, month - 1 + amount, 1);
-
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function formatYearMonthLabel(value: string) {
-  const { year, month } = parseYearMonth(value);
-
-  return `${year}年${month}月`;
 }
 
 function formatProgressRatio(value: number) {

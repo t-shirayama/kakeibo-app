@@ -12,6 +12,7 @@ import { incomeSettingsQueryKeys } from "@/features/income-settings/queryKeys";
 import { api, type IncomeOverrideRequest, type IncomeSettingRequest } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import type { CategoryDto, IncomeSettingDto } from "@/lib/types";
+import { getCurrentYearMonth } from "@/lib/year-month";
 
 type OverrideDraft = {
   targetMonth: string;
@@ -447,14 +448,6 @@ function normalizeOptionalMonth(value: FormDataEntryValue | null) {
 
 function formatIncomeSettingPeriod(startMonth: string, endMonth: string | null) {
   return endMonth ? `${startMonth} - ${endMonth}` : `${startMonth} から継続`;
-}
-
-function getCurrentYearMonth() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-  }).format(new Date()).slice(0, 7);
 }
 
 function IncomeCategoryBadge({ category }: { category: CategoryDto | undefined }) {
