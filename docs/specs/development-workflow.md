@@ -89,7 +89,7 @@
 - `frontend/Dockerfile.dev` は通常開発用、`frontend/Dockerfile.e2e` は Playwright とE2E用バックエンド実行環境を含む検証用、`frontend/Dockerfile.prod` は本番ビルド確認用として分ける。
 - バックエンドテスト全体は `docker compose run --rm backend python -m pytest` を基本コマンドとする。
 - バックエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps backend python -m pytest tests/unit` を使う。単体テストはMySQL起動に依存させない。
-- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。Docker Compose では `INTEGRATION_DATABASE_URL` と `INTEGRATION_ADMIN_DATABASE_URL` を backend service に渡し、テスト起動時に integration 専用DBを自動作成する。CI の `test` workflow では Alembic 適用確認後にバックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを別ステップで実行する。
+- バックエンドの Integration Test だけを確認する場合は `docker compose run --rm backend python -m pytest -m integration` を使う。Docker Compose では `INTEGRATION_DATABASE_URL` と `INTEGRATION_ADMIN_DATABASE_URL` を backend service に渡し、テスト起動時に integration 専用DBを自動作成する。CI では backend-check、backend-unit、backend-integration を別 job として段階実行する。
 - フロントエンドの lint / 型チェック / ビルドは `docker compose run --rm --no-deps frontend npm run lint`、`docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build` を基本コマンドとする。Next.js 16 以降は `next lint` が廃止されているため、lint は ESLint CLI で実行する。型チェックは `next typegen` で route types を生成してから `tsc --noEmit` を実行する。
 - フロントエンドの単体テストだけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:unit`、Integration Test だけを確認する場合は `docker compose run --rm --no-deps frontend npm run test:integration` を使う。どちらもバックエンドやMySQL起動に依存させない。依存追加直後など、`frontend-node-modules` ボリュームが古い場合は `docker compose run --rm --no-deps frontend npm install` で lockfile を反映してから実行する。
 - E2Eは `docker compose run --rm e2e` を基本コマンドとし、frontend 側は `npm run build && next start` で production build を起動する。
@@ -99,10 +99,13 @@
 
 ## CI と自動化
 
-- GitHub ActionsのCIは `quality` と `test` に分ける。
-- `quality` では `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、未確定事項チェック、シークレットスキャン、OpenAPI生成物チェックを実行する。
-- `quality` ではあわせて `backend/requirements.lock` の再生成差分も検証する。
-- `test` では Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2Eを pull request ごとに分けて実行する。現時点では定期実行は追加せず、PR単位の即時検知を優先する。
+- GitHub Actions のCIは `.github/workflows/ci.yml` に集約する。workflow 間では `needs` を張れないため、品質チェックとテストを1つの workflow 内の job として分割する。
+- CI は `main` / `develop` への push と、`main` / `develop` 宛ての pull request で実行する。`main` / `develop` への push と feature 系以外の pull request は全 job を実行する。
+- pull request の head branch が `feature/**` または `features/**` の場合だけ、変更パスに応じて backend / frontend / E2E 関連 job を絞る。`docs/`、`README.md`、`.codex/`、`.github/` だけの共通変更では repo-check、backend-check、frontend-check までを実行し、unit / integration / E2E は省略する。
+- CI の段階は、step1 を `backend-check` / `frontend-check`、step2 を `backend-unit` / `frontend-unit`、step3 を `backend-integration` / `frontend-integration`、最後を `e2e` とする。E2E は backend または frontend の変更、E2E関連ファイルの変更、または全実行条件のときに実行する。
+- `backend-check` ではバックエンドのレイヤ依存チェック、Alembic適用確認、OpenAPI生成物チェック、`backend/requirements.lock` の再生成差分チェックを実行する。Pythonアプリには独立した build script がないため、Docker Compose 上での migration smoke と生成物/lock 検証をバックエンド側のビルド相当チェックとして扱う。
+- `frontend-check` では `frontend` の `lint` / `typecheck` / `build` を実行する。Next.js の production build は静的チェック段階に含め、単体テストやIntegration Testより前にビルド不能な状態を検知する。
+- `repo-check` では未確定事項チェックとシークレットスキャンを実行する。段階制御上は preflight 扱いとし、テストの step1 には含めない。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
 - バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
 - clone 後は `scripts/install-git-hooks.ps1` または `scripts/install-git-hooks.sh` で `core.hooksPath=.githooks` を設定し、`push` 前に `requirements.lock` 整合性チェックと、E2E関連変更時の `docker compose build e2e` を自動実行する。
