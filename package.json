@@ -8,6 +8,7 @@
     "down": "docker compose down",
     "reset": "docker compose down -v",
     "migrate": "docker compose run --rm backend python -m alembic upgrade head",
+    "seed:sample": "docker compose run --rm backend python -m app.bootstrap.seed_sample_data --reset",
     "test:backend": "docker compose run --rm backend python -m pytest",
     "test:backend:unit": "docker compose run --rm --no-deps backend python -m pytest tests/unit",
     "test:backend:it": "docker compose run --rm backend python -m pytest -m integration",

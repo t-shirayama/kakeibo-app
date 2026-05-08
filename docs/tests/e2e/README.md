@@ -42,7 +42,7 @@ docker compose run --rm -p 3100:3100 -e E2E_FRONTEND_PORT=3100 -e E2E_BASE_URL=h
 
 - E2Eは `docker compose run --rm e2e` で実行し、`frontend/playwright.config.ts` からコンテナ内のバックエンドと production build 済みフロントエンドを起動する。
 - E2E専用DBは既定で `kakeibo_e2e` を使う。
-- 実行前に `frontend/scripts/reset-e2e-db.mjs` がE2E専用DBを作り直し、Alembic `upgrade head` でサンプルユーザーとサンプルデータを投入する。
+- 実行前に `frontend/scripts/reset-e2e-db.mjs` がE2E専用DBを作り直し、Alembic `upgrade head` の後に `python -m app.bootstrap.seed_sample_data --reset` でサンプルユーザーとサンプルデータを投入する。
 - `frontend/scripts/e2e-runtime.mjs` は E2E 用の Python 解決、環境変数組み立て、コマンド実行を共通化し、`reset-e2e-db.mjs` と `start-backend-e2e.mjs` から使う。
 - DB作成と権限付与には `E2E_ADMIN_DATABASE_URL` を使う。Docker Composeでは `mysql+pymysql://root:root_password@mysql:3306/mysql` を使う。
 - 通常の開発DB `kakeibo` は変更しない。

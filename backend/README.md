@@ -40,7 +40,11 @@ When backend dependencies change, activate the same virtual environment and run 
 
 ## Sample user
 
-`alembic upgrade head` inserts local verification sample data.
+`alembic upgrade head` applies schema migrations only. Insert local verification sample data explicitly when needed.
+
+```bash
+python -m app.bootstrap.seed_sample_data --reset
+```
 
 - Email: `sample@example.com`
 - Password: `SamplePassw0rd!`

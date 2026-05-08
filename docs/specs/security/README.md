@@ -84,6 +84,7 @@
 - `zap` サービスは `security` profile に属し、通常の `docker compose up` では起動しない。
 - ZAPは公式イメージ `ghcr.io/zaproxy/zaproxy:stable` を使う。
 - 対象OpenAPI定義は `http://backend:8000/openapi.json` とする。
+- ZAP実行前に `python -m app.bootstrap.seed_sample_data --reset` でサンプルユーザーを投入する。
 - ZAP実行前に `http://backend:8000/api/health` の成功を待つ。
 - ZAP実行時は `GET /api/auth/csrf` でCSRFトークンを取得し、サンプルユーザーで `POST /api/auth/login` して認証Cookieを取得する。
 - ZAPにはBearerトークンではなく、ログイン時にSet-CookieされたHttpOnly認証Cookieと `X-CSRF-Token` ヘッダーを渡す。
