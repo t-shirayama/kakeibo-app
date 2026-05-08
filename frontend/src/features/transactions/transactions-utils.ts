@@ -6,6 +6,9 @@ export type SortDirection = "asc" | "desc";
 export type DateRange = { date_from: string; date_to: string };
 export type SearchParamsLike = Pick<URLSearchParams, "get" | "toString">;
 
+const SORT_FIELDS = new Set(["date", "amount"]);
+const SORT_DIRECTIONS = new Set(["asc", "desc"]);
+
 export type TransactionSearchParams = {
   keyword: string;
   dateFrom: string;
@@ -60,10 +63,10 @@ export function buildNormalizedSearchParams(
   }
   const pageSize = Number(normalized.get("page_size") ?? String(defaultPageSize));
   normalized.set("page_size", String([10, 20, 50].includes(pageSize) ? pageSize : defaultPageSize));
-  if (!normalized.get("sort_field") || !["date", "amount"].includes(normalized.get("sort_field") ?? "")) {
+  if (!SORT_FIELDS.has(String(normalized.get("sort_field")))) {
     normalized.set("sort_field", "date");
   }
-  if (!normalized.get("sort_direction") || !["asc", "desc"].includes(normalized.get("sort_direction") ?? "")) {
+  if (!SORT_DIRECTIONS.has(String(normalized.get("sort_direction")))) {
     normalized.set("sort_direction", "desc");
   }
   return normalized;

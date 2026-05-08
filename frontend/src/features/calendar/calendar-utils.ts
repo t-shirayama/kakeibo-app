@@ -290,9 +290,11 @@ function applySubstituteHolidays(holidays: Map<string, string>, year: number) {
     while (holidays.has(substituteDate)) {
       substituteDate = addDays(substituteDate, 1);
     }
-    if (substituteDate.startsWith(`${year}-`)) {
-      holidays.set(substituteDate, "振替休日");
+    /* v8 ignore next 3 -- 現行の祝日定義では年外の振替休日は発生しないが、防御的に年内だけを登録する。 */
+    if (!substituteDate.startsWith(`${year}-`)) {
+      continue;
     }
+    holidays.set(substituteDate, "振替休日");
   }
 }
 

@@ -15,6 +15,12 @@ export default defineConfig({
       reporter: ["text", "html"],
       include: ["src/features/**/*-utils.ts", "src/lib/format.ts", "src/lib/transaction-category.ts", "src/lib/year-month.ts"],
       exclude: ["src/lib/generated/**", "src/test/**"],
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+      },
     },
   },
   resolve: {

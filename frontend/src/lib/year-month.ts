@@ -9,30 +9,24 @@ export type DateRange = {
 };
 
 export function getCurrentYearMonth() {
-  const parts = new Intl.DateTimeFormat("ja-JP", {
+  const parts = getDateParts("ja-JP", {
     timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
-  }).formatToParts(new Date());
-  const fallbackDate = new Date();
-  const year = parts.find((part) => part.type === "year")?.value ?? String(fallbackDate.getFullYear());
-  const month = parts.find((part) => part.type === "month")?.value ?? String(fallbackDate.getMonth() + 1).padStart(2, "0");
+  });
 
-  return `${year}-${month}`;
+  return `${parts.year}-${parts.month}`;
 }
 
 export function getTodayDateString() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
+  const parts = getDateParts("en-CA", {
     timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
-  const year = parts.find((part) => part.type === "year")?.value ?? "2000";
-  const month = parts.find((part) => part.type === "month")?.value ?? "01";
-  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+  });
 
-  return `${year}-${month}-${day}`;
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 export function parseYearMonth(value: string): YearMonth {
@@ -90,4 +84,8 @@ export function formatDateParam(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function getDateParts(locales: Intl.LocalesArgument, options: Intl.DateTimeFormatOptions): Record<string, string> {
+  return Object.fromEntries(new Intl.DateTimeFormat(locales, options).formatToParts(new Date()).map((part) => [part.type, part.value]));
 }

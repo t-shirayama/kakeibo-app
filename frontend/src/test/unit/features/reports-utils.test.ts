@@ -65,6 +65,41 @@ describe("reports-utils", () => {
     expect(buildInsights(undefined)).toEqual([]);
   });
 
+  it("カテゴリなし、収入ゼロ、平均以下の支出でも気づきを作る", () => {
+    const insights = buildInsights(
+      dashboardSummary({
+        total_expense: 90000,
+        total_income: 0,
+        balance: 0,
+        category_summaries: [],
+        monthly_summaries: [
+          { period: "2026-03", total_expense: 120000, total_income: 0, balance: 0, transaction_count: 10 },
+          { period: "2026-04", total_expense: 100000, total_income: 0, balance: 0, transaction_count: 11 },
+        ],
+      }),
+    );
+
+    expect(insights).toHaveLength(2);
+    expect(insights[0]).toMatchObject({ tone: "info", iconKey: "trend" });
+    expect(insights[1]).toMatchObject({
+      title: "貯蓄率は0.0%です",
+      description: "収入が0円のため、今月の貯蓄率は0%として表示しています。",
+      tone: "info",
+    });
+
+    expect(
+      buildInsights(
+        dashboardSummary({
+          total_expense: 1,
+          total_income: 1,
+          balance: 0,
+          category_summaries: [],
+          monthly_summaries: [],
+        }),
+      )[0],
+    ).toMatchObject({ tone: "alert", iconKey: "trend" });
+  });
+
   it("前月比と貯蓄率の表示用値を返す", () => {
     expect(calculateSavingsRate(300000, 45000)).toBe(15);
     expect(calculateSavingsRate(0, 45000)).toBe(0);
@@ -79,8 +114,10 @@ describe("reports-utils", () => {
   it("増減のtoneとclass名を返す", () => {
     expect(getExpenseTone(-1)).toBe("good");
     expect(getExpenseTone(1)).toBe("bad");
+    expect(getExpenseTone(0)).toBe("neutral");
     expect(getPositiveTone(1)).toBe("good");
     expect(getPositiveTone(-1)).toBe("bad");
+    expect(getPositiveTone(0)).toBe("neutral");
     expect(getDeltaClassName(-1)).toBe("expense-improved");
     expect(getDeltaClassName(1)).toBe("expense-worse");
     expect(getDeltaClassName(0)).toBe("expense-neutral");
