@@ -41,7 +41,7 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - UUIDはMySQL上では `CHAR(36)` として保存する。
 - 最大アップロードサイズは10MBとする。
 - エクスポート形式はExcel（`.xlsx`）とする。
-- MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
+- MVP対象APIのRequest/Response DTOは `../api-specs/README.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
 - スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
 - マイナス金額は取消明細を表す。
 - 0円明細を許可する。

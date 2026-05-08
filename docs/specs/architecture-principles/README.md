@@ -4,7 +4,7 @@
 
 この文書は、技術スタック、レイヤ構成、依存方向、フロントエンドとバックエンドの境界のような横断的な設計原則をまとめる。
 
-具体的な実装構成は `backend-architecture.md` と `frontend-architecture.md` を参照する。
+具体的な実装構成は `../backend-architecture/README.md` と `../frontend-architecture/README.md` を参照する。
 
 ## 技術スタック
 

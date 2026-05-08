@@ -10,7 +10,7 @@
 - 認可対象のリソースはログインユーザー本人のデータに限定する。
 - 認証が必要なAPIはHttpOnly CookieのJWTで認証する。
 - エクスポート形式はExcel（`.xlsx`）とする。
-- MVP対象APIのRequest/Response DTOは `api-specs.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
+- MVP対象APIのRequest/Response DTOは `README.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
 - スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
 - APIエラーは `error.code`, `error.message`, `error.details`, `error.request_id` を持つ共通形式で返す。
 - ページネーションは `page` と `page_size` を使うoffset/page方式とする。
