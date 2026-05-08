@@ -7,7 +7,7 @@ description: Use when working on this repository's OWASP ZAP Docker Compose API 
 
 ## Workflow
 
-1. Read `README.md` and `docs/specs/security.md` if scan behavior or security policy may change.
+1. Read `README.md` and `docs/specs/security/README.md` if scan behavior or security policy may change.
 2. Use `docker compose run --rm backend python -m alembic upgrade head` before scanning when sample data may be missing or stale.
 3. Run the local scan with `docker compose run --rm zap`.
 4. Summarize `zap-reports/zap-api-report.md` or `zap-reports/zap-api-report.json` by severity, affected endpoint, likely cause, and recommended next action.
