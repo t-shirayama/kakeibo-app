@@ -21,6 +21,7 @@ frontend/next-env.d.ts
 frontend/e2e/.auth/
 frontend/playwright-report/
 frontend/test-results/
+frontend/coverage/
 zap-reports/
 *.tsbuildinfo
 out/
