@@ -11,6 +11,7 @@
 
 ```powershell
 docker compose run --rm --no-deps backend python -m pytest tests/unit
+docker compose run --rm --no-deps backend python -m pytest tests/unit --cov=app --cov-report=term-missing
 docker compose run --rm --no-deps frontend npm run test:unit
 docker compose run --rm --no-deps frontend npm run test:unit:coverage
 ```

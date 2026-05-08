@@ -20,6 +20,7 @@ dependencies = [
 dev = [
     "httpx>=0.27.0",
     "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
 ]
 
 [build-system]
@@ -39,3 +40,17 @@ markers = [
 norecursedirs = [
     "tests/__pycache__",
 ]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/**/*/ports.py",
+    "app/domain/repositories.py",
+    "app/infrastructure/models/*.py",
+    "app/presentation/api/routes/*.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_empty = true
