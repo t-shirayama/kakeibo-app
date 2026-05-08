@@ -21,7 +21,7 @@
 
 2026-05 時点の主なテスト資産は次のとおり。
 
-- Backend Unit Test: `backend/tests/unit/` に 9 ファイル。domain の不変条件、application の認証・取引・Excel出力、infrastructure repository、presentation API の単体寄り検証を置く。カバレッジ確認は `docker compose run --rm --no-deps backend python -m pytest tests/unit --cov=app --cov-report=term-missing` で行い、抽象port、SQLAlchemy model、実API routeのように Integration Test で守る境界は coverage 対象から外す。
+- Backend Unit Test: `backend/tests/unit/` に domain / application / infrastructure / presentation の単体寄り検証を置く。カバレッジ確認は `docker compose run --rm --no-deps backend python -m pytest tests/unit --cov=app --cov-report=term-missing` で行い、抽象port、SQLAlchemy model、DB-backed repository、実API routeのように Integration Test で守る境界は coverage 対象から外す。
 - Backend Integration Test: `backend/tests/integration/` に 1 ファイル。FastAPI + Cookie認証 + CSRF + MySQL 永続化を通し、認証/refresh、明細 CRUD、月次集計、カテゴリ無効化時の未分類表示をまとめて守る。
 - Frontend Unit Test: `frontend/src/test/unit/` に 6 ファイル。整形関数、カテゴリ表示ルール、年月処理、カレンダー集計、明細検索パラメータ、ダッシュボード表示用集計のような純粋ロジックを置く。カバレッジ確認は `docker compose run --rm --no-deps frontend npm run test:unit:coverage` で行う。
 - Frontend Integration Test: `frontend/src/test/integration/` に 6 ファイル。ログイン、認証 refresh / CSRF 回復、明細一覧、レポート、アップロードを MSW と React Testing Library で検証する。

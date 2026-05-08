@@ -6,9 +6,10 @@ from uuid import UUID, uuid4
 import pytest
 
 from app.application.auth.password_policy import PasswordPolicy, PasswordPolicyError
+from app.application.auth.ports import AuthSettings
 from app.application.auth.refresh_rotation import RefreshTokenRotationService
 from app.domain.auth import RefreshToken
-from app.infrastructure.security import CsrfTokenError, CsrfTokenService, PasswordHasher, TokenHasher
+from app.infrastructure.security import CsrfTokenError, CsrfTokenService, JwtService, PasswordHasher, TokenHasher
 
 
 class FakeRefreshTokenRepository:
@@ -49,6 +50,13 @@ def test_password_hasher_verifies_password() -> None:
     assert not hasher.verify("WrongPass123!", password_hash)
 
 
+def test_password_hasher_rejects_unsupported_algorithm() -> None:
+    hasher = PasswordHasher()
+    password_hash = hasher.hash_password("StrongPass123!").replace("pbkdf2_sha256", "legacy", 1)
+
+    assert hasher.verify("StrongPass123!", password_hash) is False
+
+
 def test_hash_token_is_deterministic_without_returning_raw_token() -> None:
     hasher = TokenHasher()
     hashed = hasher.hash_token("refresh-token")
@@ -77,12 +85,38 @@ def test_csrf_token_rejects_tampering() -> None:
         service.validate_token(token, session_binding=session_binding)
 
 
+def test_csrf_token_rejects_malformed_and_expired_tokens() -> None:
+    service = CsrfTokenService(secret_key="secret", ttl_minutes=0)
+
+    with pytest.raises(CsrfTokenError, match="Invalid CSRF token"):
+        service.validate_token("malformed-token", session_binding="session")
+
+    token = service.issue_token(session_binding="session")
+    with pytest.raises(CsrfTokenError, match="expired"):
+        service.validate_token(token, session_binding="session")
+
+
 def test_csrf_token_rejects_different_session_binding() -> None:
     service = CsrfTokenService(secret_key="secret", ttl_minutes=30)
     token = service.issue_token(session_binding="session-a")
 
     with pytest.raises(CsrfTokenError, match="does not match this session"):
         service.validate_token(token, session_binding="session-b")
+
+
+def test_jwt_service_issues_and_decodes_all_token_types() -> None:
+    service = JwtService(
+        AuthSettings(
+            jwt_secret="test-secret-key-with-32-bytes-minimum!!",
+            jwt_algorithm="HS256",
+            access_token_minutes=15,
+            refresh_token_days=7,
+        )
+    )
+
+    assert service.decode(service.issue_access_token("user-id"))["typ"] == "access"
+    assert service.decode(service.issue_refresh_token("user-id"))["typ"] == "refresh"
+    assert service.decode(service.issue_reset_token("user-id"))["typ"] == "password_reset"
 
 
 def test_refresh_token_rotation_revokes_old_token_and_returns_replacement() -> None:

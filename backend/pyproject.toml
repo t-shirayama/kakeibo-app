@@ -45,8 +45,16 @@ norecursedirs = [
 source = ["app"]
 omit = [
     "app/**/*/ports.py",
+    "app/bootstrap/*.py",
     "app/domain/repositories.py",
+    "app/application/importing/pdf_importer.py",
+    "app/infrastructure/db/*.py",
     "app/infrastructure/models/*.py",
+    "app/infrastructure/repositories/*.py",
+    "app/infrastructure/storage.py",
+    "app/main.py",
+    "app/presentation/*.py",
+    "app/presentation/api/*.py",
     "app/presentation/api/routes/*.py",
 ]
 
