@@ -41,5 +41,5 @@ test("opens add transaction modal with the selected date", async ({ page }) => {
   await page.getByRole("button", { name: "明細追加" }).click();
 
   await expect(page.getByRole("heading", { name: "明細を追加" })).toBeVisible();
-  await expect(page.getByLabel("日付")).toHaveValue("2026-05-18");
+  await expect(page.getByLabel("日付")).toHaveValue("2026/05/18");
 });
