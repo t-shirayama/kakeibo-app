@@ -12,7 +12,7 @@
 1. ドキュメント入口: `docs/README.md`
 2. プロジェクトルール: `docs/specs/project-rules/README.md`
 3. 画面要件: `docs/README.md#画面別要件` および `docs/requirements/`
-4. E2Eテスト方針: `docs/tests/e2e/index.md`
+4. E2Eテスト方針: `docs/tests/e2e/README.md`
 5. 個別仕様: `docs/specs/` 配下の該当文書
 
 ## 変更パターン別の参照順
@@ -36,7 +36,7 @@
   4. 生成物: APIの入出力型が変わる場合だけ `frontend/src/lib/generated/openapi-client.ts` を更新する
 
 - E2Eを追加・変更する場合
-  1. 仕様: `docs/tests/e2e/index.md`、該当する `docs/tests/e2e/*.md`
+  1. 仕様: `docs/tests/e2e/README.md`、該当する `docs/tests/e2e/*.md`
   2. 実装: `frontend/e2e/*.spec.ts`、必要に応じて `frontend/e2e/auth.setup.ts`、`frontend/scripts/reset-e2e-db.mjs`
   3. テスト: `docker compose run --rm e2e`
   4. 生成物: なし。シナリオ文書とテストコードを同じ作業でそろえる

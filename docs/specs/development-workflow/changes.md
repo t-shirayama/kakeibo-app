@@ -12,7 +12,7 @@
 - セキュリティ、認証、認可、Cookie、CSRF、パスワード、ファイルアップロードの方針を変更した場合は `docs/specs/security/README.md` を更新する。
 - PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import/README.md` を更新する。
 - 用語を追加・変更した場合は `docs/specs/glossary/README.md` を更新する。
-- E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/tests/e2e/index.md` と該当する `docs/tests/e2e/` 配下のシナリオを更新する。
+- E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/tests/e2e/README.md` と該当する `docs/tests/e2e/` 配下のシナリオを更新する。
 - 現行画面のスクリーンショットを更新した場合は、既存の現行画像を `docs/designs/archive/screen-updates/<YYYY-MM-DD>/` へ退避し、`docs/designs/README.md` と README の画面イメージも同じ作業内で更新する。
 
 ## リファクタリング方針

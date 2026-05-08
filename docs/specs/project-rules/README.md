@@ -23,7 +23,7 @@
 - `docs/specs/glossary/README.md`: 用語集を置く。
 - `docs/specs/adrs/`: 重要な設計判断の履歴を置く。
 - `docs/tests/README.md`: テスト文書の入口。単体テスト、結合テスト、E2Eへの導線を置く。
-- `docs/tests/e2e/index.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
+- `docs/tests/e2e/README.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
 - `docs/tasks/completed/`: 完了済みタスク履歴の月別アーカイブを置く。
 
 現行の画面スクリーンショットは `docs/designs/` に置き、過去のデザイン案や旧スクリーンショットは `docs/designs/archive/` に退避する。
@@ -42,7 +42,7 @@
   - 開発手順、単体テスト・Integration Test・E2Eの方針、CI、Dependabot: `docs/specs/development-workflow/README.md`
   - レイヤ構成、依存方向、システム境界: `docs/specs/architecture-principles/README.md`
   - 画面の表示、操作、例外状態: `docs/requirements/`
-  - E2Eの対象、観点、実行方法: `docs/tests/e2e/index.md` と `docs/tests/e2e/`
+  - E2Eの対象、観点、実行方法: `docs/tests/e2e/README.md` と `docs/tests/e2e/`
 
 ## 最重要の横断ルール
 

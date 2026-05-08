@@ -70,7 +70,7 @@ docs/
 
 テスト方針の正本は [開発・運用ワークフロー](specs/development-workflow/README.md) です。単体テスト、Integration Test、E2Eの住み分け、フォルダ構成、Docker Composeでの実行コマンド、CIの実行単位は同文書を参照してください。
 
-テスト文書の入口は [テストドキュメント](tests/README.md) です。E2Eの実行方法と更新方針は [E2Eテスト](tests/e2e/index.md) を参照してください。
+テスト文書の入口は [テストドキュメント](tests/README.md) です。E2Eの実行方法と更新方針は [E2Eテスト](tests/e2e/README.md) を参照してください。
 
 ## タスク
 

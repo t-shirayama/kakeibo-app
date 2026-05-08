@@ -193,7 +193,7 @@ docker compose run --rm --no-deps frontend npm run build
 docker compose run --rm e2e
 ```
 
-単体テストと結合テストの置き場、実行コマンド、CIでの実行単位は [docs/specs/development-workflow/README.md](docs/specs/development-workflow/README.md) を参照してください。E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/tests/e2e/index.md](docs/tests/e2e/index.md) を参照してください。
+単体テストと結合テストの置き場、実行コマンド、CIでの実行単位は [docs/specs/development-workflow/README.md](docs/specs/development-workflow/README.md) を参照してください。E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/tests/e2e/README.md](docs/tests/e2e/README.md) を参照してください。
 
 ### GitHub Actions
 
