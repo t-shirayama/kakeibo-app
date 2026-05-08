@@ -3,35 +3,39 @@
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
+import { MessageDialog, useMessageDialog } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { categoriesQueryKeys } from "@/features/categories/queryKeys";
 import { settingsQueryKeys } from "@/features/settings/queryKeys";
 import { transactionsQueryKeys } from "@/features/transactions/queryKeys";
-import { TransactionEditModal } from "@/components/transaction-edit-modal";
+import {
+  buildFilterChips,
+  buildNormalizedSearchParams,
+  buildPageNumbers,
+  getCategoryBadgeStyle,
+  parseSearchParams,
+  resolveDefaultDateRange,
+  setOrDelete,
+  sortDirectionLabel,
+  sortLabel,
+  type SortDirection,
+  type SortField,
+  type TransactionSearchParams,
+} from "@/features/transactions/transactions-utils";
+import { TransactionEditModal } from "@/features/transactions/components/transaction-edit-modal";
 import { api, type TransactionRequest } from "@/lib/api";
 import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { getTransactionCategoryDisplay } from "@/lib/transaction-category";
 import type { CategoryDto, TransactionDto } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 
-type SortField = "date" | "amount";
-type SortDirection = "asc" | "desc";
 type SaveTransactionInput = {
   request: TransactionRequest;
   updateSameShop: boolean;
 };
-type MessageDialogState = {
-  title: string;
-  description: ReactNode;
-  actions: MessageDialogAction[];
-  tone?: "info" | "danger";
-  onAction: (actionId: string) => void;
-};
-
 export default function TransactionsPage() {
   const pathname = usePathname();
   const router = useRouter();
@@ -39,7 +43,7 @@ export default function TransactionsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionDto | null>(null);
   const [isPreparingSave, setIsPreparingSave] = useState(false);
-  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
+  const { messageDialog, showMessageDialog, handleMessageDialogOpenChange } = useMessageDialog();
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({ queryKey: settingsQueryKeys.current(), queryFn: api.get_settings });
   const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
@@ -50,7 +54,7 @@ export default function TransactionsPage() {
     () => parseSearchParams(searchParams, defaultDateRange, defaultPageSize),
     [defaultDateRange, defaultPageSize, searchParams],
   );
-  const currentParamsRef = useRef(currentParams);
+  const currentParamsRef = useRef<TransactionSearchParams>(currentParams);
 
   useEffect(() => {
     currentParamsRef.current = currentParams;
@@ -222,18 +226,6 @@ export default function TransactionsPage() {
     next.set("sort_field", "date");
     next.set("sort_direction", "desc");
     router.replace(buildAppRouteUrl(pathname, next));
-  }
-
-  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
-    return new Promise((resolve) => {
-      setMessageDialog({
-        ...options,
-        onAction: (actionId) => {
-          setMessageDialog(null);
-          resolve(actionId);
-        },
-      });
-    });
   }
 
   async function chooseSameShopCategoryUpdate(transaction: TransactionDto, request: TransactionRequest): Promise<"bulk" | "single" | "cancel"> {
@@ -536,198 +528,15 @@ export default function TransactionsPage() {
           actions={messageDialog.actions}
           tone={messageDialog.tone}
           onAction={messageDialog.onAction}
-          onOpenChange={(open) => {
-            if (!open) {
-              messageDialog.onAction("cancel");
-            }
-          }}
+          onOpenChange={handleMessageDialogOpenChange}
         />
       ) : null}
     </div>
   );
 }
 
-function parseSearchParams(
-  searchParams: ReturnType<typeof useSearchParams>,
-  defaultDateRange: { date_from: string; date_to: string },
-  defaultPageSize: number,
-) {
-  const sortField = searchParams.get("sort_field") === "amount" ? "amount" : "date";
-  const sortDirection = searchParams.get("sort_direction") === "asc" ? "asc" : "desc";
-  const parsedPage = Number(searchParams.get("page") ?? "1");
-  const parsedPageSize = Number(searchParams.get("page_size") ?? String(defaultPageSize));
-  const explicitDateFrom = searchParams.get("date_from");
-  const explicitDateTo = searchParams.get("date_to");
-  const hasExplicitDateFilter = explicitDateFrom !== null || explicitDateTo !== null || searchParams.get("period") === "all";
-  return {
-    keyword: searchParams.get("keyword") ?? "",
-    dateFrom: hasExplicitDateFilter ? explicitDateFrom ?? "" : defaultDateRange.date_from,
-    dateTo: hasExplicitDateFilter ? explicitDateTo ?? "" : defaultDateRange.date_to,
-    categoryFilter: searchParams.get("category_id") ?? "",
-    page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
-    pageSize: [10, 20, 50].includes(parsedPageSize) ? parsedPageSize : defaultPageSize,
-    sortField: sortField as SortField,
-    sortDirection: sortDirection as SortDirection,
-  };
-}
-
-function buildNormalizedSearchParams(
-  searchParams: ReturnType<typeof useSearchParams>,
-  defaultDateRange: { date_from: string; date_to: string },
-  defaultPageSize: number,
-) {
-  const normalized = new URLSearchParams(searchParams.toString());
-  const hasExplicitDateFilter =
-    normalized.has("date_from") || normalized.has("date_to") || normalized.get("period") === "all";
-  if (!hasExplicitDateFilter && !normalized.get("date_from")) {
-    normalized.set("date_from", defaultDateRange.date_from);
-  }
-  if (!hasExplicitDateFilter && !normalized.get("date_to")) {
-    normalized.set("date_to", defaultDateRange.date_to);
-  }
-  if (!normalized.get("page")) {
-    normalized.set("page", "1");
-  }
-  const pageSize = Number(normalized.get("page_size") ?? String(defaultPageSize));
-  normalized.set("page_size", String([10, 20, 50].includes(pageSize) ? pageSize : defaultPageSize));
-  if (!normalized.get("sort_field") || !["date", "amount"].includes(normalized.get("sort_field") ?? "")) {
-    normalized.set("sort_field", "date");
-  }
-  if (!normalized.get("sort_direction") || !["asc", "desc"].includes(normalized.get("sort_direction") ?? "")) {
-    normalized.set("sort_direction", "desc");
-  }
-  return normalized;
-}
-
-function resolveDefaultDateRange(searchParams: ReturnType<typeof useSearchParams>) {
-  const explicitFrom = searchParams.get("date_from");
-  const explicitTo = searchParams.get("date_to");
-  if (isDateParam(explicitFrom) && isDateParam(explicitTo)) {
-    return { date_from: explicitFrom, date_to: explicitTo };
-  }
-
-  const period = searchParams.get("period");
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-
-  if (period === "all") {
-    return { date_from: "", date_to: "" };
-  }
-  if (period === "previous_month") {
-    const previousMonth = new Date(year, month - 1, 1);
-    return {
-      date_from: formatDateParam(new Date(previousMonth.getFullYear(), previousMonth.getMonth(), 1)),
-      date_to: formatDateParam(new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0)),
-    };
-  }
-  if (period === "current_year") {
-    return {
-      date_from: formatDateParam(new Date(year, 0, 1)),
-      date_to: formatDateParam(new Date(year, 11, 31)),
-    };
-  }
-
-  return {
-    date_from: formatDateParam(new Date(year, month, 1)),
-    date_to: formatDateParam(new Date(year, month + 1, 0)),
-  };
-}
-
-function setOrDelete(searchParams: URLSearchParams, key: string, value: string) {
-  if (!value) {
-    searchParams.delete(key);
-    return;
-  }
-  searchParams.set(key, value);
-}
-
-function isDateParam(value: string | null): value is string {
-  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
-}
-
-function formatDateParam(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function SortIcon({ active, direction }: { active: boolean; direction: SortDirection }) {
   const Icon = active && direction === "asc" ? ArrowUp : ArrowDown;
 
   return <Icon className={`sort-icon${active ? " active" : ""}`} size={13} aria-hidden="true" />;
-}
-
-function sortDirectionLabel(direction: SortDirection) {
-  return direction === "asc" ? "昇順" : "降順";
-}
-
-function sortLabel(field: SortField, direction: SortDirection) {
-  return `${field === "date" ? "日付" : "金額"} ${sortDirectionLabel(direction)}`;
-}
-
-function buildFilterChips({ dateFrom, dateTo, categoryName, query }: { dateFrom: string; dateTo: string; categoryName?: string; query: string }) {
-  const chips: string[] = [];
-  if (dateFrom || dateTo) {
-    chips.push(formatDateRangeChip(dateFrom, dateTo));
-  }
-  if (categoryName) {
-    chips.push(categoryName);
-  }
-  if (query.trim()) {
-    chips.push(`検索: ${query.trim()}`);
-  }
-  return chips;
-}
-
-function formatDateRangeChip(dateFrom: string, dateTo: string) {
-  const currentMonth = getCurrentMonthRange();
-  if (dateFrom === currentMonth.date_from && dateTo === currentMonth.date_to) {
-    return "今月";
-  }
-  if (dateFrom && dateTo) {
-    return `${dateFrom} - ${dateTo}`;
-  }
-  return dateFrom ? `${dateFrom}以降` : `${dateTo}まで`;
-}
-
-function getCurrentMonthRange() {
-  const today = new Date();
-  return {
-    date_from: formatDateParam(new Date(today.getFullYear(), today.getMonth(), 1)),
-    date_to: formatDateParam(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
-  };
-}
-
-function buildPageNumbers(currentPage: number, totalPages: number) {
-  const start = Math.max(1, currentPage - 2);
-  const end = Math.min(totalPages, currentPage + 2);
-  const pages: number[] = [];
-  for (let page = start; page <= end; page += 1) {
-    pages.push(page);
-  }
-  return pages;
-}
-
-function getCategoryBadgeStyle(backgroundColor: string): React.CSSProperties {
-  return {
-    backgroundColor,
-    borderColor: backgroundColor,
-    color: getReadableTextColor(backgroundColor),
-  };
-}
-
-function getReadableTextColor(hexColor: string): "#17233c" | "#ffffff" {
-  const normalized = hexColor.replace("#", "");
-  if (!/^[\da-f]{6}$/i.test(normalized)) {
-    return "#17233c";
-  }
-
-  const red = parseInt(normalized.slice(0, 2), 16);
-  const green = parseInt(normalized.slice(2, 4), 16);
-  const blue = parseInt(normalized.slice(4, 6), 16);
-  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
-
-  return luminance > 0.62 ? "#17233c" : "#ffffff";
 }

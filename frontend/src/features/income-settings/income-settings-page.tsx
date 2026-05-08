@@ -2,9 +2,9 @@
 
 import { CalendarPlus, Plus, Save, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
+import { MessageDialog, useMessageDialog } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { categoriesQueryKeys } from "@/features/categories/queryKeys";
@@ -19,14 +19,6 @@ type OverrideDraft = {
   day: string;
 };
 
-type MessageDialogState = {
-  title: string;
-  description: ReactNode;
-  actions: MessageDialogAction[];
-  tone?: "info" | "danger";
-  onAction: (actionId: string) => void;
-};
-
 export default function IncomeSettingsPage() {
   const queryClient = useQueryClient();
   const currentMonth = getCurrentYearMonth();
@@ -37,7 +29,7 @@ export default function IncomeSettingsPage() {
   const [newStartMonth, setNewStartMonth] = useState(currentMonth);
   const [newEndMonth, setNewEndMonth] = useState("");
   const [overrideDrafts, setOverrideDrafts] = useState<Record<string, OverrideDraft>>({});
-  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
+  const { messageDialog, showMessageDialog, handleMessageDialogOpenChange } = useMessageDialog();
 
   const incomeSettingsQuery = useQuery({ queryKey: incomeSettingsQueryKeys.all, queryFn: api.list_income_settings });
   const categoriesQuery = useQuery({ queryKey: categoriesQueryKeys.list(), queryFn: () => api.list_categories() });
@@ -91,18 +83,6 @@ export default function IncomeSettingsPage() {
     deleteMutation.isPending ||
     overrideMutation.isPending ||
     deleteOverrideMutation.isPending;
-
-  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
-    return new Promise((resolve) => {
-      setMessageDialog({
-        ...options,
-        onAction: (actionId) => {
-          setMessageDialog(null);
-          resolve(actionId);
-        },
-      });
-    });
-  }
 
   async function handleDeleteIncomeSetting(setting: IncomeSettingDto) {
     const action = await showMessageDialog({
@@ -443,11 +423,7 @@ export default function IncomeSettingsPage() {
           actions={messageDialog.actions}
           tone={messageDialog.tone}
           onAction={messageDialog.onAction}
-          onOpenChange={(open) => {
-            if (!open) {
-              messageDialog.onAction("cancel");
-            }
-          }}
+          onOpenChange={handleMessageDialogOpenChange}
         />
       ) : null}
     </>

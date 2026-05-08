@@ -4,29 +4,21 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Edit3, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { CategoryEditModal } from "@/components/category-edit-modal";
-import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
+import { MessageDialog, useMessageDialog } from "@/components/message-dialog";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
+import { CategoryEditModal } from "@/features/categories/components/category-edit-modal";
 import { categoriesQueryKeys } from "@/features/categories/queryKeys";
 import { api, type CategoryRequest } from "@/lib/api";
 import type { CategoryDto } from "@/lib/types";
-
-type MessageDialogState = {
-  title: string;
-  description: ReactNode;
-  actions: MessageDialogAction[];
-  tone?: "info" | "danger";
-  onAction: (actionId: string) => void;
-};
 
 export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
-  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
+  const { messageDialog, showMessageDialog, handleMessageDialogOpenChange } = useMessageDialog();
   const queryClient = useQueryClient();
   const categoriesQuery = useQuery({
     queryKey: categoriesQueryKeys.list(true),
@@ -65,18 +57,6 @@ export default function CategoriesPage() {
   );
   const editorError = createMutation.error || updateMutation.error;
   const apiError = categoriesQuery.error || editorError || statusMutation.error || deleteMutation.error;
-
-  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
-    return new Promise((resolve) => {
-      setMessageDialog({
-        ...options,
-        onAction: (actionId) => {
-          setMessageDialog(null);
-          resolve(actionId);
-        },
-      });
-    });
-  }
 
   async function handleDeleteCategory(category: CategoryDto) {
     const action = await showMessageDialog({
@@ -278,11 +258,7 @@ export default function CategoriesPage() {
           actions={messageDialog.actions}
           tone={messageDialog.tone}
           onAction={messageDialog.onAction}
-          onOpenChange={(open) => {
-            if (!open) {
-              messageDialog.onAction("cancel");
-            }
-          }}
+          onOpenChange={handleMessageDialogOpenChange}
         />
       ) : null}
     </div>

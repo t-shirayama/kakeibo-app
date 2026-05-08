@@ -1,22 +1,14 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Download, Save, Trash2 } from "lucide-react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { MessageDialog, type MessageDialogAction } from "@/components/message-dialog";
+import { MessageDialog, useMessageDialog } from "@/components/message-dialog";
 import { LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { settingsQueryKeys } from "@/features/settings/queryKeys";
 import { api } from "@/lib/api";
-
-type MessageDialogState = {
-  title: string;
-  description: ReactNode;
-  actions: MessageDialogAction[];
-  tone?: "info" | "danger";
-  onAction: (actionId: string) => void;
-};
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -27,7 +19,7 @@ export default function SettingsPage() {
     darkMode?: boolean;
   }>({});
   const [confirmationText, setConfirmationText] = useState("");
-  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
+  const { messageDialog, showMessageDialog, handleMessageDialogOpenChange } = useMessageDialog();
   const pageSize = draftSettings.pageSize ?? String(settingsQuery.data?.page_size ?? 10);
   const dateFormat = draftSettings.dateFormat ?? settingsQuery.data?.date_format ?? "yyyy/MM/dd";
   const darkMode = draftSettings.darkMode ?? settingsQuery.data?.dark_mode ?? false;
@@ -43,18 +35,6 @@ export default function SettingsPage() {
     mutationFn: () => api.delete_all_data(confirmationText),
   });
   const exportMutation = useMutation({ mutationFn: api.export_user_data });
-
-  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
-    return new Promise((resolve) => {
-      setMessageDialog({
-        ...options,
-        onAction: (actionId) => {
-          setMessageDialog(null);
-          resolve(actionId);
-        },
-      });
-    });
-  }
 
   async function handleDeleteAllData() {
     const action = await showMessageDialog({
@@ -175,11 +155,7 @@ export default function SettingsPage() {
           actions={messageDialog.actions}
           tone={messageDialog.tone}
           onAction={messageDialog.onAction}
-          onOpenChange={(open) => {
-            if (!open) {
-              messageDialog.onAction("cancel");
-            }
-          }}
+          onOpenChange={handleMessageDialogOpenChange}
         />
       ) : null}
     </>

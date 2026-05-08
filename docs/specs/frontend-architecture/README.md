@@ -57,8 +57,11 @@ APIクライアントはOpenAPIから自動生成する。
 - `frontend/src/features/categories` はカテゴリ管理画面の実装と、その画面専用の query key を持つ。
 - `frontend/src/features/audit-logs` は監査ログ画面の実装と、その画面専用の query key を持つ。
 - `frontend/src/features/settings` は設定画面の実装と、その画面専用の query key を持つ。
+- feature内で画面専用の部品が必要な場合は `frontend/src/features/<feature>/components/` に置く。DTOやAPI request型へ依存する業務モーダルは共通 `components` に置かない。
+- feature内でURL search params、年月・日付範囲、表示用集計、色判定のような純粋ロジックが増えた場合は `frontend/src/features/<feature>/<feature>-utils.ts` へ切り出し、単体テストを付ける。
 - TanStack Query の query key 定義は、原則として各 feature 配下の `queryKeys.ts` へ置き、画面側で配列を直書きしない。
 - `frontend/src/components` には複数画面で再利用する共通UIだけを置く。
+- 確認ダイアログのPromise化や開閉状態のように複数画面で繰り返すUI制御は、共通UIコンポーネントに近い hook として集約する。
 - `収入` `支出` `収支` のテーマカラーは `frontend/app/globals.css` の CSS 変数を正とし、金額表示やアイコンを含めて画面やコンポーネントで色コードを直書きして増やさない。
 - フォント指定は `frontend/app/globals.css` の `--font-sans` と `--font-mono` を正とし、個別画面やコンポーネントでフォントファミリーを直書きしない。
 
