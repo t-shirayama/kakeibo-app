@@ -49,6 +49,7 @@ class FakeFinanceRepository:
             ),
         }
         self.transactions: dict[UUID, Transaction] = {}
+        self.category_rules: list[tuple[str, UUID, bool]] = []
         self.audit_logs: list[tuple[str, UUID]] = []
 
     def next_id(self) -> UUID:
@@ -230,6 +231,18 @@ class FakeFinanceRepository:
                 return transaction.category_id
         return None
 
+    def find_matching_category_id(self, *, user_id: UUID, shop_name: str) -> UUID | None:
+        normalized_shop_name = shop_name.strip().casefold()
+        candidates = sorted(
+            [rule for rule in self.category_rules if rule[2] and self.categories[rule[1]].is_active],
+            key=lambda rule: len(rule[0]),
+            reverse=True,
+        )
+        for keyword, category_id, _is_active in candidates:
+            if keyword.strip().casefold() in normalized_shop_name:
+                return category_id
+        return None
+
     def create_audit_log(
         self,
         *,
@@ -266,6 +279,7 @@ def make_transaction_use_cases(repository: FakeFinanceRepository) -> Transaction
     return TransactionUseCases(
         transaction_repository=repository,
         transaction_query_repository=repository,
+        category_rule_repository=repository,
         category_repository=repository,
         audit_log_repository=repository,
     )
@@ -298,6 +312,39 @@ def test_create_transaction_reuses_past_category_for_same_shop() -> None:
     inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
 
     assert inferred.category_id == FOOD_ID
+
+
+def test_create_transaction_prefers_user_rule_over_past_same_shop_category() -> None:
+    repository = FakeFinanceRepository()
+    repository.category_rules.append(("Cafe", DAILY_ID, True))
+    use_cases = make_transaction_use_cases(repository)
+
+    use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
+    inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
+
+    assert inferred.category_id == DAILY_ID
+
+
+def test_create_transaction_rule_matching_uses_longest_active_keyword() -> None:
+    repository = FakeFinanceRepository()
+    repository.category_rules.append(("Amazon", FOOD_ID, True))
+    repository.category_rules.append(("Amazon.co.jp", DAILY_ID, True))
+    use_cases = make_transaction_use_cases(repository)
+
+    inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Amazon.co.jp"))
+
+    assert inferred.category_id == DAILY_ID
+
+
+def test_create_transaction_ignores_rule_with_inactive_category() -> None:
+    repository = FakeFinanceRepository()
+    repository.category_rules.append(("Cafe", FOOD_ID, True))
+    repository.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=False)
+    use_cases = make_transaction_use_cases(repository)
+
+    inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
+
+    assert inferred.category_id == UNCATEGORIZED_ID
 
 
 def test_create_transaction_creates_uncategorized_when_initial_category_is_missing() -> None:

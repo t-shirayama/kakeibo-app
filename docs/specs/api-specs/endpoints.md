@@ -52,6 +52,20 @@
 - `DELETE /api/categories/{category_id}`
   - カテゴリを論理削除する。
 
+## 分類ルール
+
+- `GET /api/category-rules`
+  - 店名キーワードによるカテゴリ分類ルール一覧を取得する。
+  - `include_inactive=true` 指定時は無効ルールも取得する。
+- `POST /api/category-rules`
+  - 店名キーワードとカテゴリを指定して分類ルールを追加する。
+- `PUT /api/category-rules/{rule_id}`
+  - 店名キーワードまたは分類先カテゴリを更新する。
+- `PATCH /api/category-rules/{rule_id}/status`
+  - 分類ルールの有効/無効を切り替える。
+- `DELETE /api/category-rules/{rule_id}`
+  - 分類ルールを論理削除する。
+
 ## 収入設定
 
 - `GET /api/income-settings`

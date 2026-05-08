@@ -1,6 +1,7 @@
 import { createAuthApi } from "./features/auth";
 import { createAuditLogApi } from "./features/audit-logs";
 import { createCategoryApi } from "./features/categories";
+import { createCategoryRuleApi } from "./features/category-rules";
 import { createIncomeSettingsApi } from "./features/income-settings";
 import { createReportApi } from "./features/reports";
 import { createSettingsApi } from "./features/settings";
@@ -27,6 +28,7 @@ export const api: ApiClient = {
   ...createAuthApi(),
   ...createSettingsApi(),
   ...createCategoryApi(),
+  ...createCategoryRuleApi(),
   ...createIncomeSettingsApi(),
   ...createAuditLogApi(),
 };

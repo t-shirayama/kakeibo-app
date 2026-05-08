@@ -222,6 +222,57 @@ def test_category_status_change_normalizes_existing_transactions_to_uncategorize
     assert rejected_response.json()["error"]["message"] == "Category not found or inactive."
 
 
+def test_category_rule_crud_through_api_and_mysql(authenticated_api_client) -> None:
+    category_response = authenticated_api_client.post(
+        "/api/categories",
+        json={"name": "分類ルールIT", "color": "#6366f1"},
+    )
+    assert category_response.status_code == 200
+    category_id = category_response.json()["category_id"]
+
+    create_response = authenticated_api_client.post(
+        "/api/category-rules",
+        json={"keyword": " Amazon ", "category_id": category_id},
+    )
+    assert create_response.status_code == 200
+    payload = create_response.json()
+    assert payload["keyword"] == "Amazon"
+    assert payload["category_id"] == category_id
+    rule_id = payload["rule_id"]
+
+    duplicate_response = authenticated_api_client.post(
+        "/api/category-rules",
+        json={"keyword": "amazon", "category_id": category_id},
+    )
+    assert duplicate_response.status_code == 400
+
+    update_response = authenticated_api_client.put(
+        f"/api/category-rules/{rule_id}",
+        json={"keyword": "Amazon.co.jp", "category_id": category_id},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["keyword"] == "Amazon.co.jp"
+
+    disable_response = authenticated_api_client.patch(
+        f"/api/category-rules/{rule_id}/status",
+        json={"is_active": False},
+    )
+    assert disable_response.status_code == 200
+    assert disable_response.json()["is_active"] is False
+
+    list_response = authenticated_api_client.get("/api/category-rules", params={"include_inactive": "true"})
+    assert list_response.status_code == 200
+    assert list_response.json()[0]["rule_id"] == rule_id
+
+    delete_response = authenticated_api_client.delete(f"/api/category-rules/{rule_id}")
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {"status": "ok"}
+
+    after_delete_response = authenticated_api_client.get("/api/category-rules", params={"include_inactive": "true"})
+    assert after_delete_response.status_code == 200
+    assert after_delete_response.json() == []
+
+
 def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_upload(authenticated_api_client, monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeParser:
         def parse(self, pdf_bytes: bytes) -> list[ImportedCardTransaction]:
@@ -263,6 +314,17 @@ def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_u
 
     monkeypatch.setattr(bootstrap_container, "RakutenCardPdfParser", FakeParser)
     pdf_bytes = _build_rakuten_statement_pdf()
+    category_response = authenticated_api_client.post(
+        "/api/categories",
+        json={"name": "日用品IT", "color": "#8b5cf6"},
+    )
+    assert category_response.status_code == 200
+    daily_category_id = category_response.json()["category_id"]
+    rule_response = authenticated_api_client.post(
+        "/api/category-rules",
+        json={"keyword": "Amazon", "category_id": daily_category_id},
+    )
+    assert rule_response.status_code == 200
 
     first_upload_response = authenticated_api_client.post(
         "/api/uploads",
@@ -280,12 +342,14 @@ def test_pdf_upload_imports_transactions_deduplicates_rows_and_removes_deleted_u
     assert transactions_payload["total"] == 3
     source_rows = {(item["shop_name"], item["source_row_number"], item["source_page_number"]) for item in transactions_payload["items"]}
     assert ("セブン-イレブン", 1, 1) in source_rows
-    assert all(item["category_name"] == "未分類" for item in transactions_payload["items"])
+    category_by_shop = {item["shop_name"]: item["category_name"] for item in transactions_payload["items"]}
+    assert category_by_shop["Amazon.co.jp"] == "日用品IT"
+    assert category_by_shop["セブン-イレブン"] == "未分類"
     assert all(item["source_format"] == "rakuten_card_pdf" for item in transactions_payload["items"])
 
     categories_response = authenticated_api_client.get("/api/categories")
     assert categories_response.status_code == 200
-    assert categories_response.json()[0]["name"] == "未分類"
+    assert {item["name"] for item in categories_response.json()} == {"日用品IT", "未分類"}
 
     second_upload_response = authenticated_api_client.post(
         "/api/uploads",

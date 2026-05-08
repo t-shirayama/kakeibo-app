@@ -25,7 +25,7 @@
 - Backend Integration Test: `backend/tests/integration/` に 1 ファイル。FastAPI + Cookie認証 + CSRF + MySQL 永続化を通し、認証/refresh、明細 CRUD、月次集計、カテゴリ無効化時の未分類表示をまとめて守る。
 - Frontend Unit Test: `frontend/src/test/unit/` に 6 ファイル。整形関数、カテゴリ表示ルール、年月処理、カレンダー集計、明細検索パラメータ、ダッシュボード表示用集計のような純粋ロジックを置く。カバレッジ確認は `docker compose run --rm --no-deps frontend npm run test:unit:coverage` で行う。
 - Frontend Integration Test: `frontend/src/test/integration/` に 6 ファイル。ログイン、認証 refresh / CSRF 回復、明細一覧、レポート、アップロードを MSW と React Testing Library で検証する。
-- E2E: `frontend/e2e/` に 11 spec。認証、主要画面遷移、ダッシュボード、カレンダー、明細一覧、収入設定、カテゴリ管理、アップロード、設定、レガシー導線、ドキュメント用スクリーンショットを扱う。
+- E2E: `frontend/e2e/` に 14 spec。認証、主要画面遷移、ダッシュボード、カレンダー、明細一覧、収入設定、予算管理、カテゴリ管理、分類ルール、アップロード、監査ログ、設定、レガシー導線、ドキュメント用スクリーンショットを扱う。
 
 各層の責務と、優先して置く観点は次のとおり。
 

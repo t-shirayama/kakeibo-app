@@ -21,6 +21,27 @@
 
 - `(user_id, name)` は一意
 
+## transaction_category_rules
+
+店名キーワードによるカテゴリ自動分類ルールを表す。
+
+| カラム | 型 | 内容 |
+| --- | --- | --- |
+| id | UUID | 分類ルールID |
+| user_id | UUID | ユーザーID |
+| keyword | string | 店名に部分一致させるキーワード |
+| category_id | UUID | 分類先カテゴリID |
+| is_active | boolean | 有効状態 |
+| created_at | datetime | 作成日時 |
+| updated_at | datetime | 更新日時 |
+| deleted_at | datetime | 論理削除日時 |
+
+制約:
+
+- `keyword` はtrim後に保存し、空文字を許可しない
+- 同一ユーザー内で論理未削除の同一キーワード重複を許可しない
+- 分類先カテゴリは同一ユーザーの有効カテゴリのみ指定できる
+
 ## transactions
 
 明細を表す。

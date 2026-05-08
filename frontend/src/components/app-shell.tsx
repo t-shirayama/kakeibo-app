@@ -10,6 +10,7 @@ import {
   FileUp,
   ListTree,
   PiggyBank,
+  Tags,
   type LucideIcon,
   NotebookText,
   Settings,
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/budgets", label: "予算管理", icon: PiggyBank },
   { href: "/upload", label: "アップロード", icon: FileUp },
   { href: "/categories", label: "カテゴリ管理", icon: ListTree },
+  { href: "/category-rules", label: "分類ルール", icon: Tags },
 ];
 
 const utilityNavItems = [

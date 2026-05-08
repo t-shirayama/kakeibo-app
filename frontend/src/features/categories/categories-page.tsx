@@ -1,7 +1,6 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
-import { Edit3, Plus, Trash2, X } from "lucide-react";
+import { Edit3, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -16,7 +15,6 @@ import type { CategoryDto } from "@/lib/types";
 
 export default function CategoriesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
   const { messageDialog, showMessageDialog, handleMessageDialogOpenChange } = useMessageDialog();
   const queryClient = useQueryClient();
@@ -164,9 +162,9 @@ export default function CategoriesPage() {
                 <h2>店名キーワード</h2>
                 <p>PDF明細の店名に一致する語句でカテゴリ候補を作成します。</p>
               </div>
-              <button className="button secondary" type="button" onClick={() => setIsRuleDialogOpen(true)}>
+              <Link className="button secondary" href="/category-rules" prefetch={false}>
                 編集
-              </button>
+              </Link>
             </div>
             <div className="settings-row">
               <div>
@@ -212,44 +210,6 @@ export default function CategoriesPage() {
         }}
       />
 
-      <Dialog.Root open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="dialog-overlay" />
-          <Dialog.Content className="dialog-content" aria-describedby="category-rule-description">
-            <div className="dialog-header">
-              <Dialog.Title className="dialog-title">店名キーワードの分類ルール</Dialog.Title>
-              <Dialog.Close className="icon-button" aria-label="分類ルールを閉じる">
-                <X size={18} aria-hidden="true" />
-              </Dialog.Close>
-            </div>
-            <Dialog.Description id="category-rule-description" className="sr-only">
-              店名キーワードによる自動分類の現在の扱いを確認します。
-            </Dialog.Description>
-            <div className="settings-list">
-              <div className="settings-row">
-                <div>
-                  <h2>現在の自動分類</h2>
-                  <p>同じ店名、カード利用者、支払い方法の過去明細がある場合、その明細のカテゴリを候補として再利用します。</p>
-                </div>
-              </div>
-              <div className="settings-row">
-                <div>
-                  <h2>編集方法</h2>
-                  <p>店名ごとの分類を変える場合は、明細一覧で対象明細のカテゴリを編集してください。次回以降の同一店名分類に反映されます。</p>
-                </div>
-                <Link className="button secondary" href="/transactions?period=current_year" prefetch={false}>
-                  明細一覧へ
-                </Link>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <Dialog.Close className="button" type="button">
-                閉じる
-              </Dialog.Close>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
       {messageDialog ? (
         <MessageDialog
           open

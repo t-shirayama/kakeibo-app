@@ -9,6 +9,7 @@ from app.application.transactions.policies import TransactionCategoryError, Tran
 from app.application.transactions.ports import (
     AuditLogRepositoryProtocol,
     CategoryRepositoryProtocol,
+    CategoryRuleRepositoryProtocol,
     TransactionQueryRepositoryProtocol,
     TransactionRepositoryProtocol,
 )
@@ -23,15 +24,18 @@ class TransactionUseCases:
         *,
         transaction_repository: TransactionRepositoryProtocol,
         transaction_query_repository: TransactionQueryRepositoryProtocol,
+        category_rule_repository: CategoryRuleRepositoryProtocol,
         category_repository: CategoryRepositoryProtocol,
         audit_log_repository: AuditLogRepositoryProtocol,
     ) -> None:
         self._transaction_repository = transaction_repository
         self._transaction_query_repository = transaction_query_repository
+        self._category_rule_repository = category_rule_repository
         self._category_repository = category_repository
         self._audit_log_repository = audit_log_repository
         self._policy = TransactionCategoryPolicy(
             transaction_query_repository=transaction_query_repository,
+            category_rule_repository=category_rule_repository,
             category_repository=category_repository,
         )
 

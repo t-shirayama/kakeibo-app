@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.application.audit_logs import AuditLogUseCases
 from app.application.auth.use_cases import AuthUseCases
+from app.application.category_rules import CategoryRuleUseCases
 from app.application.exporting.transaction_workbook_exporter import TransactionWorkbookExporter
 from app.application.importing.upload_import import PdfUploadUseCases
 from app.application.importing.transaction_writer import ImportedTransactionWriter
@@ -18,6 +19,7 @@ from app.infrastructure.repositories.audit_log_records import AuditLogRecordRepo
 from app.infrastructure.repositories.audit_logs import AuditLogQueryRepository
 from app.infrastructure.repositories.auth import AuthRepository
 from app.infrastructure.repositories.categories import CategoryRepository
+from app.infrastructure.repositories.category_rules import CategoryRuleRepository
 from app.infrastructure.repositories.income_settings import IncomeSettingsRepository
 from app.infrastructure.repositories.settings import SettingsRepository
 from app.infrastructure.repositories.transaction_queries import TransactionQueryRepository
@@ -32,6 +34,7 @@ def build_transaction_use_cases(session: Session) -> TransactionUseCases:
     return TransactionUseCases(
         transaction_repository=TransactionRepository(session),
         transaction_query_repository=TransactionQueryRepository(session),
+        category_rule_repository=CategoryRuleRepository(session),
         category_repository=CategoryRepository(session),
         audit_log_repository=AuditLogRecordRepository(session),
     )
@@ -39,6 +42,13 @@ def build_transaction_use_cases(session: Session) -> TransactionUseCases:
 
 def build_category_use_cases(session: Session) -> CategoryUseCases:
     return CategoryUseCases(category_repository=CategoryRepository(session))
+
+
+def build_category_rule_use_cases(session: Session) -> CategoryRuleUseCases:
+    return CategoryRuleUseCases(
+        rule_repository=CategoryRuleRepository(session),
+        category_repository=CategoryRepository(session),
+    )
 
 
 def build_audit_log_use_cases(session: Session) -> AuditLogUseCases:

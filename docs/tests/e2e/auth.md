@@ -28,7 +28,7 @@
 
 ## 期待結果
 
-- 未認証で `/dashboard`、`/income-settings`、`/reports` を開くと、それぞれ `/login?redirect=...` に遷移する。
+- 未認証で `/dashboard`、`/income-settings`、`/reports`、`/category-rules` を開くと、それぞれ `/login?redirect=...` に遷移する。
 - サンプルユーザーでログインすると `/dashboard` に遷移し、ダッシュボード見出しが表示される。
 
 ## 安定化メモ

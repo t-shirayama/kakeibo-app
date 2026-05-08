@@ -62,6 +62,7 @@ docs/
 - [予算管理](requirements/budgets.md)
 - [明細詳細（編集モーダル）](requirements/transaction-edit-modal.md)
 - [カテゴリ管理](requirements/categories.md)
+- [分類ルール](requirements/category-rules.md)
 - [アップロード](requirements/upload.md)
 - [レガシーレポート導線](requirements/reports.md)
 - [設定](requirements/settings.md)

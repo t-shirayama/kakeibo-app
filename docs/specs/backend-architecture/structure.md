@@ -54,6 +54,12 @@ backend/
 - `policies.py`: カテゴリ割り当てや無効カテゴリ扱いの業務判断を置く。
 - `use_cases.py`: 明細操作ユースケースとカテゴリ管理ユースケースを置く。両者は同じファイル内でもクラスを分け、変更理由を混ぜない。
 
+### application/category_rules
+
+- `commands.py`: 店名キーワード分類ルールの入力コマンドを置く。
+- `ports.py`: 分類ルールRepository Protocolを置く。
+- `use_cases.py`: 分類ルールCRUDと、キーワード重複・有効カテゴリ検証を扱う。
+
 ### application/importing
 
 - `pdf_importer.py`: PDFカード明細パーサの入力・出力型とParser Protocolを置く。
@@ -99,6 +105,7 @@ backend/
 - `user.py`: ユーザーのORMモデルを置く。
 - `user_setting.py`: ユーザー画面設定のORMモデルを置く。
 - `category.py`: カテゴリのORMモデルを置く。
+- `transaction_category_rule.py`: 店名キーワード分類ルールのORMモデルを置く。
 - `transaction.py`: 明細のORMモデルを置く。
 - `upload.py`: PDFアップロード履歴のORMモデルを置く。
 - `audit_log.py`: 監査ログのORMモデルを置く。
@@ -120,6 +127,7 @@ backend/
 - `transaction_query_sorting.py`: 明細検索の並び順組み立てを担当する。
 - `transaction_category_display.py`: 無効カテゴリを未分類表示へ寄せるなど、明細表示用カテゴリ解決を担当する。
 - `transaction_category_rules.py`: 無効カテゴリ、未分類カテゴリ判定のSQL条件を担当する。
+- `category_rules.py`: 店名キーワード分類ルールの保存、更新、削除、取込時の一致候補検索を担当する。
 - `categories.py`: カテゴリ集約の保存、更新、無効化、復元を担当する。
 - `income_settings.py`: 収入設定と月別上書きの永続化を担当する。
 - `mappers.py`: ORMモデルからドメインエンティティへの変換を担当する。
@@ -148,6 +156,7 @@ backend/
 - `transactions.py`: 明細一覧、作成、取得、更新、削除、同一店舗カテゴリ更新、明細ExcelエクスポートのHTTP入出力を担当する。
 - `transaction_dtos.py`: 明細APIのリクエスト・レスポンスDTOと変換処理を置く。
 - `categories.py`: カテゴリ一覧、作成、更新、有効化・無効化、削除のHTTP入出力を担当する。
+- `category_rules.py`: 店名キーワード分類ルールの一覧、作成、更新、有効化・無効化、削除のHTTP入出力を担当する。
 - `reports.py`: 月次、週次、年次、カテゴリ集計レポートのHTTP入出力を担当する。
 - `dashboard.py`: ダッシュボード集計と最近の明細のHTTP入出力を担当する。
 - `report_dtos.py`: レポート・ダッシュボード系レスポンスDTOと変換処理を置く。

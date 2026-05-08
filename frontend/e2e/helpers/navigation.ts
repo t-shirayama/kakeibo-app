@@ -23,7 +23,7 @@ export async function expectLoginRedirect(page: Page, redirectPath: string) {
 async function expectPageUrl(page: Page, path: string) {
   const hasQuery = path.includes("?");
   const pattern = hasQuery
-    ? new RegExp(`${escapeRegExp(path)}$`)
+    ? new RegExp(`${escapeRegExp(path)}(?:&.*)?$`)
     : new RegExp(`${escapeRegExp(path)}(?:\\?.*)?$`);
   await expect(page).toHaveURL(pattern);
 }

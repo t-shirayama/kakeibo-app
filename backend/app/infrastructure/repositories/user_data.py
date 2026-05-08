@@ -11,6 +11,7 @@ from app.infrastructure.models.income_setting import IncomeSettingModel, IncomeS
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.transaction import TransactionModel
+from app.infrastructure.models.transaction_category_rule import TransactionCategoryRuleModel
 from app.infrastructure.models.upload import UploadModel
 
 
@@ -31,7 +32,7 @@ class UserDataRepository:
 
     def soft_delete_user_data(self, *, user_id: UUID) -> None:
         now = datetime.now(UTC)
-        for model_class in (TransactionModel, UploadModel, IncomeSettingModel):
+        for model_class in (TransactionModel, UploadModel, IncomeSettingModel, TransactionCategoryRuleModel):
             rows = self._session.scalars(
                 select(model_class).where(model_class.user_id == str(user_id), model_class.deleted_at.is_(None))
             ).all()

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.application.auth.ports import UserRecord
 from app.application.common import Page
 from app.application.user_data import UserDataDeletionUseCases
-from app.domain.entities import Category, Transaction, TransactionType, UploadStatus
+from app.domain.entities import Category, Transaction, TransactionCategoryRule, TransactionType, UploadStatus
 from app.domain.value_objects import MoneyJPY
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
@@ -17,6 +17,7 @@ from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
 from app.infrastructure.repositories.auth import AuthRepository
 from app.infrastructure.repositories.categories import CategoryRepository
+from app.infrastructure.repositories.category_rules import CategoryRuleRepository
 from app.infrastructure.repositories.transaction_queries import TransactionQueryRepository
 from app.infrastructure.repositories.transaction_records import TransactionRepository
 from app.infrastructure.repositories.user_data import UserDataRepository
@@ -319,6 +320,73 @@ def test_category_repository_restores_soft_deleted_category_with_same_name(db_se
     assert restored.color == "#94A3B8"
     assert restored.description == "復元された未分類"
     assert restored.is_active is True
+
+
+def test_category_rule_repository_matches_longest_active_keyword(db_session: Session) -> None:
+    add_user(db_session)
+    category_repository = CategoryRepository(db_session)
+    rule_repository = CategoryRuleRepository(db_session)
+    food = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    daily = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+    rule_repository.create_rule(
+        TransactionCategoryRule(id=uuid4(), user_id=USER_ID, keyword="Amazon", category_id=food.id)
+    )
+    long_rule = rule_repository.create_rule(
+        TransactionCategoryRule(id=uuid4(), user_id=USER_ID, keyword="Amazon.co.jp", category_id=daily.id)
+    )
+
+    matched = rule_repository.find_matching_category_id(user_id=USER_ID, shop_name="AMAZON.CO.JP マーケット")
+    listed = rule_repository.list_rules(user_id=USER_ID, include_inactive=True)
+
+    assert matched == daily.id
+    assert listed[0].id == long_rule.id
+
+
+def test_category_rule_repository_uses_newer_rule_when_keyword_lengths_match(db_session: Session) -> None:
+    add_user(db_session)
+    category_repository = CategoryRepository(db_session)
+    rule_repository = CategoryRuleRepository(db_session)
+    food = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    daily = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+    older_rule = rule_repository.create_rule(
+        TransactionCategoryRule(id=uuid4(), user_id=USER_ID, keyword="StoreA", category_id=food.id)
+    )
+    newer_rule = rule_repository.create_rule(
+        TransactionCategoryRule(id=uuid4(), user_id=USER_ID, keyword="StoreB", category_id=daily.id)
+    )
+    rule_repository.update_rule(
+        TransactionCategoryRule(
+            id=newer_rule.id,
+            user_id=USER_ID,
+            keyword="StoreA",
+            category_id=daily.id,
+            is_active=True,
+        )
+    )
+
+    matched = rule_repository.find_matching_category_id(user_id=USER_ID, shop_name="StoreA")
+
+    assert matched == daily.id
+    assert older_rule.category_id == food.id
+
+
+def test_category_rule_repository_ignores_inactive_rule_and_category(db_session: Session) -> None:
+    add_user(db_session)
+    category_repository = CategoryRepository(db_session)
+    rule_repository = CategoryRuleRepository(db_session)
+    food = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="食費", color="#EF4444"))
+    daily = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+    inactive_rule = rule_repository.create_rule(
+        TransactionCategoryRule(id=uuid4(), user_id=USER_ID, keyword="Cafe", category_id=food.id)
+    )
+    rule_repository.create_rule(
+        TransactionCategoryRule(id=uuid4(), user_id=USER_ID, keyword="Drug", category_id=daily.id)
+    )
+    rule_repository.set_rule_active(user_id=USER_ID, rule_id=inactive_rule.id, is_active=False)
+    category_repository.set_category_active(user_id=USER_ID, category_id=daily.id, is_active=False)
+
+    assert rule_repository.find_matching_category_id(user_id=USER_ID, shop_name="Cafe") is None
+    assert rule_repository.find_matching_category_id(user_id=USER_ID, shop_name="Drug Store") is None
 
 
 def test_auth_repository_returns_token_expiration_as_utc_aware_datetime(db_session: Session) -> None:

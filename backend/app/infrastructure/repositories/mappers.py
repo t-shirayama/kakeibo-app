@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from app.domain.entities import Category, Transaction, TransactionType
+from app.domain.entities import Category, Transaction, TransactionCategoryRule, TransactionType
 from app.domain.value_objects import MoneyJPY
 from app.infrastructure.models.category import CategoryModel
 from app.infrastructure.models.transaction import TransactionModel
+from app.infrastructure.models.transaction_category_rule import TransactionCategoryRuleModel
 
 
 def to_transaction(model: TransactionModel) -> Transaction:
@@ -37,5 +38,15 @@ def to_category(model: CategoryModel) -> Category:
         color=model.color,
         description=model.description,
         monthly_budget=MoneyJPY(model.monthly_budget) if model.monthly_budget is not None else None,
+        is_active=model.is_active,
+    )
+
+
+def to_transaction_category_rule(model: TransactionCategoryRuleModel) -> TransactionCategoryRule:
+    return TransactionCategoryRule(
+        id=UUID(model.id),
+        user_id=UUID(model.user_id),
+        keyword=model.keyword,
+        category_id=UUID(model.category_id),
         is_active=model.is_active,
     )

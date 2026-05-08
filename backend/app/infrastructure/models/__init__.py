@@ -5,6 +5,7 @@ from app.infrastructure.models.income_setting import IncomeSettingModel, IncomeS
 from app.infrastructure.models.password_reset_token import PasswordResetTokenModel
 from app.infrastructure.models.refresh_token import RefreshTokenModel
 from app.infrastructure.models.transaction import TransactionModel
+from app.infrastructure.models.transaction_category_rule import TransactionCategoryRuleModel
 from app.infrastructure.models.upload import UploadModel
 from app.infrastructure.models.user import UserModel
 from app.infrastructure.models.user_setting import UserSettingModel
@@ -18,6 +19,7 @@ __all__ = [
     "PasswordResetTokenModel",
     "RefreshTokenModel",
     "TransactionModel",
+    "TransactionCategoryRuleModel",
     "UploadModel",
     "UserModel",
     "UserSettingModel",

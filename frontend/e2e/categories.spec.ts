@@ -38,9 +38,11 @@ test("shows category colors and creates a category", async ({ page }) => {
   await page.getByRole("button", { name: "削除する" }).click();
   await expect(page.getByText("E2Eカテゴリ 編集済み")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "編集", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "店名キーワードの分類ルール" })).toBeVisible();
-  await page.getByRole("button", { name: "閉じる", exact: true }).click();
+  await page.getByRole("link", { name: "編集", exact: true }).click();
+  await expect(page).toHaveURL(/\/category-rules$/);
+  await expect(page.getByRole("heading", { name: "分類ルール", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "カテゴリ管理" })).toBeVisible();
 
   await page.locator(".settings-row").filter({ hasText: "未分類の扱い" }).getByRole("link", { name: "確認" }).click();
   await expect(page).toHaveURL(/\/transactions\?category_id=.*&period=all(&.*)?$/);

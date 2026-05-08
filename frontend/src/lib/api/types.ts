@@ -1,5 +1,7 @@
 import type {
   AuditLogListResponse,
+  CategoryRuleRequest as GeneratedCategoryRuleRequest,
+  CategoryRuleResponse,
   CategoryRequest as GeneratedCategoryRequest,
   DashboardSummaryResponse,
   DeleteDataRequest,
@@ -21,6 +23,7 @@ import type {
 } from "../generated/openapi-client";
 import type {
   CategoryDto,
+  CategoryRuleDto,
   CategorySummaryDto,
   DashboardSummaryDto,
   IncomeSettingDto,
@@ -35,6 +38,11 @@ export type ApiClient = {
   list_transactions: (params?: TransactionListParams) => Promise<TransactionListResponse>;
   list_all_transactions: (params?: TransactionListParams) => Promise<TransactionDto[]>;
   list_categories: (params?: CategoryListParams) => Promise<CategoryDto[]>;
+  list_category_rules: (params?: CategoryRuleListParams) => Promise<CategoryRuleDto[]>;
+  create_category_rule: (request: CategoryRuleRequest) => Promise<CategoryRuleDto>;
+  update_category_rule: (ruleId: string, request: CategoryRuleRequest) => Promise<CategoryRuleDto>;
+  set_category_rule_active: (ruleId: string, isActive: boolean) => Promise<CategoryRuleDto>;
+  delete_category_rule: (ruleId: string) => Promise<{ status: string }>;
   create_transaction: (request: TransactionRequest) => Promise<TransactionDto>;
   update_transaction: (transactionId: string, request: TransactionRequest) => Promise<TransactionDto>;
   count_same_shop_transactions: (transactionId: string) => Promise<{ count: number }>;
@@ -75,7 +83,9 @@ export type TransactionExportParams = {
   category_id?: string;
 };
 export type CategoryRequest = GeneratedCategoryRequest;
+export type CategoryRuleRequest = GeneratedCategoryRuleRequest;
 export type CategoryListParams = Pick<ListCategoriesParams, "include_inactive">;
+export type CategoryRuleListParams = { include_inactive?: boolean };
 export type SettingsRequest = UpdateSettingsRequest;
 export type IncomeSettingRequest = GeneratedIncomeSettingRequest;
 export type IncomeOverrideRequest = GeneratedIncomeOverrideRequest;
@@ -91,6 +101,8 @@ export type RecentTransactionsParams = GetRecentTransactionsParams;
 
 export type {
   CategoryDto,
+  CategoryRuleDto,
+  CategoryRuleResponse,
   CategorySummaryDto,
   DashboardSummaryResponse,
   DeleteDataRequest,
