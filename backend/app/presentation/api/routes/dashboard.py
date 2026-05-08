@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from datetime import date
-
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.application.dates import app_today
 from app.application.reports import DashboardSummary, ReportUseCases
 from app.bootstrap.income_transactions import apply_due_income_transactions
 from app.bootstrap.container import build_report_use_cases
@@ -51,7 +50,7 @@ def get_dashboard_summary(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> DashboardSummaryResponse:
-    today = date.today()
+    today = app_today()
     apply_due_income_transactions(user_id=current_user.id, session=session)
     summary = _use_cases(session).dashboard_summary(
         user_id=current_user.id,

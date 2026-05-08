@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
+from app.application.dates import app_today
 from app.application.reports import ReportUseCases, month_range
 from app.bootstrap.income_transactions import apply_due_income_transactions
 from app.bootstrap.container import build_report_use_cases
@@ -28,7 +29,7 @@ def get_category_summary(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> list[CategorySummaryResponse]:
-    today = date.today()
+    today = app_today()
     apply_due_income_transactions(user_id=current_user.id, session=session)
     default_start, default_end = month_range(today.year, today.month)
     summaries = _use_cases(session).category_summary(
@@ -46,7 +47,7 @@ def get_monthly_report(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> ReportResponse:
-    today = date.today()
+    today = app_today()
     apply_due_income_transactions(user_id=current_user.id, session=session)
     report = _use_cases(session).monthly_report(
         user_id=current_user.id,
@@ -63,7 +64,7 @@ def get_weekly_report(
     current_user: UserRecord = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ) -> ReportResponse:
-    today = date.today()
+    today = app_today()
     apply_due_income_transactions(user_id=current_user.id, session=session)
     iso = today.isocalendar()
     try:
@@ -84,7 +85,7 @@ def get_yearly_report(
     session: Session = Depends(get_db_session),
 ) -> ReportResponse:
     apply_due_income_transactions(user_id=current_user.id, session=session)
-    report = _use_cases(session).yearly_report(user_id=current_user.id, year=year or date.today().year)
+    report = _use_cases(session).yearly_report(user_id=current_user.id, year=year or app_today().year)
     return report_response(report)
 
 

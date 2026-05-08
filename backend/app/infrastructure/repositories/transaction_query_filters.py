@@ -15,6 +15,17 @@ from app.infrastructure.repositories.transaction_category_rules import (
     uncategorized_category_ids_query,
 )
 
+LIKE_ESCAPE = "\\"
+
+
+def literal_like_pattern(value: str) -> str:
+    escaped = (
+        value.replace(LIKE_ESCAPE, LIKE_ESCAPE + LIKE_ESCAPE)
+        .replace("%", LIKE_ESCAPE + "%")
+        .replace("_", LIKE_ESCAPE + "_")
+    )
+    return f"%{escaped}%"
+
 
 class TransactionQueryFilterBuilder:
     def __init__(self, session: Session) -> None:
@@ -52,15 +63,15 @@ class TransactionQueryFilterBuilder:
         )
 
     def _keyword_filter(self, *, user_id: UUID, keyword: str):
-        pattern = f"%{keyword}%"
+        pattern = literal_like_pattern(keyword)
         matching_category_ids = select(CategoryModel.id).where(
             CategoryModel.user_id == str(user_id),
             CategoryModel.deleted_at.is_(None),
-            CategoryModel.name.like(pattern),
+            CategoryModel.name.like(pattern, escape=LIKE_ESCAPE),
         )
         conditions = [
-            TransactionModel.shop_name.like(pattern),
-            TransactionModel.memo.like(pattern),
+            TransactionModel.shop_name.like(pattern, escape=LIKE_ESCAPE),
+            TransactionModel.memo.like(pattern, escape=LIKE_ESCAPE),
             TransactionModel.category_id.in_(matching_category_ids),
         ]
         if UNCATEGORIZED_CATEGORY_NAME in keyword:

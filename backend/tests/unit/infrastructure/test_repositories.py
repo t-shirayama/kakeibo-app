@@ -154,6 +154,41 @@ def test_transaction_repository_keyword_matches_category_name_and_uncategorized(
     assert uncategorized_result.items[0].category_color == "#6B7280"
 
 
+def test_transaction_repository_keyword_treats_like_wildcards_as_literals(db_session: Session) -> None:
+    add_user(db_session)
+    transaction_repository = TransactionRepository(db_session)
+    transaction_query_repository = TransactionQueryRepository(db_session)
+    category_repository = CategoryRepository(db_session)
+    category = category_repository.create_category(Category(id=uuid4(), user_id=USER_ID, name="日用品", color="#8B5CF6"))
+
+    for shop_name in ["100% Store", "100 Yen Store", "foo_bar", "fooXbar"]:
+        transaction_repository.create_transaction(
+            Transaction(
+                id=uuid4(),
+                user_id=USER_ID,
+                category_id=category.id,
+                transaction_date=date(2026, 5, 1),
+                shop_name=shop_name,
+                amount=MoneyJPY(100),
+                transaction_type=TransactionType.EXPENSE,
+            )
+        )
+
+    percent_result = transaction_query_repository.list_transactions(
+        user_id=USER_ID,
+        page=Page(page=1, page_size=10),
+        keyword="100%",
+    )
+    underscore_result = transaction_query_repository.list_transactions(
+        user_id=USER_ID,
+        page=Page(page=1, page_size=10),
+        keyword="foo_bar",
+    )
+
+    assert [item.transaction.shop_name for item in percent_result.items] == ["100% Store"]
+    assert [item.transaction.shop_name for item in underscore_result.items] == ["foo_bar"]
+
+
 def test_transaction_repository_updates_category_for_same_shop(db_session: Session) -> None:
     add_user(db_session)
     transaction_repository = TransactionRepository(db_session)
