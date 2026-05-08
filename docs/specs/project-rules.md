@@ -14,13 +14,18 @@
 
 - `docs/specs/project-rules.md`: SSOT全体の入口と、更新先の判断基準を置く。
 - `docs/specs/development-workflow.md`: 仕様更新、単体テスト・Integration Test・E2Eの方針、Docker Compose での確認、CI、Dependabot運用を置く。
+- `docs/specs/development/`: 開発・運用ワークフローの詳細分割を置く。
 - `docs/specs/architecture-principles.md`: 技術スタック、レイヤ構成、依存方向、システム境界を置く。
 - `docs/specs/domain-model.md`: ドメイン概念、不変条件、業務ルールを置く。
+- `docs/specs/domain/`: ドメインモデル詳細の分割を置く。
 - `docs/specs/api-specs.md`: APIの共通契約とエンドポイント概要を置く。
+- `docs/specs/api/`: API詳細の分割を置く。
 - `docs/specs/db-schema.md`: DBスキーマと永続化モデルを置く。
+- `docs/specs/db/`: DBスキーマ詳細の分割を置く。
 - `docs/specs/security.md`: 認証、認可、Cookie、CSRF、パスワード、削除保護、セキュリティスキャンを置く。
 - `docs/specs/pdf-import.md`: PDF取込、抽出、保存、重複判定を置く。
 - `docs/specs/backend-architecture.md`: バックエンドの詳細設計を置く。
+- `docs/specs/backend/`: バックエンド詳細設計の分割を置く。
 - `docs/specs/frontend-architecture.md`: フロントエンドの詳細設計を置く。
 - `docs/specs/glossary.md`: 用語集を置く。
 - `docs/specs/adrs/`: 重要な設計判断の履歴を置く。
@@ -30,6 +35,7 @@
 - `docs/e2e/index.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
 - `docs/e2e.md`: 既存リンク互換用の案内ファイル。E2Eの正規入口へ誘導する。
 - `docs/e2e/`: E2Eのシナリオ詳細を置く。
+- `docs/tasks/completed/`: 完了済みタスク履歴の月別アーカイブを置く。
 
 現行の画面スクリーンショットは `docs/designs/` に置き、過去のデザイン案や旧スクリーンショットは `docs/designs/archive/` に退避する。
 
@@ -61,11 +67,16 @@
 ## 詳細への導線
 
 - 開発・運用ルール: `development-workflow.md`
+- 開発・運用詳細: `development/`
 - 横断アーキテクチャ原則: `architecture-principles.md`
 - ドメイン仕様: `domain-model.md`
+- ドメイン詳細: `domain/`
 - API仕様: `api-specs.md`
+- API詳細: `api/`
 - DBスキーマ: `db-schema.md`
+- DB詳細: `db/`
 - セキュリティ仕様: `security.md`
 - PDF取込仕様: `pdf-import.md`
 - バックエンド詳細設計: `backend-architecture.md`
+- バックエンド詳細分割: `backend/`
 - フロントエンド詳細設計: `frontend-architecture.md`
