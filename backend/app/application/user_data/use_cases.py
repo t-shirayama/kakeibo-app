@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from app.application.auth.ports import PasswordHasherPort, UserRecord
+from app.application.errors import ApplicationError
 from app.application.user_data.ports import UserDataRepositoryProtocol, UploadStorageProtocol
 
 
-class UserDataDeletionError(ValueError):
+class UserDataDeletionError(ApplicationError):
     pass
 
 

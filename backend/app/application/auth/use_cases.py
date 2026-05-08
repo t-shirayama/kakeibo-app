@@ -13,9 +13,10 @@ from app.application.auth.ports import (
     TokenHasherPort,
     UserRecord,
 )
+from app.application.errors import ApplicationError
 
 
-class AuthError(ValueError):
+class AuthError(ApplicationError):
     pass
 
 

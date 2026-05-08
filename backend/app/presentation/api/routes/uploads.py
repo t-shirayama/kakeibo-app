@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -13,6 +13,7 @@ from app.application.importing.upload_import import PdfUploadError, PdfUploadUse
 from app.domain.entities import Upload, UploadStatus
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.errors import http_exception_from_application_error
 
 router = APIRouter()
 
@@ -41,7 +42,7 @@ async def upload_pdf(
             content=content,
         )
     except PdfUploadError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _upload_response(upload)
 
 
@@ -62,7 +63,7 @@ def get_upload(
     try:
         upload = _use_cases(session).get_upload(user_id=current_user.id, upload_id=upload_id)
     except PdfUploadError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _upload_response(upload)
 
 
@@ -75,7 +76,7 @@ def delete_upload(
     try:
         _use_cases(session).delete_upload(user_id=current_user.id, upload_id=upload_id)
     except PdfUploadError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return {"status": "ok"}
 
 

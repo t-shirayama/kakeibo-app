@@ -4,7 +4,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
@@ -15,6 +15,7 @@ from app.bootstrap.income_transactions import apply_due_income_transactions
 from app.bootstrap.container import build_report_use_cases, build_transaction_use_cases
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.errors import http_exception_from_application_error
 from app.presentation.api.routes.transaction_dtos import (
     SameShopCategoryRequest,
     SameShopCategoryResponse,
@@ -92,7 +93,7 @@ def create_transaction(
     try:
         transaction = _use_cases(session).create_transaction(user_id=current_user.id, command=transaction_command_from_request(request))
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return transaction_response(transaction)
 
 
@@ -105,7 +106,7 @@ def get_transaction(
     try:
         transaction = _use_cases(session).get_transaction(user_id=current_user.id, transaction_id=transaction_id)
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return transaction_response(transaction)
 
 
@@ -123,7 +124,7 @@ def update_transaction(
             command=transaction_command_from_request(request),
         )
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return transaction_response(transaction)
 
 
@@ -136,7 +137,7 @@ def count_same_shop_transactions(
     try:
         count = _use_cases(session).count_same_shop_candidates(user_id=current_user.id, transaction_id=transaction_id)
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return SameShopCountResponse(count=count)
 
 
@@ -155,7 +156,7 @@ def update_same_shop_category(
             category_id=request.category_id,
         )
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return SameShopCategoryResponse(updated_count=updated_count)
 
 
@@ -168,7 +169,7 @@ def delete_transaction(
     try:
         _use_cases(session).delete_transaction(user_id=current_user.id, transaction_id=transaction_id)
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return {"status": "ok"}
 
 

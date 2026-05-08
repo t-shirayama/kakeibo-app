@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.application.errors import ApplicationError
 from app.application.settings.commands import UpdateSettingsCommand
 from app.application.settings.ports import SettingsRepositoryProtocol, UserSettingsRecord
 
 
-class SettingsError(ValueError):
+class SettingsError(ApplicationError):
     pass
 
 

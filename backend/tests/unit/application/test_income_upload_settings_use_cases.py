@@ -181,8 +181,9 @@ def test_income_settings_validate_invalid_commands(command: IncomeSettingCommand
 
 
 def test_income_settings_reject_missing_setting_or_inactive_category() -> None:
-    with pytest.raises(IncomeSettingsError, match="not found"):
+    with pytest.raises(IncomeSettingsError, match="not found") as exc_info:
         make_income_use_cases().delete_setting(user_id=USER_ID, income_setting_id=uuid4())
+    assert exc_info.value.status_code == 404
     with pytest.raises(IncomeSettingsError, match="inactive"):
         make_income_use_cases(categories=FakeCategoryRepository(active=False)).create_setting(user_id=USER_ID, command=make_income_command())
 
@@ -418,10 +419,12 @@ def test_pdf_upload_delete_removes_storage_and_missing_uploads_raise() -> None:
     use_cases.delete_upload(user_id=USER_ID, upload_id=upload.id)
 
     assert storage.deleted == [f"uploads/{upload.id}.pdf"]
-    with pytest.raises(PdfUploadError, match="not found"):
+    with pytest.raises(PdfUploadError, match="not found") as get_exc:
         use_cases.get_upload(user_id=USER_ID, upload_id=upload.id)
-    with pytest.raises(PdfUploadError, match="not found"):
+    with pytest.raises(PdfUploadError, match="not found") as delete_exc:
         use_cases.delete_upload(user_id=USER_ID, upload_id=uuid4())
+    assert get_exc.value.status_code == 404
+    assert delete_exc.value.status_code == 404
 
 
 @pytest.mark.parametrize(

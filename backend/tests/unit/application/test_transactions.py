@@ -372,10 +372,12 @@ def test_list_and_update_transaction_delegate_filters_and_record_audit_log() -> 
 def test_get_or_update_transaction_missing_record_raises() -> None:
     use_cases = make_transaction_use_cases(FakeFinanceRepository())
 
-    with pytest.raises(TransactionCategoryError, match="Transaction not found"):
+    with pytest.raises(TransactionCategoryError, match="Transaction not found") as get_exc:
         use_cases.get_transaction(user_id=USER_ID, transaction_id=uuid4())
-    with pytest.raises(TransactionCategoryError, match="Transaction not found"):
+    with pytest.raises(TransactionCategoryError, match="Transaction not found") as update_exc:
         use_cases.update_transaction(user_id=USER_ID, transaction_id=uuid4(), command=make_command())
+    assert get_exc.value.status_code == 404
+    assert update_exc.value.status_code == 404
 
 
 def test_delete_transaction_records_audit_log() -> None:

@@ -7,11 +7,24 @@ import pytest
 
 from app.application.audit_logs import AuditLogEntry, AuditLogUseCases
 from app.application.common import Page, PageResult
+from app.application.errors import ApplicationError
 from app.application.user_data import UserDataDeletionError, UserDataDeletionUseCases
 from app.application.auth.ports import UserRecord
 
 
 USER_ID = UUID("11111111-1111-1111-1111-111111111111")
+
+
+def test_application_error_keeps_http_mapping_metadata() -> None:
+    error = ApplicationError("Invalid operation.", status_code=409, error_code="conflict", details={"field": "name"})
+    not_found = ApplicationError.not_found("Resource not found.")
+
+    assert str(error) == "Invalid operation."
+    assert error.status_code == 409
+    assert error.error_code == "conflict"
+    assert error.details == {"field": "name"}
+    assert not_found.status_code == 404
+    assert not_found.error_code == "not_found"
 
 
 def test_page_validates_bounds_and_calculates_offset() -> None:
@@ -113,8 +126,10 @@ def test_user_data_deletion_requires_confirmation_or_valid_password() -> None:
     )
     current_user = UserRecord(id=USER_ID, email="user@example.com", password_hash="hash", is_admin=False)
 
-    with pytest.raises(UserDataDeletionError, match="Confirmation"):
+    with pytest.raises(UserDataDeletionError, match="Confirmation") as exc_info:
         use_cases.delete_all_user_data(current_user=current_user, confirmation_text=None, password="wrong")
+
+    assert exc_info.value.status_code == 400
 
 
 def test_user_data_deletion_accepts_confirmation_text_and_deletes_upload_paths() -> None:

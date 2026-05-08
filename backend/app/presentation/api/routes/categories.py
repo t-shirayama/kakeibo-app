@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from app.bootstrap.container import build_category_use_cases
 from app.domain.entities import Category
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.errors import http_exception_from_application_error
 
 router = APIRouter()
 
@@ -63,7 +64,7 @@ def create_category(
             ),
         )
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _category_response(category)
 
 
@@ -86,7 +87,7 @@ def update_category(
             ),
         )
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _category_response(category)
 
 
@@ -104,7 +105,7 @@ def set_category_status(
             is_active=request.is_active,
         )
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _category_response(category)
 
 
@@ -117,7 +118,7 @@ def delete_category(
     try:
         _use_cases(session).deactivate_category(user_id=current_user.id, category_id=category_id)
     except TransactionCategoryError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return {"status": "ok"}
 
 

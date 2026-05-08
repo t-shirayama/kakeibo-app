@@ -4,8 +4,10 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
+from app.application.errors import ApplicationError
 
-class IncomeSettingsError(ValueError):
+
+class IncomeSettingsError(ApplicationError):
     pass
 
 

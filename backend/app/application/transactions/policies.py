@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.application.errors import ApplicationError
 from app.application.transactions.commands import TransactionCommand
 from app.application.transactions.ports import CategoryRepositoryProtocol, TransactionQueryRepositoryProtocol
 
 
-class TransactionCategoryError(ValueError):
+class TransactionCategoryError(ApplicationError):
     pass
 
 

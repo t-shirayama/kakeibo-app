@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.application.errors import ApplicationError
 from app.application.importing.pdf_importer import CardStatementParser
 from app.application.importing.ports import (
     ImportedTransactionWriterProtocol,
@@ -13,7 +14,7 @@ from app.application.transactions import TransactionCommand
 from app.domain.entities import TransactionType, Upload, UploadStatus
 
 
-class PdfUploadError(ValueError):
+class PdfUploadError(ApplicationError):
     pass
 
 
@@ -93,13 +94,13 @@ class PdfUploadUseCases:
     def get_upload(self, *, user_id: UUID, upload_id: UUID) -> Upload:
         upload = self._upload_repository.get_upload(user_id=user_id, upload_id=upload_id)
         if upload is None:
-            raise PdfUploadError("Upload not found.")
+            raise PdfUploadError.not_found("Upload not found.")
         return upload
 
     def delete_upload(self, *, user_id: UUID, upload_id: UUID) -> None:
         upload = self._upload_repository.soft_delete_upload(user_id=user_id, upload_id=upload_id)
         if upload is None:
-            raise PdfUploadError("Upload not found.")
+            raise PdfUploadError.not_found("Upload not found.")
         self._storage.delete(upload.stored_file_path)
 
     def _validate_pdf(self, *, file_name: str, content: bytes) -> None:

@@ -84,7 +84,7 @@ class TransactionUseCases:
     def get_transaction(self, *, user_id: UUID, transaction_id: UUID) -> Transaction:
         transaction = self._transaction_repository.get_transaction(user_id=user_id, transaction_id=transaction_id)
         if transaction is None:
-            raise TransactionCategoryError("Transaction not found.")
+            raise TransactionCategoryError.not_found("Transaction not found.")
         return transaction
 
     def update_transaction(self, *, user_id: UUID, transaction_id: UUID, command: TransactionCommand) -> Transaction:
@@ -183,7 +183,7 @@ class CategoryUseCases:
     def update_category(self, *, user_id: UUID, category_id: UUID, command: CategoryCommand) -> Category:
         category = self._category_repository.get_category(user_id=user_id, category_id=category_id)
         if category is None:
-            raise TransactionCategoryError("Category not found.")
+            raise TransactionCategoryError.not_found("Category not found.")
         if category.name.casefold() != command.name.casefold() and self._category_repository.category_name_exists(
             user_id=user_id,
             name=command.name,
@@ -204,11 +204,11 @@ class CategoryUseCases:
     def set_category_active(self, *, user_id: UUID, category_id: UUID, is_active: bool) -> Category:
         category = self._category_repository.get_category(user_id=user_id, category_id=category_id)
         if category is None:
-            raise TransactionCategoryError("Category not found.")
+            raise TransactionCategoryError.not_found("Category not found.")
         return self._category_repository.set_category_active(user_id=user_id, category_id=category_id, is_active=is_active)
 
     def deactivate_category(self, *, user_id: UUID, category_id: UUID) -> None:
         category = self._category_repository.get_category(user_id=user_id, category_id=category_id)
         if category is None:
-            raise TransactionCategoryError("Category not found.")
+            raise TransactionCategoryError.not_found("Category not found.")
         self._category_repository.deactivate_category(user_id=user_id, category_id=category_id)

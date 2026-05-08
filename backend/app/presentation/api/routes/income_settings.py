@@ -19,6 +19,7 @@ from app.application.income_settings import (
 )
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.errors import http_exception_from_application_error
 
 router = APIRouter()
 
@@ -73,7 +74,7 @@ def create_income_setting(
     try:
         setting = _use_cases(session).create_setting(user_id=current_user.id, command=_setting_command(request))
     except IncomeSettingsError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _setting_response(setting)
 
 
@@ -91,7 +92,7 @@ def update_income_setting(
             command=_setting_command(request),
         )
     except IncomeSettingsError as exc:
-        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _setting_response(setting)
 
 
@@ -104,7 +105,7 @@ def delete_income_setting(
     try:
         _use_cases(session).delete_setting(user_id=current_user.id, income_setting_id=income_setting_id)
     except IncomeSettingsError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return {"status": "ok"}
 
 
@@ -123,7 +124,7 @@ def upsert_income_override(
             command=IncomeOverrideCommand(target_month=_parse_target_month(target_month), amount=request.amount, day=request.day),
         )
     except IncomeSettingsError as exc:
-        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _setting_response(setting)
 
 
@@ -141,7 +142,7 @@ def delete_income_override(
             target_month=_parse_target_month(target_month),
         )
     except IncomeSettingsError as exc:
-        raise HTTPException(status_code=404 if "not found" in str(exc).lower() else 400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _setting_response(setting)
 
 def _use_cases(session: Session) -> IncomeSettingsUseCases:

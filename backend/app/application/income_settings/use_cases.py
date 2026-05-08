@@ -101,7 +101,7 @@ class IncomeSettingsUseCases:
     def _ensure_setting(self, *, user_id: UUID, income_setting_id: UUID) -> IncomeSetting:
         setting = self._repository.get_setting(user_id=user_id, income_setting_id=income_setting_id)
         if setting is None:
-            raise IncomeSettingsError("Income setting not found.")
+            raise IncomeSettingsError.not_found("Income setting not found.")
         return setting
 
     def _validate_command(self, *, user_id: UUID, command: IncomeSettingCommand) -> None:

@@ -14,6 +14,7 @@ from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.cookies import delete_auth_cookie, set_auth_cookie, set_session_cookie
 from app.presentation.api.dependencies import get_current_user, require_admin_user, validate_csrf_token
+from app.presentation.api.errors import http_exception_from_application_error
 
 router = APIRouter()
 
@@ -78,7 +79,7 @@ def bootstrap_admin(
     try:
         user = _use_cases(session).bootstrap_admin(email=request.email, password=request.password)
     except (AuthError, PasswordPolicyError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _user_response(user)
 
 
@@ -96,7 +97,7 @@ def create_user(
             is_admin=request.is_admin,
         )
     except (AuthError, PasswordPolicyError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _user_response(user)
 
 
@@ -110,7 +111,7 @@ def login(request: LoginRequest, response: Response, session: Session = Depends(
     try:
         user, tokens = _use_cases(session).login(email=request.email, password=request.password)
     except AuthError as exc:
-        raise HTTPException(status_code=401, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc, status_code=401) from exc
     _set_auth_cookies(response, tokens)
     return _user_response(user)
 
@@ -126,6 +127,8 @@ def refresh(
     try:
         tokens = _use_cases(session).refresh(refresh_token=kakeibo_refresh)
     except (AuthError, PyJWTError) as exc:
+        if isinstance(exc, AuthError):
+            raise http_exception_from_application_error(exc, status_code=401) from exc
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     _set_auth_cookies(response, tokens)
     return {"status": "ok"}
@@ -165,6 +168,8 @@ def confirm_password_reset(
     try:
         _use_cases(session).confirm_password_reset(reset_token=request.reset_token, new_password=request.new_password)
     except (AuthError, PasswordPolicyError, PyJWTError) as exc:
+        if isinstance(exc, (AuthError, PasswordPolicyError)):
+            raise http_exception_from_application_error(exc) from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"status": "ok"}
 
