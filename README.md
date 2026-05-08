@@ -193,7 +193,7 @@ docker compose run --rm --no-deps frontend npm run build
 docker compose run --rm e2e
 ```
 
-単体テストと結合テストの置き場、実行コマンド、CIでの実行単位は [docs/specs/development-workflow.md](docs/specs/development-workflow.md) を参照してください。E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/e2e/index.md](docs/e2e/index.md) を参照してください。
+単体テストと結合テストの置き場、実行コマンド、CIでの実行単位は [docs/specs/development-workflow/README.md](docs/specs/development-workflow/README.md) を参照してください。E2Eの実行方法、デバッグ、安定化方針、シナリオ詳細は [docs/tests/e2e/index.md](docs/tests/e2e/index.md) を参照してください。
 
 ### GitHub Actions
 
@@ -202,7 +202,7 @@ GitHub Actions のCIは `quality` と `test` の2系統に分けます。
 - `quality`: `frontend` の `lint` / `typecheck` / `build`、バックエンドのレイヤ依存チェック、ドキュメント未確定事項チェック、シークレットスキャン、OpenAPI生成物チェック
 - `test`: `backend` の Alembic 適用確認、バックエンド単体テスト、バックエンドIntegration Test、フロントエンド単体テスト、フロントエンドIntegration Test、E2E
 
-シークレットスキャンは `gitleaks` の `git` モードを使い、追跡対象の差分と履歴を中心に確認します。CIの詳細な実行コマンドや運用方針は [docs/specs/development-workflow.md](docs/specs/development-workflow.md) を参照してください。
+シークレットスキャンは `gitleaks` の `git` モードを使い、追跡対象の差分と履歴を中心に確認します。CIの詳細な実行コマンドや運用方針は [docs/specs/development-workflow/README.md](docs/specs/development-workflow/README.md) を参照してください。
 
 OpenAPI生成クライアントを更新したい場合は、次を実行します。
 
@@ -255,33 +255,33 @@ docker compose run --rm zap
 - `GET /api/auth/csrf` でCSRFセッションCookieが発行または再利用されること
 - 本番はHTTPS配信であること
 
-フロントエンドとバックエンドを別サイトとして運用する場合、現行の `SameSite=Lax` 前提では成立しない可能性があるため、公開前にCookie方針を見直してください。詳細は [docs/specs/security.md](docs/specs/security.md) を参照してください。
+フロントエンドとバックエンドを別サイトとして運用する場合、現行の `SameSite=Lax` 前提では成立しない可能性があるため、公開前にCookie方針を見直してください。詳細は [docs/specs/security/README.md](docs/specs/security/README.md) を参照してください。
 
 ## ドキュメント
 
-このリポジトリでは、仕様書の正本を `docs/specs/` に集約しています。実装前にまず [docs/README.md](docs/README.md) と [docs/specs/project-rules.md](docs/specs/project-rules.md) を確認し、詳細が必要な場合はそこから個別文書へ進んでください。
+このリポジトリでは、仕様書の正本を `docs/specs/` に集約しています。実装前にまず [docs/README.md](docs/README.md) と [docs/specs/project-rules/README.md](docs/specs/project-rules/README.md) を確認し、詳細が必要な場合はそこから個別文書へ進んでください。
 
 - [ドキュメント入口](docs/README.md)
-- [プロジェクトルール](docs/specs/project-rules.md)
-- [開発・運用ワークフロー](docs/specs/development-workflow.md)
-- [アーキテクチャ原則](docs/specs/architecture-principles.md)
-- [ドメインモデル](docs/specs/domain-model.md)
-- [API仕様](docs/specs/api-specs.md)
-- [DBスキーマ](docs/specs/db-schema.md)
-- [バックエンド設計](docs/specs/backend-architecture.md)
-- [フロントエンド設計](docs/specs/frontend-architecture.md)
-- [PDF取込仕様](docs/specs/pdf-import.md)
-- [セキュリティ仕様](docs/specs/security.md)
-- [用語集](docs/specs/glossary.md)
+- [プロジェクトルール](docs/specs/project-rules/README.md)
+- [開発・運用ワークフロー](docs/specs/development-workflow/README.md)
+- [アーキテクチャ原則](docs/specs/architecture-principles/README.md)
+- [ドメインモデル](docs/specs/domain-model/README.md)
+- [API仕様](docs/specs/api-specs/README.md)
+- [DBスキーマ](docs/specs/db-schema/README.md)
+- [バックエンド設計](docs/specs/backend-architecture/README.md)
+- [フロントエンド設計](docs/specs/frontend-architecture/README.md)
+- [PDF取込仕様](docs/specs/pdf-import/README.md)
+- [セキュリティ仕様](docs/specs/security/README.md)
+- [用語集](docs/specs/glossary/README.md)
 - [ADR](docs/specs/adrs/)
-- [画面別要件](docs/requirements.md)
+- [画面別要件](docs/README.md#画面別要件)
 - [画面共通要件](docs/requirements/common.md)
 - [画面イメージ](docs/designs/README.md)
 - [タスク管理](docs/tasks/)
 
 ## 開発ルール
 
-仕様、設計、技術選定、画面要件、データモデル、API、セキュリティ、運用方針を変更した場合は、関連するSSOT文書を同じ作業内で更新してください。更新先の入口は [docs/specs/project-rules.md](docs/specs/project-rules.md) です。
+仕様、設計、技術選定、画面要件、データモデル、API、セキュリティ、運用方針を変更した場合は、関連するSSOT文書を同じ作業内で更新してください。更新先の入口は [docs/specs/project-rules/README.md](docs/specs/project-rules/README.md) です。
 
 更新後は以下で未確定事項が残っていないか確認します。
 
