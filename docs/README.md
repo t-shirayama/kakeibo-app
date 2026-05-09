@@ -7,13 +7,14 @@
 ## 参照順
 
 1. 共通ルールの入口を確認する: [仕様書入口](specs/README.md)
-2. プロジェクトルールを確認する: [プロジェクトルール](specs/project-rules/README.md)
-3. 開発・運用ルールを確認する: [開発・運用ワークフロー](specs/development-workflow/README.md)
-4. アーキテクチャ方針を確認する: [アーキテクチャ](architecture/README.md)
-5. 画面別の要件を確認する: [画面別要件](#画面別要件)
-6. テスト方針やシナリオを確認する: [テストドキュメント](tests/README.md)
-7. 画面イメージを確認する: [画面イメージ一覧](designs/README.md)
-8. 実装タスクを確認する: [タスク管理](tasks/)
+2. プロダクト文脈を確認する: [プロダクト文書](product/README.md)
+3. プロジェクトルールを確認する: [プロジェクトルール](specs/project-rules/README.md)
+4. 開発・運用ルールを確認する: [開発・運用ワークフロー](specs/development-workflow/README.md)
+5. アーキテクチャ方針を確認する: [アーキテクチャ](architecture/README.md)
+6. 画面別の要件を確認する: [画面別要件](#画面別要件)
+7. テスト方針やシナリオを確認する: [テストドキュメント](tests/README.md)
+8. 画面イメージを確認する: [画面イメージ一覧](designs/README.md)
+9. 実装タスクを確認する: [タスク管理](tasks/)
 
 画面共通の表示前提は `docs/requirements/screens/common.md` を参照してください。
 
@@ -32,6 +33,10 @@ docs/
 ├── requirements/
 │   ├── README.md
 │   └── screens/
+├── product/
+│   ├── README.md
+│   ├── vision/
+│   └── glossary/
 ├── specs/
 │   ├── README.md
 │   ├── project-rules/
@@ -39,7 +44,6 @@ docs/
 │   ├── domain-model/
 │   ├── api-specs/
 │   ├── db-schema/
-│   ├── glossary/
 │   ├── pdf-import/
 │   └── security/
 ├── tasks/

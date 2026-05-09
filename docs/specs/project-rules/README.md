@@ -8,7 +8,7 @@
 
 ## ドキュメント構成
 
-`docs/specs/` を仕様書のSSOTとする。仕様書の入口は `docs/specs/README.md` とし、個別仕様はテーマごとのフォルダに置く。アーキテクチャ関連の正本は `docs/architecture/` に置く。
+`docs/specs/` を仕様書のSSOTとする。仕様書の入口は `docs/specs/README.md` とし、個別仕様はテーマごとのフォルダに置く。アーキテクチャ関連の正本は `docs/architecture/` に置く。プロダクト文脈と共通用語は `docs/product/` に置く。
 
 - `docs/specs/project-rules/README.md`: SSOT全体の入口と、更新先の判断基準を置く。
 - `docs/specs/development-workflow/README.md`: 仕様更新、単体テスト・Integration Test・E2Eの方針、Docker Compose での確認、CI、Dependabot運用を置く。
@@ -21,7 +21,9 @@
 - `docs/specs/db-schema/README.md`: DBスキーマと永続化モデルを置く。
 - `docs/specs/security/README.md`: 認証、認可、Cookie、CSRF、パスワード、削除保護、セキュリティスキャンを置く。
 - `docs/specs/pdf-import/README.md`: PDF取込、抽出、保存、重複判定を置く。
-- `docs/specs/glossary/README.md`: 用語集を置く。
+- `docs/product/README.md`: プロダクト文書の入口を置く。
+- `docs/product/vision/README.md`: プロダクトビジョンを置く。
+- `docs/product/glossary/README.md`: 用語集を置く。
 - `docs/tests/README.md`: テスト文書の入口。単体テスト、結合テスト、E2Eへの導線を置く。
 - `docs/tests/e2e/README.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
 - `docs/tasks/completed/`: 完了済みタスク履歴の月別アーカイブを置く。
@@ -39,6 +41,7 @@
   - DB項目、永続化方針: `docs/specs/db-schema/README.md`
   - 認証、認可、Cookie、CSRF、パスワード、削除保護: `docs/specs/security/README.md`
   - PDF取込、抽出、保存、重複判定: `docs/specs/pdf-import/README.md`
+  - プロダクトビジョン、共通用語: `docs/product/`
   - 開発手順、単体テスト・Integration Test・E2Eの方針、CI、Dependabot: `docs/specs/development-workflow/README.md`
   - 技術スタック、全体構成、システム境界: `docs/architecture/overview/README.md`
   - レイヤ構成、依存方向: `docs/architecture/backend/layers.md`
@@ -66,3 +69,5 @@
 - DBスキーマ: [DBスキーマ](../db-schema/README.md)
 - セキュリティ仕様: [セキュリティ仕様](../security/README.md)
 - PDF取込仕様: [PDF取込仕様](../pdf-import/README.md)
+- プロダクトビジョン: [プロダクトビジョン](../../product/vision/README.md)
+- 用語集: [用語集](../../product/glossary/README.md)

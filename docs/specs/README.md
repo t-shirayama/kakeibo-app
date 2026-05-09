@@ -11,8 +11,8 @@
 5. [API仕様](api-specs/README.md)
 6. [DBスキーマ](db-schema/README.md)
 7. [セキュリティ仕様](security/README.md)
+8. [用語集](../product/glossary/README.md)
 
 ## 個別仕様
 
-- [用語集](glossary/README.md)
 - [PDF取込仕様](pdf-import/README.md)

@@ -88,7 +88,7 @@ rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex AGENTS.md READM
 - ドメインモデル: `docs/specs/domain-model/README.md`
 - API仕様: `docs/specs/api-specs/README.md`
 - DBスキーマ: `docs/specs/db-schema/README.md`
-- 用語集: `docs/specs/glossary/README.md`
+- 用語集: `docs/product/glossary/README.md`
 - バックエンド設計: `docs/architecture/backend/README.md`
 - フロントエンド設計: `docs/architecture/frontend/README.md`
 - PDF取込仕様: `docs/specs/pdf-import/README.md`
