@@ -86,4 +86,4 @@ docs/
 - 画面の振る舞いや表示項目を変更した場合は、`docs/requirements/` の該当画面要件を更新します。
 - テスト方針やE2Eの対象を変更した場合は、`docs/tests/` 配下の該当文書を更新します。
 - 依存更新PRは Dependabot で週次作成し、対象は `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile を基本とします。
-- Codex向けの最小ルールは `.codex/AGENTS.md` に置きます。
+- Codex向けの最小ルールはリポジトリ直下の `AGENTS.md` に置きます。

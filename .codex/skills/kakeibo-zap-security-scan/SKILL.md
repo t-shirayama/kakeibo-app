@@ -22,7 +22,7 @@ description: Use when working on this repository's OWASP ZAP Docker Compose API 
 - Confirm `docker compose --profile security config --services` lists `zap`.
 - Confirm reports exist in `zap-reports/` after a scan.
 - For ZAP-derived fixes, compare the new `zap-reports/zap-api-report.md` or JSON against the original finding and state whether the specific alert was resolved.
-- After documentation changes, run the repository's unresolved-marker check documented in `.codex/AGENTS.md`.
+- After documentation changes, run the repository's unresolved-marker check documented in `AGENTS.md`.
 
 ## Common Findings
 

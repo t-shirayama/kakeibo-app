@@ -17,7 +17,7 @@ Use this skill whenever a request is to add tasks, turn findings into tasks, upd
 4. Preserve `docs/tasks/open.md` as the list of unfinished work only.
 5. When a task is done, remove it from `open.md` and add a concise completed entry to `completed.md`.
 6. If a task changes specifications, architecture, security, API, DB, E2E, or UI requirements, include the relevant document update in the task or perform it in the same work.
-7. After task document edits, run the unresolved-marker check documented in `.codex/AGENTS.md`.
+7. After task document edits, run the unresolved-marker check documented in `AGENTS.md`.
 
 ## Open Task Format
 

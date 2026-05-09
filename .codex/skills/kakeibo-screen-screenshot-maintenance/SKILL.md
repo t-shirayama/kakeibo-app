@@ -17,7 +17,7 @@ Use this skill whenever the work involves current screen screenshots under `docs
 4. Copy the generated PNG files from `frontend/.doc-screenshots/` into `docs/designs/`.
 5. Update `docs/designs/README.md` and README image sections in the same work so the listed screens match the actual PNG files.
 6. When a new screen is added, update both the capture target list and the image index documents together.
-7. After documentation edits, run the unresolved-marker check documented in `.codex/AGENTS.md`.
+7. After documentation edits, run the unresolved-marker check documented in `AGENTS.md`.
 
 ## Output Checklist
 

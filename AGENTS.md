@@ -70,7 +70,7 @@
 - ドキュメント更新後は、次のコマンドで意図しない未確定事項が残っていないか確認してください。
 
 ```powershell
-rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"
+rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex AGENTS.md README.md -g "*.md" -g "*.toml"
 ```
 
 ## タスク分割ルール

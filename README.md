@@ -292,10 +292,10 @@ docker compose run --rm zap
 更新後は以下で未確定事項が残っていないか確認します。
 
 ```powershell
-rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex -g "*.md" -g "*.toml"
+rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex AGENTS.md README.md -g "*.md" -g "*.toml"
 ```
 
-`.codex/config.toml` はCodexのローカル実行設定です。仕様の正本ではないため、Codexの参照入口、プロジェクトルート判定、承認・サンドボックス方針を変更した場合だけ同期してください。
+`.codex/config.toml` はCodexのローカル実行設定です。仕様の正本ではないため、Codexの参照入口、プロジェクトルート判定、承認・サンドボックス方針を変更した場合だけ同期してください。Codex向けの作業ルールはリポジトリ直下の `AGENTS.md` に置きます。
 
 ## 現在の状態
 

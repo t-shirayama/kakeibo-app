@@ -1,9 +1,9 @@
 # .codex/config.toml
 # Project-scoped Codex config.
-# Canonical project rules and documentation live in .codex/AGENTS.md and docs/.
+# Canonical project rules and documentation live in AGENTS.md and docs/.
 
-# Try the project-specific agent instructions when a root AGENTS.md is not present.
-project_doc_fallback_filenames = [".codex/AGENTS.md"]
+# Use the repository-root agent instructions for project-specific guidance.
+project_doc_fallback_filenames = ["AGENTS.md"]
 
 # Treat this repository as a project root for local Codex sessions.
 project_root_markers = ["README.md", "docker-compose.yml", "backend/pyproject.toml", "frontend/package.json"]
