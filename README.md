@@ -150,7 +150,7 @@ macOS / Linux:
 
 Git hooks を有効化すると、`push` 前に次を自動確認します。
 
-- `backend/pyproject.toml` か `backend/requirements.lock` を含む変更がある場合: `docker compose run --rm backend python scripts/generate_requirements_lock.py --check`
+- `backend/`、`docker-compose.yml`、`docs/`、`README.md`、`.codex/`、`.github/` を含む変更がある場合: `docker compose run --rm --no-deps backend python scripts/generate_requirements_lock.py --check`
 - `frontend/Dockerfile.e2e`、`frontend/package.json`、`frontend/package-lock.json`、`docker-compose.yml` を含む変更がある場合: `docker compose build e2e`
 
 ### npmエイリアス

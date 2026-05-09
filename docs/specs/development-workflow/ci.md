@@ -11,7 +11,7 @@
 - `repo-check` では未確定事項チェックとシークレットスキャンを実行する。段階制御上は preflight 扱いとし、テストの step1 には含めない。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
 - バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
-- clone 後は `scripts/install-git-hooks.ps1` または `scripts/install-git-hooks.sh` で `core.hooksPath=.githooks` を設定し、`push` 前に `requirements.lock` 整合性チェックと、E2E関連変更時の `docker compose build e2e` を自動実行する。
+- clone 後は `scripts/install-git-hooks.ps1` または `scripts/install-git-hooks.sh` で `core.hooksPath=.githooks` を設定する。`push` 前には、CI の `backend-check` と同じく `backend/`、`docker-compose.yml`、`docs/`、`README.md`、`.codex/`、`.github/` の変更で `requirements.lock` 整合性チェックを実行し、E2E関連変更時は `docker compose build e2e` を自動実行する。
 - 依存更新は Dependabot で管理し、少なくとも `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile の更新PRを週次で自動作成する。
 
 ## ドキュメント品質チェック
