@@ -4,7 +4,7 @@
 
 - 日本語で簡潔かつ丁寧に回答してください。
 - 実装や仕様確認で迷った場合は、まず `docs/README.md` を読み、次に `docs/specs/project-rules/README.md` を確認してください。
-- `docs/specs/project-rules/README.md` は入口文書です。開発フローは `docs/specs/development-workflow/README.md`、設計原則は `docs/specs/architecture-principles/README.md` を参照してください。
+- `docs/specs/project-rules/README.md` は入口文書です。開発フローは `docs/specs/development-workflow/README.md`、設計原則は `docs/architecture/principles/README.md` を参照してください。
 - `.codex/config.toml` は Codex の設定ファイルであり、プロジェクト仕様の正本ではありません。
 
 ## 参照順
@@ -13,7 +13,7 @@
 2. プロジェクトルール: `docs/specs/project-rules/README.md`
 3. 画面要件: `docs/README.md#画面別要件` および `docs/requirements/`
 4. E2Eテスト方針: `docs/tests/e2e/README.md`
-5. 個別仕様: `docs/specs/` 配下の該当文書
+5. 個別仕様: `docs/specs/` または `docs/architecture/` 配下の該当文書
 
 ## 変更パターン別の参照順
 
@@ -83,12 +83,13 @@ rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex AGENTS.md READM
 ## 主要ドキュメント
 
 - 仕様書SSOT: `docs/specs/`
+- アーキテクチャ: `docs/architecture/README.md`
 - ドメインモデル: `docs/specs/domain-model/README.md`
 - API仕様: `docs/specs/api-specs/README.md`
 - DBスキーマ: `docs/specs/db-schema/README.md`
 - 用語集: `docs/specs/glossary/README.md`
-- バックエンド設計: `docs/specs/backend-architecture/README.md`
-- フロントエンド設計: `docs/specs/frontend-architecture/README.md`
+- バックエンド設計: `docs/architecture/backend/README.md`
+- フロントエンド設計: `docs/architecture/frontend/README.md`
 - PDF取込仕様: `docs/specs/pdf-import/README.md`
 - セキュリティ仕様: `docs/specs/security/README.md`
-- ADR: `docs/specs/adrs/`
+- ADR: `docs/architecture/adrs/`

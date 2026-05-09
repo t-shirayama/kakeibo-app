@@ -31,6 +31,6 @@
 | DTO | レイヤ間やAPI境界でデータを受け渡すためのオブジェクト |
 | SSOT | Single Source of Truth の略。仕様や設計について、唯一の正しい情報源として扱う正本 |
 | ADR | Architecture Decision Record の略。重要なアーキテクチャ上の決定を、背景・決定内容・結果とともに記録する文書 |
-| ADRs | ADRの複数形。`docs/specs/adrs/` 配下に配置する |
+| ADRs | ADRの複数形。`docs/architecture/adrs/` 配下に配置する |
 | FastAPI | バックエンドAPI実装に使うPython Webフレームワーク |
 | Next.js | フロントエンド実装に使うReactフレームワーク |

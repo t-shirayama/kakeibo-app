@@ -9,7 +9,7 @@
 1. 共通ルールの入口を確認する: [仕様書入口](specs/README.md)
 2. プロジェクトルールを確認する: [プロジェクトルール](specs/project-rules/README.md)
 3. 開発・運用ルールを確認する: [開発・運用ワークフロー](specs/development-workflow/README.md)
-4. 横断アーキテクチャ原則を確認する: [アーキテクチャ原則](specs/architecture-principles/README.md)
+4. アーキテクチャ方針を確認する: [アーキテクチャ](architecture/README.md)
 5. 画面別の要件を確認する: [画面別要件](#画面別要件)
 6. テスト方針やシナリオを確認する: [テストドキュメント](tests/README.md)
 7. 画面イメージを確認する: [画面イメージ一覧](designs/README.md)
@@ -22,22 +22,24 @@
 ```text
 docs/
 ├── README.md
+├── architecture/
+│   ├── README.md
+│   ├── principles/
+│   ├── backend/
+│   ├── frontend/
+│   └── adrs/
 ├── designs/
 ├── requirements/
 ├── specs/
 │   ├── README.md
 │   ├── project-rules/
 │   ├── development-workflow/
-│   ├── architecture-principles/
 │   ├── domain-model/
 │   ├── api-specs/
 │   ├── db-schema/
 │   ├── glossary/
-│   ├── backend-architecture/
-│   ├── frontend-architecture/
 │   ├── pdf-import/
-│   ├── security/
-│   └── adrs/
+│   └── security/
 ├── tasks/
 └── tests/
     ├── README.md
@@ -82,7 +84,7 @@ docs/
 
 - 仕様や実装方針を変更した場合は、関連するSSOT文書を同じ作業内で更新します。
 - 開発フロー、CI、Docker Compose での確認手順、Dependabot運用を変える場合は、`docs/specs/development-workflow/README.md` を更新します。
-- 技術スタック、レイヤ構成、依存方向、システム境界を変える場合は、`docs/specs/architecture-principles/README.md` を更新します。
+- 技術スタック、レイヤ構成、依存方向、システム境界を変える場合は、`docs/architecture/README.md` 配下の該当文書を更新します。
 - 画面の振る舞いや表示項目を変更した場合は、`docs/requirements/` の該当画面要件を更新します。
 - テスト方針やE2Eの対象を変更した場合は、`docs/tests/` 配下の該当文書を更新します。
 - 依存更新PRは Dependabot で週次作成し、対象は `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile を基本とします。
