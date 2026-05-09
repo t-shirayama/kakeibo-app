@@ -3,6 +3,7 @@
 画面共通要件と画面別要件の一覧です。
 
 - [画面共通要件](common.md)
+- [認証画面](auth.md)
 - [ダッシュボード](dashboard.md)
 - [カレンダー](calendar.md)
 - [明細一覧](transactions.md)

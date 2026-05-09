@@ -80,7 +80,7 @@ backend/
 
 - `settings/commands.py`: 画面設定更新の入力コマンドを置く。
 - `settings/ports.py`: 画面設定Repository Protocolと設定レコードを置く。
-- `settings/use_cases.py`: 通貨、タイムゾーン、表示件数、日付形式、ダークモードなど画面設定だけを扱う。
+- `settings/use_cases.py`: 通貨とタイムゾーンの固定値、表示件数、日付形式、ダークモードなど画面設定だけを扱う。
 - `user_data/ports.py`: ユーザーデータ全削除RepositoryとStorageのProtocolを置く。
 - `user_data/use_cases.py`: 全データ削除の確認、業務データ論理削除、PDF原本削除を扱う。画面設定更新とは混ぜない。
 

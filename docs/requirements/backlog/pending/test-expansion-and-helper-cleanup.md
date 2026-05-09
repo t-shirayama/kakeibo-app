@@ -31,4 +31,4 @@ Unit Test の未カバー純粋ロジック、Backend / Frontend Integration Tes
 
 ## 根拠
 
-`docs/specs/development-workflow/testing.md` のテスト棚卸しと拡充順。
+`docs/specs/development-workflow/testing.md` のテスト資産と層ごとの責務。

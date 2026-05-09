@@ -116,7 +116,7 @@
 - `GET /api/settings`
   - ユーザー設定を取得する。
 - `PUT /api/settings`
-  - ユーザー設定を更新する。`page_size` は10、20、50のいずれかとし、通貨はJPY固定で扱う。
+  - ユーザー設定を更新する。`page_size` は10、20、50のいずれか、`date_format` は `yyyy/MM/dd` または `yyyy-MM-dd` とし、`dark_mode` を保存する。通貨はJPY、タイムゾーンはAsia/Tokyo固定で扱う。
 - `POST /api/settings/export`
   - 明細一覧、カテゴリ集計、月別集計を含むExcel（`.xlsx`）をエクスポートする。
 - `DELETE /api/settings/data`

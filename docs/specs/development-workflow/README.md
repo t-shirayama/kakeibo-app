@@ -5,7 +5,7 @@
 ## 分割先
 
 - [変更ルール](changes.md): 仕様更新ルール、リファクタリング方針
-- [テスト方針](testing.md): テスト更新ルール、テスト棚卸し、拡充順
+- [テスト方針](testing.md): テスト更新ルール、テスト資産、層ごとの責務
 - [Docker Compose確認](docker-compose.md): Docker Composeでの確認ルール
 - [CIと品質チェック](ci.md): CIと自動化、ドキュメント品質チェック
 

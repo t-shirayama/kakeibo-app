@@ -27,6 +27,7 @@ PDFアップロード履歴を表す。
 | timezone | string | タイムゾーン |
 | date_format | string | 日付表示形式 |
 | page_size | integer | 1ページあたりの件数 |
+| dark_mode | boolean | ダークモード設定値 |
 | updated_at | datetime | 更新日時 |
 
 ## audit_logs

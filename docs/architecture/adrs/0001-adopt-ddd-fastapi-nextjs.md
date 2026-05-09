@@ -25,7 +25,7 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - リフレッシュトークンはローテーションする。
 - CSRF対策として `SameSite=Lax` とCSRFトークンヘッダーを使う。
 - CSRFトークンは `GET /api/auth/csrf` で取得する。
-- CSRFトークンはCookieには持たせず、レスポンスボディのみで返す。
+- CSRFトークン本体はCookieには持たせず、レスポンスボディのみで返す。別途 HttpOnly のCSRFセッションCookieでブラウザセッションと結び付ける。
 - CSRFトークンの有効期限は30分とする。
 - Cookieの `Secure` 属性は本番では `true`、ローカル開発では `false` とする。
 - JWTライブラリは PyJWT を使う。
@@ -41,7 +41,7 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - UUIDはMySQL上では `CHAR(36)` として保存する。
 - 最大アップロードサイズは10MBとする。
 - エクスポート形式はExcel（`.xlsx`）とする。
-- MVP対象APIのRequest/Response DTOは `../api-specs/README.md` に概要を固定し、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
+- Request/Response DTOの概要は `docs/specs/api-specs/` 配下に置き、厳密な機械可読仕様はPydantic/OpenAPIを正とする。
 - スキーマ変更は後方互換な追加を基本とし、破壊的変更は仕様書とADRを更新してから行う。
 - マイナス金額は取消明細を表す。
 - 0円明細を許可する。
@@ -54,7 +54,7 @@ UIやデータベースの都合にドメインルールが埋もれると、仕
 - APIクライアントはOpenAPIから自動生成する。
 - 楽天カード明細PDFのテストデータは、抽出後テキストfixtureと期待値JSONで管理する。
 - PDF原本の保存パスは `storage/uploads/{user_id}/{upload_id}/original.pdf` の相対パスとする。
-- 初回取込時のカテゴリは未分類とし、次回以降は同一項目の過去分類からルールベースで自動分類する。
+- PDF取込時のカテゴリは、明示指定、店名キーワード分類ルール、同一店名・利用者・支払い方法の過去分類、未分類カテゴリの順で自動分類する。
 - APIエラーは `error.code`, `error.message`, `error.details`, `error.request_id` を持つ共通形式で返す。
 - ページネーションは `page` と `page_size` を使うoffset/page方式とする。
 - APIとフロントDTOのID項目名はsnake_caseで統一する。

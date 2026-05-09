@@ -17,7 +17,7 @@
 - Frontend Integration Test では `frontend/src/test/integration/helpers.tsx` の route-aware render / user helper と、`frontend/src/test/msw/http.ts` の API URL / エラーレスポンス helper を使い、`setMockUrl`、`userEvent.setup()`、MSW URL 定義の重複を減らす。
 - Next.js App Router を使う E2E では hydration 完了前の操作で flaky failure が起きやすいため、Playwright helper で `html[data-hydrated="true"]` を待ってから操作する。`waitForLoadState("networkidle")` や固定 sleep は hydration 完了の代わりに使わない。
 
-## テスト棚卸しと拡充順
+## テスト資産と責務
 
 2026-05 時点の主なテスト資産は次のとおり。
 

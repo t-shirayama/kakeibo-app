@@ -64,6 +64,7 @@ docs/
 
 - [画面要件一覧](requirements/screens/README.md)
 - [画面共通要件](requirements/screens/common.md)
+- [認証画面](requirements/screens/auth.md)
 - [ダッシュボード](requirements/screens/dashboard.md)
 - [カレンダー](requirements/screens/calendar.md)
 - [明細一覧](requirements/screens/transactions.md)
