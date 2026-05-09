@@ -4,7 +4,7 @@
 
 - 日本語で簡潔かつ丁寧に回答してください。
 - 実装や仕様確認で迷った場合は、まず `docs/README.md` を読み、次に `docs/specs/project-rules/README.md` を確認してください。
-- `docs/specs/project-rules/README.md` は入口文書です。開発フローは `docs/specs/development-workflow/README.md`、設計原則は `docs/architecture/principles/README.md` を参照してください。
+- `docs/specs/project-rules/README.md` は入口文書です。開発フローは `docs/specs/development-workflow/README.md`、アーキテクチャは `docs/architecture/README.md` を参照してください。
 - `.codex/config.toml` は Codex の設定ファイルであり、プロジェクト仕様の正本ではありません。
 
 ## 参照順
@@ -84,6 +84,7 @@ rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex AGENTS.md READM
 
 - 仕様書SSOT: `docs/specs/`
 - アーキテクチャ: `docs/architecture/README.md`
+- アーキテクチャ全体像: `docs/architecture/overview/README.md`
 - ドメインモデル: `docs/specs/domain-model/README.md`
 - API仕様: `docs/specs/api-specs/README.md`
 - DBスキーマ: `docs/specs/db-schema/README.md`

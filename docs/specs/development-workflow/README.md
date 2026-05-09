@@ -13,4 +13,4 @@
 
 この文書は、仕様更新、テスト更新、Docker Compose での確認、CI、依存更新のような開発・運用フローの正本をまとめる。
 
-アーキテクチャ原則は `../../architecture/principles/README.md`、業務仕様は各SSOTを参照する。
+アーキテクチャ方針は `../../architecture/README.md`、業務仕様は各SSOTを参照する。

@@ -12,7 +12,7 @@
 
 - `docs/specs/project-rules/README.md`: SSOT全体の入口と、更新先の判断基準を置く。
 - `docs/specs/development-workflow/README.md`: 仕様更新、単体テスト・Integration Test・E2Eの方針、Docker Compose での確認、CI、Dependabot運用を置く。
-- `docs/architecture/principles/README.md`: 技術スタック、レイヤ構成、依存方向、システム境界を置く。
+- `docs/architecture/overview/README.md`: 技術スタック、全体構成、システム境界を置く。
 - `docs/architecture/backend/README.md`: バックエンドの詳細設計を置く。
 - `docs/architecture/frontend/README.md`: フロントエンドの詳細設計を置く。
 - `docs/architecture/adrs/`: 重要な設計判断の履歴を置く。
@@ -40,7 +40,8 @@
   - 認証、認可、Cookie、CSRF、パスワード、削除保護: `docs/specs/security/README.md`
   - PDF取込、抽出、保存、重複判定: `docs/specs/pdf-import/README.md`
   - 開発手順、単体テスト・Integration Test・E2Eの方針、CI、Dependabot: `docs/specs/development-workflow/README.md`
-  - レイヤ構成、依存方向、システム境界: `docs/architecture/principles/README.md`
+  - 技術スタック、全体構成、システム境界: `docs/architecture/overview/README.md`
+  - レイヤ構成、依存方向: `docs/architecture/backend/layers.md`
   - バックエンド詳細設計: `docs/architecture/backend/README.md`
   - フロントエンド詳細設計: `docs/architecture/frontend/README.md`
   - ADR: `docs/architecture/adrs/`

@@ -271,7 +271,7 @@ docker compose run --rm zap
 - [プロジェクトルール](docs/specs/project-rules/README.md)
 - [開発・運用ワークフロー](docs/specs/development-workflow/README.md)
 - [アーキテクチャ](docs/architecture/README.md)
-- [アーキテクチャ原則](docs/architecture/principles/README.md)
+- [アーキテクチャ全体像](docs/architecture/overview/README.md)
 - [ドメインモデル](docs/specs/domain-model/README.md)
 - [API仕様](docs/specs/api-specs/README.md)
 - [DBスキーマ](docs/specs/db-schema/README.md)

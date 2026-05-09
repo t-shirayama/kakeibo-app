@@ -24,7 +24,7 @@ docs/
 ├── README.md
 ├── architecture/
 │   ├── README.md
-│   ├── principles/
+│   ├── overview/
 │   ├── backend/
 │   ├── frontend/
 │   └── adrs/
