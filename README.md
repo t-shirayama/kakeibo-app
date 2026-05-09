@@ -285,7 +285,7 @@ docker compose run --rm zap
 - [画面別要件](docs/README.md#画面別要件)
 - [画面共通要件](docs/requirements/screens/common.md)
 - [画面イメージ](docs/designs/README.md)
-- [タスク管理](docs/tasks/)
+- [バックログ](docs/requirements/backlog/README.md)
 
 ## 開発ルール
 
@@ -301,4 +301,4 @@ rg "確認事項|未決定事項|TODO|TBD|要確認" docs .codex AGENTS.md READM
 
 ## 現在の状態
 
-現時点の未完了タスクは [docs/tasks/open.md](docs/tasks/open.md) で管理します。完了済みタスクは [docs/tasks/completed.md](docs/tasks/completed.md) に退避しています。
+現時点の未対応・対応中タスクは [docs/requirements/backlog/README.md](docs/requirements/backlog/README.md) で管理します。完了済みタスクは `docs/requirements/backlog/archive/` に退避しています。

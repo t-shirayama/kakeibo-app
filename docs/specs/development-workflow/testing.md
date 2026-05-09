@@ -41,13 +41,7 @@
 - Frontend Integration Test は、主要画面の読み込みに加えて、明細フォームの追加・編集、PDFアップロードの進捗と再試行、401/403 時の認証 refresh と CSRF 再取得まで確認できる状態にした。カテゴリ管理、設定保存のような操作系はまだ薄い。
 - E2E helper は `auth.ts`、`date.ts`、`navigation.ts`、`transactions.ts`、`upload.ts` に分かれ、`navigation.ts` では通常画面遷移の `gotoAppPage()` と redirect 専用待ち合わせを分ける。
 
-今後の拡充順は、次の順番を標準とする。
-
-1. Unit Test の未カバー純粋ロジックを追加し、重複 fixture と小さな helper を整理する。
-2. Backend / Frontend Integration Test の共通 fixture と helper を整え、認証、CSRF、MSW、Query 初期化の準備処理を標準化する。
-3. 認証ガード対象ルートと E2E の待ち合わせを見直し、認証境界の揺れと redirect 起因の flaky failure を減らす。
-4. E2E helper を代表導線中心に整理し、細かな表示分岐や再試行UIは Frontend Integration Test へ寄せる。
-5. そのうえで、カテゴリ管理、PDF取込、明細フォーム、CSRF再試行、Excel出力、migration 検証の順に、各層へ追加する。
+テスト拡充の作業候補は [バックログ](../../requirements/backlog/README.md) で管理する。
 
 タスク化の判断基準は次のとおり。
 

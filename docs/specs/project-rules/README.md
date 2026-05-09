@@ -24,9 +24,10 @@
 - `docs/product/README.md`: プロダクト文書の入口を置く。
 - `docs/product/vision/README.md`: プロダクトビジョンを置く。
 - `docs/product/glossary/README.md`: 用語集を置く。
+- `docs/requirements/backlog/README.md`: 未対応・対応中タスクと完了済み履歴の入口を置く。
 - `docs/tests/README.md`: テスト文書の入口。単体テスト、結合テスト、E2Eへの導線を置く。
 - `docs/tests/e2e/README.md`: E2Eの入口。実行方法、安定化方針、更新方針への案内を置く。
-- `docs/tasks/completed/`: 完了済みタスク履歴の月別アーカイブを置く。
+- `docs/requirements/backlog/archive/`: 完了済みタスク履歴の月別アーカイブを置く。
 
 現行の画面スクリーンショットは `docs/designs/screens/` に置く。v1向けには過去のデザイン案や旧スクリーンショットのアーカイブを持たない。
 
@@ -49,6 +50,7 @@
   - フロントエンド詳細設計: `docs/architecture/frontend/README.md`
   - ADR: `docs/architecture/adrs/`
   - 画面の表示、操作、例外状態: `docs/requirements/screens/`
+  - 未対応・対応中タスク、作業予定、構想: `docs/requirements/backlog/`
   - E2Eの対象、観点、実行方法: `docs/tests/e2e/README.md` と `docs/tests/e2e/`
 
 ## 最重要の横断ルール

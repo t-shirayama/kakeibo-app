@@ -14,7 +14,7 @@
 6. 画面別の要件を確認する: [画面別要件](#画面別要件)
 7. テスト方針やシナリオを確認する: [テストドキュメント](tests/README.md)
 8. 画面イメージを確認する: [画面イメージ一覧](designs/README.md)
-9. 実装タスクを確認する: [タスク管理](tasks/)
+9. 実装タスクを確認する: [バックログ](requirements/backlog/README.md)
 
 画面共通の表示前提は `docs/requirements/screens/common.md` を参照してください。
 
@@ -32,6 +32,7 @@ docs/
 ├── designs/
 ├── requirements/
 │   ├── README.md
+│   ├── backlog/
 │   └── screens/
 ├── product/
 │   ├── README.md
@@ -46,7 +47,6 @@ docs/
 │   ├── db-schema/
 │   ├── pdf-import/
 │   └── security/
-├── tasks/
 └── tests/
     ├── README.md
     ├── unit/
@@ -83,10 +83,10 @@ docs/
 
 テスト文書の入口は [テストドキュメント](tests/README.md) です。E2Eの実行方法と更新方針は [E2Eテスト](tests/e2e/README.md) を参照してください。
 
-## タスク
+## バックログ
 
-未完了タスクは [未完了タスク](tasks/open.md)、完了済みタスクは [完了済みタスク](tasks/completed.md) で管理します。
-完了済みタスクの詳細履歴は `docs/tasks/completed/` 配下に月別でアーカイブします。
+未対応・対応中タスクは [バックログ](requirements/backlog/README.md) で管理します。
+完了済みタスクの詳細履歴は `docs/requirements/backlog/archive/` 配下に月別でアーカイブします。
 
 ## 運用
 

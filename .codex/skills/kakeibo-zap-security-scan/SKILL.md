@@ -13,7 +13,7 @@ description: Use when working on this repository's OWASP ZAP Docker Compose API 
 4. Summarize `zap-reports/zap-api-report.md` or `zap-reports/zap-api-report.json` by severity, affected endpoint, likely cause, and recommended next action.
 5. Remember that authentication is HttpOnly Cookie based. Do not replace the scan with a fixed `Authorization: Bearer` token unless the app's auth design changes.
 6. For authenticated ZAP requests, keep the flow in `scripts/security/zap-api-scan.sh`: wait for `/api/health`, fetch `/api/auth/csrf`, login with the sample user, save cookies, then pass Cookie and `X-CSRF-Token` through ZAP Replacer rules.
-7. If any finding needs follow-up implementation, check `docs/tasks/open.md` for duplicates and add a concise unchecked task there. Include the affected endpoint/header, expected remediation, and the ZAP report source.
+7. If any finding needs follow-up implementation, check `docs/requirements/backlog/` for duplicates and add a concise task file under `docs/requirements/backlog/pending/`. Include the affected endpoint/header, expected remediation, and the ZAP report source.
 8. When implementing a ZAP-derived task, rerun `docker compose run --rm zap` after the fix and confirm the targeted alert no longer appears before marking the task complete.
 
 ## Validation
@@ -32,13 +32,38 @@ description: Use when working on this repository's OWASP ZAP Docker Compose API 
 
 ## Task Triage
 
-Add tasks to `docs/tasks/open.md` when a finding is reproducible, actionable, and not already tracked. Prefer this shape:
+Add tasks to `docs/requirements/backlog/pending/` when a finding is reproducible, actionable, and not already tracked. Prefer this shape:
 
 ```md
-- [ ] ZAP: <short action>
-  - 対象: `<endpoint or header>`
-  - 対応: <expected remediation>
-  - 根拠: `zap-reports/zap-api-report.md` の <alert name>
+# ZAP: <short action>
+
+## 状態
+
+未対応
+
+## 優先度
+
+<severity-based priority>
+
+## 目的
+
+<why this finding matters>
+
+## 対象
+
+`<endpoint or header>`
+
+## 対応内容
+
+<expected remediation>
+
+## 完了条件
+
+Fresh ZAP run confirms the target alert no longer appears.
+
+## 根拠
+
+`zap-reports/zap-api-report.md` の <alert name>
 ```
 
 Do not add tasks for purely informational findings unless they reveal a concrete product risk.
