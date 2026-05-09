@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/categories.png`
+- `docs/designs/screens/categories.png`
 
 ## 目的
 

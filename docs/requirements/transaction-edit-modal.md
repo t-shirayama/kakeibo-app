@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/transaction-edit-modal.png`
+- `docs/designs/screens/transaction-edit-modal.png`
 
 ## 目的
 

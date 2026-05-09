@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/settings.png`
+- `docs/designs/screens/settings.png`
 
 ## 目的
 

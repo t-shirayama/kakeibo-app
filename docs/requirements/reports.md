@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/dashboard.png`
+- `docs/designs/screens/dashboard.png`
 
 ## 目的
 

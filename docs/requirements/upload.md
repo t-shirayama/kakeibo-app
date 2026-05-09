@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/upload.png`
+- `docs/designs/screens/upload.png`
 
 ## 目的
 

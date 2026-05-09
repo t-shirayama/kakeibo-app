@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/calendar.png`
+- `docs/designs/screens/calendar.png`
 
 ## 目的
 

@@ -13,7 +13,7 @@
 - PDF取込、抽出、重複判定、保存方針を変更した場合は `docs/specs/pdf-import/README.md` を更新する。
 - 用語を追加・変更した場合は `docs/specs/glossary/README.md` を更新する。
 - E2Eの対象、観点、実行方法、テストデータを変更した場合は `docs/tests/e2e/README.md` と該当する `docs/tests/e2e/` 配下のシナリオを更新する。
-- 現行画面のスクリーンショットを更新した場合は、`frontend/e2e/docs-screenshots.spec.ts` を正として画像を生成し、`docs/designs/README.md` と README の画面イメージも同じ作業内で更新する。
+- 現行画面のスクリーンショットを更新した場合は、`frontend/e2e/docs-screenshots.spec.ts` を正として画像を生成し、`docs/designs/screens/`、`docs/designs/README.md`、README の画面イメージを同じ作業内で更新する。
 
 ## リファクタリング方針
 

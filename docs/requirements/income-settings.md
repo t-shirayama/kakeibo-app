@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/income-settings.png`
+- `docs/designs/screens/income-settings.png`
 
 ## 目的
 

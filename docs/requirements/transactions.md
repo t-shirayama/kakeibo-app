@@ -2,7 +2,7 @@
 
 ## 対応デザイン
 
-- `docs/designs/transactions.png`
+- `docs/designs/screens/transactions.png`
 
 ## 目的
 
