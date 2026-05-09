@@ -15,7 +15,7 @@
 7. 画面イメージを確認する: [画面イメージ一覧](designs/README.md)
 8. 実装タスクを確認する: [タスク管理](tasks/)
 
-画面共通の表示前提は `docs/requirements/common.md` を参照してください。
+画面共通の表示前提は `docs/requirements/screens/common.md` を参照してください。
 
 ## 構成
 
@@ -30,6 +30,8 @@ docs/
 │   └── adrs/
 ├── designs/
 ├── requirements/
+│   ├── README.md
+│   └── screens/
 ├── specs/
 │   ├── README.md
 │   ├── project-rules/
@@ -54,20 +56,22 @@ docs/
 
 ## 画面別要件
 
-画面要件は `docs/requirements/` 配下に置きます。
+画面要件は `docs/requirements/screens/` 配下に置きます。
 
-- [画面共通要件](requirements/common.md)
-- [ダッシュボード](requirements/dashboard.md)
-- [カレンダー](requirements/calendar.md)
-- [明細一覧](requirements/transactions.md)
-- [収入設定](requirements/income-settings.md)
-- [予算管理](requirements/budgets.md)
-- [明細詳細（編集モーダル）](requirements/transaction-edit-modal.md)
-- [カテゴリ管理](requirements/categories.md)
-- [分類ルール](requirements/category-rules.md)
-- [アップロード](requirements/upload.md)
-- [レガシーレポート導線](requirements/reports.md)
-- [設定](requirements/settings.md)
+- [画面要件一覧](requirements/screens/README.md)
+- [画面共通要件](requirements/screens/common.md)
+- [ダッシュボード](requirements/screens/dashboard.md)
+- [カレンダー](requirements/screens/calendar.md)
+- [明細一覧](requirements/screens/transactions.md)
+- [収入設定](requirements/screens/income-settings.md)
+- [予算管理](requirements/screens/budgets.md)
+- [明細詳細（編集モーダル）](requirements/screens/transaction-edit-modal.md)
+- [カテゴリ管理](requirements/screens/categories.md)
+- [分類ルール](requirements/screens/category-rules.md)
+- [アップロード](requirements/screens/upload.md)
+- [レガシーレポート導線](requirements/screens/reports.md)
+- [監査ログ](requirements/screens/audit-logs.md)
+- [設定](requirements/screens/settings.md)
 
 ## テスト
 
@@ -85,7 +89,7 @@ docs/
 - 仕様や実装方針を変更した場合は、関連するSSOT文書を同じ作業内で更新します。
 - 開発フロー、CI、Docker Compose での確認手順、Dependabot運用を変える場合は、`docs/specs/development-workflow/README.md` を更新します。
 - 技術スタック、レイヤ構成、依存方向、システム境界を変える場合は、`docs/architecture/README.md` 配下の該当文書を更新します。
-- 画面の振る舞いや表示項目を変更した場合は、`docs/requirements/` の該当画面要件を更新します。
+- 画面の振る舞いや表示項目を変更した場合は、`docs/requirements/screens/` の該当画面要件を更新します。
 - テスト方針やE2Eの対象を変更した場合は、`docs/tests/` 配下の該当文書を更新します。
 - 依存更新PRは Dependabot で週次作成し、対象は `frontend` の npm、`backend` の Python、GitHub Actions、Dockerfile を基本とします。
 - Codex向けの最小ルールはリポジトリ直下の `AGENTS.md` に置きます。

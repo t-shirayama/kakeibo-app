@@ -11,7 +11,7 @@
 
 1. ドキュメント入口: `docs/README.md`
 2. プロジェクトルール: `docs/specs/project-rules/README.md`
-3. 画面要件: `docs/README.md#画面別要件` および `docs/requirements/`
+3. 画面要件: `docs/README.md#画面別要件` および `docs/requirements/screens/`
 4. E2Eテスト方針: `docs/tests/e2e/README.md`
 5. 個別仕様: `docs/specs/` または `docs/architecture/` 配下の該当文書
 
@@ -30,7 +30,7 @@
   4. 生成物: Alembicマイグレーション。スキーマ変更時は差分を同じ作業で追加する
 
 - UIや画面要件を変更する場合
-  1. 仕様: `docs/README.md#画面別要件`、該当する `docs/requirements/*.md`、必要に応じて `docs/designs/`
+  1. 仕様: `docs/README.md#画面別要件`、該当する `docs/requirements/screens/*.md`、必要に応じて `docs/designs/`
   2. 実装: `frontend/app/` のルーティング入口 → `frontend/src/features/` → `frontend/src/components/` / `frontend/src/lib/`
   3. テスト: `docker compose run --rm --no-deps frontend npm run typecheck`、`docker compose run --rm --no-deps frontend npm run build`、必要に応じて `frontend/e2e/`
   4. 生成物: APIの入出力型が変わる場合だけ `frontend/src/lib/generated/openapi-client.ts` を更新する

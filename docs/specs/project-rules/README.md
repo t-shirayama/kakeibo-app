@@ -28,7 +28,7 @@
 
 現行の画面スクリーンショットは `docs/designs/screens/` に置く。v1向けには過去のデザイン案や旧スクリーンショットのアーカイブを持たない。
 
-画面別要件の詳細は現時点では `docs/requirements/` に置く。将来、画面仕様をSSOT配下へ移す場合は、リンク切れが起きないようまとめて移動する。
+画面別要件の詳細は現時点では `docs/requirements/screens/` に置く。将来、画面仕様をSSOT配下へ移す場合は、リンク切れが起きないようまとめて移動する。
 
 ## 変更時の参照先
 
@@ -45,7 +45,7 @@
   - バックエンド詳細設計: `docs/architecture/backend/README.md`
   - フロントエンド詳細設計: `docs/architecture/frontend/README.md`
   - ADR: `docs/architecture/adrs/`
-  - 画面の表示、操作、例外状態: `docs/requirements/`
+  - 画面の表示、操作、例外状態: `docs/requirements/screens/`
   - E2Eの対象、観点、実行方法: `docs/tests/e2e/README.md` と `docs/tests/e2e/`
 
 ## 最重要の横断ルール

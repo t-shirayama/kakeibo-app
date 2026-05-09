@@ -282,7 +282,7 @@ docker compose run --rm zap
 - [用語集](docs/specs/glossary/README.md)
 - [ADR](docs/architecture/adrs/)
 - [画面別要件](docs/README.md#画面別要件)
-- [画面共通要件](docs/requirements/common.md)
+- [画面共通要件](docs/requirements/screens/common.md)
 - [画面イメージ](docs/designs/README.md)
 - [タスク管理](docs/tasks/)
 

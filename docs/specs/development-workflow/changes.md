@@ -5,7 +5,7 @@
 - 仕様、設計、技術選定、画面要件、データモデル、API、セキュリティ、運用方針を変更した場合は、関連するSSOT文書を同じ作業内で更新する。
 - `.codex/config.toml` はSSOTではなくCodexのローカル実行設定として扱う。Codexの参照入口、プロジェクトルート判定、承認・サンドボックス方針を変更した場合だけ同期する。
 - アーキテクチャ上の重要な決定を追加・変更した場合は `docs/architecture/adrs/` にADRを追加または更新する。
-- 画面の振る舞い、表示項目、操作、例外状態を変更した場合は `docs/requirements/` の該当画面要件を更新する。
+- 画面の振る舞い、表示項目、操作、例外状態を変更した場合は `docs/requirements/screens/` の該当画面要件を更新する。
 - API仕様を変更した場合は `docs/specs/api-specs/README.md` を更新する。
 - DB項目や永続化方針を変更した場合は `docs/specs/db-schema/README.md` を更新する。
 - ドメイン概念、不変条件、業務ルールを変更した場合は `docs/specs/domain-model/README.md` を更新する。
