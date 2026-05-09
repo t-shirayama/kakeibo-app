@@ -491,6 +491,38 @@ def test_category_api_exposes_monthly_budget_and_dashboard_budget_summary(sqlite
     assert payload["category_budget_summaries"][0]["progress_ratio"] == 12000 / 35000
 
 
+def test_application_not_found_error_returns_common_404_response(sqlite_session_factory: sessionmaker) -> None:
+    SessionLocal = sqlite_session_factory
+    missing_category_id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    with SessionLocal() as session:
+        add_user(session)
+        session.commit()
+
+    app.dependency_overrides[get_db_session] = build_session_override(SessionLocal)
+    app.dependency_overrides[get_current_user] = override_user
+    client = TestClient(app)
+    csrf_token = client.get("/api/auth/csrf").json()["csrf_token"]
+    try:
+        response = client.put(
+            f"/api/categories/{missing_category_id}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "name": "存在しないカテゴリ",
+                "color": "#EF4444",
+                "description": None,
+                "monthly_budget": None,
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    payload = response.json()
+    assert payload["error"]["code"] == "http_404"
+    assert payload["error"]["message"] == "Category not found."
+    assert payload["error"]["request_id"]
+
+
 def test_audit_log_endpoint_lists_filtered_rows(sqlite_session_factory: sessionmaker) -> None:
     SessionLocal = sqlite_session_factory
     with SessionLocal() as session:

@@ -5,6 +5,7 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.common import Page, PageResult
+from app.application.category_rules.ports import CategoryRuleRepositoryProtocol
 from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Category, Transaction
 

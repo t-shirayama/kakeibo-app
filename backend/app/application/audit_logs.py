@@ -31,7 +31,7 @@ class AuditLogQueryRepositoryProtocol(Protocol):
         date_from: date | None = None,
         date_to: date | None = None,
     ) -> PageResult[AuditLogEntry]:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class AuditLogUseCases:

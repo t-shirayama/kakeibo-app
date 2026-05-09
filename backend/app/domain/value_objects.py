@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 try:
     TOKYO_TZ = ZoneInfo("Asia/Tokyo")
-except ZoneInfoNotFoundError:
+except ZoneInfoNotFoundError:  # pragma: no cover
     TOKYO_TZ = timezone(timedelta(hours=9), "Asia/Tokyo")
 
 

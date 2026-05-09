@@ -1,6 +1,7 @@
 export type {
   AuditLogEntryResponse as AuditLogEntryDto,
   AuditLogListResponse as AuditLogListDto,
+  CategoryRuleResponse as CategoryRuleDto,
   CategoryResponse as CategoryDto,
   CategorySummaryResponse as CategorySummaryDto,
   DashboardSummaryResponse as DashboardSummaryDto,

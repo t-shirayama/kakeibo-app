@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.application.errors import ApplicationError
+
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(
@@ -84,6 +86,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+async def application_exception_handler(request: Request, exc: ApplicationError) -> JSONResponse:
+    return error_response(
+        request=request,
+        status_code=exc.status_code,
+        code=f"http_{exc.status_code}",
+        message=str(exc),
+        details=exc.details,
+    )
+
+
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     return error_response(
         request=request,
@@ -95,6 +107,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 def install_error_handlers(app: FastAPI) -> None:
     app.add_middleware(RequestIdMiddleware)
+    app.add_exception_handler(ApplicationError, application_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)

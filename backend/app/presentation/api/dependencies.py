@@ -6,12 +6,11 @@ from fastapi import Cookie, Depends, Header, HTTPException, Request
 from jwt import PyJWTError
 from sqlalchemy.orm import Session
 
-from app.application.auth.csrf_service import CsrfTokenError, CsrfTokenService
-from app.application.auth.jwt_service import JwtService
 from app.application.auth.ports import UserRecord
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.infrastructure.repositories.auth import AuthRepository
+from app.infrastructure.security import CsrfTokenError, CsrfTokenService, JwtService
 
 
 def validate_csrf_token(

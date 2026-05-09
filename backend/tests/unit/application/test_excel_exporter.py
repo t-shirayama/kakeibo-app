@@ -3,6 +3,8 @@ from __future__ import annotations
 from zipfile import ZipFile
 from io import BytesIO
 
+import pytest
+
 from app.application.exporting.excel_exporter import Worksheet, export_workbook
 
 
@@ -27,3 +29,8 @@ def test_export_workbook_contains_required_sheets() -> None:
     assert "明細一覧" in workbook_xml
     assert "Store" in first_sheet
     assert "<v>1200</v>" in first_sheet
+
+
+def test_export_workbook_requires_at_least_one_sheet() -> None:
+    with pytest.raises(ValueError, match="At least one worksheet"):
+        export_workbook([])

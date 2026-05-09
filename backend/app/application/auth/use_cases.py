@@ -4,14 +4,19 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from app.application.auth.jwt_service import JwtService
-from app.application.auth.password_hasher import PasswordHasher
 from app.application.auth.password_policy import PasswordPolicy
-from app.application.auth.ports import AuthRepositoryPort, AuthSettings, UserRecord
-from app.application.auth.token_hash import hash_token
+from app.application.auth.ports import (
+    AuthRepositoryPort,
+    AuthSettings,
+    JwtServicePort,
+    PasswordHasherPort,
+    TokenHasherPort,
+    UserRecord,
+)
+from app.application.errors import ApplicationError
 
 
-class AuthError(ValueError):
+class AuthError(ApplicationError):
     pass
 
 
@@ -29,14 +34,17 @@ class AuthUseCases:
         self,
         repository: AuthRepositoryPort,
         settings: AuthSettings,
+        jwt_service: JwtServicePort,
+        password_hasher: PasswordHasherPort,
+        token_hasher: TokenHasherPort,
         password_policy: PasswordPolicy | None = None,
-        password_hasher: PasswordHasher | None = None,
     ) -> None:
         self._repository = repository
         self._settings = settings
-        self._jwt = JwtService(settings)
+        self._jwt = jwt_service
         self._password_policy = password_policy or PasswordPolicy()
-        self._password_hasher = password_hasher or PasswordHasher()
+        self._password_hasher = password_hasher
+        self._token_hasher = token_hasher
 
     def bootstrap_admin(self, *, email: str, password: str) -> UserRecord:
         if self._repository.has_any_user():
@@ -60,7 +68,7 @@ class AuthUseCases:
             raise AuthError("Invalid refresh token type.")
 
         # JWTだけでなくDB上の有効なハッシュも確認し、失効済みトークンの再利用を防ぐ。
-        token_record = self._repository.get_active_refresh_token(hash_token(refresh_token))
+        token_record = self._repository.get_active_refresh_token(self._token_hasher.hash_token(refresh_token))
         if token_record is None:
             raise AuthError("Refresh token is invalid or revoked.")
 
@@ -79,7 +87,7 @@ class AuthUseCases:
     def logout(self, *, refresh_token: str | None) -> None:
         if not refresh_token:
             return
-        token_record = self._repository.get_active_refresh_token(hash_token(refresh_token))
+        token_record = self._repository.get_active_refresh_token(self._token_hasher.hash_token(refresh_token))
         if token_record is not None:
             self._repository.revoke_refresh_token(token_record.id, revoked_at=datetime.now(UTC))
 
@@ -92,7 +100,7 @@ class AuthUseCases:
         reset_token = self._jwt.issue_reset_token(str(user.id))
         self._repository.create_password_reset_token(
             user_id=user.id,
-            token_hash=hash_token(reset_token),
+            token_hash=self._token_hasher.hash_token(reset_token),
             expires_at=datetime.now(UTC) + timedelta(minutes=30),
         )
         return reset_token
@@ -102,7 +110,7 @@ class AuthUseCases:
         if payload.get("typ") != "password_reset":
             raise AuthError("Invalid password reset token type.")
 
-        token_record = self._repository.get_active_password_reset_token(hash_token(reset_token))
+        token_record = self._repository.get_active_password_reset_token(self._token_hasher.hash_token(reset_token))
         if token_record is None:
             raise AuthError("Password reset token is invalid or used.")
         if token_record.expires_at < datetime.now(UTC):
@@ -132,7 +140,7 @@ class AuthUseCases:
         self._repository.create_refresh_token(
             token_id=str(refresh_payload["jti"]),
             user_id=user_id,
-            token_hash=hash_token(refresh_token),
+            token_hash=self._token_hasher.hash_token(refresh_token),
             expires_at=datetime.now(UTC) + timedelta(days=self._settings.refresh_token_days),
             replaced_token_id=replaced_token_id,
         )

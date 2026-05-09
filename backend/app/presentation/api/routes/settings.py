@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.application.auth.ports import UserRecord
-from app.bootstrap.container import build_report_use_cases, build_settings_use_cases
+from app.bootstrap.container import build_report_use_cases, build_settings_use_cases, build_user_data_deletion_use_cases
 from app.application.reports import ReportUseCases
 from app.application.settings import SettingsError, SettingsUseCases, UpdateSettingsCommand, UserSettingsRecord
+from app.application.user_data import UserDataDeletionError, UserDataDeletionUseCases
 from app.infrastructure.config import get_settings
 from app.infrastructure.db.session import get_db_session
 from app.presentation.api.cookies import delete_auth_cookie
 from app.presentation.api.dependencies import get_current_user, validate_csrf_token
+from app.presentation.api.errors import http_exception_from_application_error
 
 router = APIRouter()
 
@@ -60,7 +62,7 @@ def update_user_settings(
             ),
         )
     except SettingsError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_exception_from_application_error(exc) from exc
     return _settings_response(settings)
 
 
@@ -85,13 +87,13 @@ def delete_all_user_data(
     session: Session = Depends(get_db_session),
 ) -> dict[str, str]:
     try:
-        _use_cases(session).delete_all_user_data(
+        _data_deletion_use_cases(session).delete_all_user_data(
             current_user=current_user,
             confirmation_text=request.confirmation_text,
             password=request.password,
         )
-    except SettingsError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UserDataDeletionError as exc:
+        raise http_exception_from_application_error(exc) from exc
     settings = get_settings()
     delete_auth_cookie(response, settings.access_cookie_name, settings)
     delete_auth_cookie(response, settings.refresh_cookie_name, settings)
@@ -100,6 +102,10 @@ def delete_all_user_data(
 
 def _use_cases(session: Session) -> SettingsUseCases:
     return build_settings_use_cases(session)
+
+
+def _data_deletion_use_cases(session: Session) -> UserDataDeletionUseCases:
+    return build_user_data_deletion_use_cases(session)
 
 
 def _settings_response(settings: UserSettingsRecord) -> SettingsResponse:

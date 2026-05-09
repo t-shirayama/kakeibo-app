@@ -8,12 +8,24 @@ import { ApiErrorAlert } from "@/components/api-error-alert";
 import { CategoryPieChart, type CategoryPieChartItem } from "@/components/category-pie-chart";
 import { reportsQueryKeys } from "@/features/reports/queryKeys";
 import { DashboardBars } from "@/features/reports/components/dashboard-bars";
+import {
+  buildCategoryComparisonRows,
+  buildInsights,
+  calculateSavingsRate,
+  formatDelta,
+  formatPointDelta,
+  getDeltaClassName,
+  getExpenseTone,
+  getPositiveTone,
+  type SummaryTone,
+} from "@/features/reports/reports-utils";
 import { EmptyState, LoadingState } from "@/components/state-block";
 import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
 import { buildAppRouteUrl } from "@/lib/app-route-url";
 import { formatCurrency } from "@/lib/format";
 import type { DashboardSummaryDto } from "@/lib/types";
+import { addMonths, formatYearMonthLabel, getCurrentYearMonth, getMonthDateRange, normalizeYearMonth, parseYearMonth } from "@/lib/year-month";
 
 export function ReportDashboardPage() {
   const pathname = usePathname();
@@ -179,7 +191,7 @@ export function ReportDashboardPage() {
                   {insightItems.map((insight) => (
                     <article className={`insight-card ${insight.tone}`} key={insight.title}>
                       <div className="insight-icon" aria-hidden="true">
-                        {insight.icon}
+                        {renderInsightIcon(insight.iconKey)}
                       </div>
                       <div>
                         <strong>{insight.title}</strong>
@@ -266,7 +278,7 @@ function SummaryCard({
   label: string;
   value: string;
   delta: string;
-  tone: "good" | "bad" | "neutral";
+  tone: SummaryTone;
   icon: ReactNode;
   iconTone: "income" | "expense" | "balance" | "saving";
 }) {
@@ -282,159 +294,12 @@ function SummaryCard({
   );
 }
 
-function buildCategoryComparisonRows(current: DashboardSummaryDto["category_summaries"], previous: DashboardSummaryDto["category_summaries"]) {
-  const previousMap = new Map(previous.map((item) => [item.category_id, item]));
-  return [...current]
-    .sort((a, b) => b.amount - a.amount)
-    .map((item) => {
-      const previousItem = previousMap.get(item.category_id);
-      const previousAmount = previousItem?.amount ?? 0;
-      return {
-        category_id: item.category_id,
-        name: item.name,
-        color: item.color,
-        current_amount: item.amount,
-        previous_amount: previousAmount,
-        delta: item.amount - previousAmount,
-      };
-    });
-}
-
-function buildInsights(summary?: DashboardSummaryDto) {
-  if (!summary) {
-    return [];
+function renderInsightIcon(iconKey: "shopping" | "trend" | "saving") {
+  if (iconKey === "shopping") {
+    return <ShoppingCart size={18} />;
   }
-
-  const topCategory = [...summary.category_summaries].sort((a, b) => b.amount - a.amount)[0];
-  const sixMonthAverageExpense =
-    summary.monthly_summaries.length > 0 ? summary.monthly_summaries.reduce((sum, month) => sum + month.total_expense, 0) / summary.monthly_summaries.length : 0;
-  const expenseGap = summary.total_expense - sixMonthAverageExpense;
-  const savingRate = calculateSavingsRate(summary.total_income, summary.balance);
-
-  const insights: Array<{ title: string; description: string; tone: "good" | "alert" | "info"; icon: ReactNode }> = [];
-  if (topCategory && topCategory.amount > 0) {
-    insights.push({
-      title: `${topCategory.name}が支出の${Math.round(topCategory.ratio * 100)}%を占めています`,
-      description: `${topCategory.name}の支出は${formatCurrency(topCategory.amount)}です。固定費と変動費の見直し候補として確認しやすい状態です。`,
-      tone: "good" as const,
-      icon: <ShoppingCart size={18} />,
-    });
+  if (iconKey === "trend") {
+    return <TrendingUp size={18} />;
   }
-
-  insights.push({
-    title: expenseGap <= 0 ? `支出合計は過去6ヶ月平均より${formatCurrency(Math.abs(Math.round(expenseGap)))}少ないです` : `支出合計は過去6ヶ月平均より${formatCurrency(Math.round(expenseGap))}多いです`,
-    description: expenseGap <= 0 ? "今月は平均より支出を抑えられています。この調子で続けやすい支出項目を確認しましょう。" : "平均を上回っているため、増加要因のカテゴリを確認すると振り返りしやすくなります。",
-    tone: expenseGap <= 0 ? ("info" as const) : ("alert" as const),
-    icon: <TrendingUp size={18} />,
-  });
-
-  insights.push({
-    title: `貯蓄率は${savingRate.toFixed(1)}%です`,
-    description: summary.total_income > 0 ? `収入${formatCurrency(summary.total_income)}に対して${formatCurrency(summary.balance)}を残せています。` : "収入が0円のため、今月の貯蓄率は0%として表示しています。",
-    tone: savingRate >= 20 ? ("good" as const) : ("info" as const),
-    icon: <PiggyBank size={18} />,
-  });
-
-  return insights;
-}
-
-function calculateSavingsRate(income: number, balance: number) {
-  if (income <= 0) {
-    return 0;
-  }
-  return (balance / income) * 100;
-}
-
-function getExpenseTone(value: number) {
-  if (value < 0) return "good";
-  if (value > 0) return "bad";
-  return "neutral";
-}
-
-function getPositiveTone(value: number) {
-  if (value > 0) return "good";
-  if (value < 0) return "bad";
-  return "neutral";
-}
-
-function formatDelta(value: number) {
-  if (value > 0) {
-    return `+${formatCurrency(value)}`;
-  }
-  if (value < 0) {
-    return `-${formatCurrency(Math.abs(value))}`;
-  }
-  return formatCurrency(0);
-}
-
-function formatPointDelta(value: number) {
-  if (value > 0) {
-    return `+${value.toFixed(1)}pt`;
-  }
-  if (value < 0) {
-    return `${value.toFixed(1)}pt`;
-  }
-  return "0.0pt";
-}
-
-function getDeltaClassName(value: number) {
-  if (value < 0) {
-    return "expense-improved";
-  }
-  if (value > 0) {
-    return "expense-worse";
-  }
-  return "expense-neutral";
-}
-
-function getCurrentYearMonth() {
-  const parts = new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(new Date());
-  const year = parts.find((part) => part.type === "year")?.value ?? String(new Date().getFullYear());
-  const month = parts.find((part) => part.type === "month")?.value ?? String(new Date().getMonth() + 1).padStart(2, "0");
-
-  return `${year}-${month}`;
-}
-
-function parseYearMonth(value: string) {
-  const [year, month] = value.split("-").map(Number);
-
-  return {
-    year: Number.isInteger(year) ? year : Number(getCurrentYearMonth().slice(0, 4)),
-    month: Number.isInteger(month) ? month : Number(getCurrentYearMonth().slice(5, 7)),
-  };
-}
-
-function normalizeYearMonth(value: string | null) {
-  if (!value || !/^\d{4}-\d{2}$/.test(value)) {
-    return null;
-  }
-  return value;
-}
-
-function addMonths(value: string, amount: number) {
-  const { year, month } = parseYearMonth(value);
-  const date = new Date(year, month - 1 + amount, 1);
-
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function formatYearMonthLabel(value: string) {
-  const { year, month } = parseYearMonth(value);
-
-  return `${year}年${month}月`;
-}
-
-function getMonthDateRange(value: string) {
-  const { year, month } = parseYearMonth(value);
-  const lastDay = new Date(year, month, 0).getDate();
-  const paddedMonth = String(month).padStart(2, "0");
-
-  return {
-    date_from: `${year}-${paddedMonth}-01`,
-    date_to: `${year}-${paddedMonth}-${String(lastDay).padStart(2, "0")}`,
-  };
+  return <PiggyBank size={18} />;
 }

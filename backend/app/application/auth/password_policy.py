@@ -3,7 +3,10 @@ from __future__ import annotations
 import re
 
 
-class PasswordPolicyError(ValueError):
+from app.application.errors import ApplicationError
+
+
+class PasswordPolicyError(ApplicationError):
     pass
 
 

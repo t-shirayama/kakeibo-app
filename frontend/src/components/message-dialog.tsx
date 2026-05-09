@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, Info, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export type MessageDialogAction = {
   id: string;
@@ -19,6 +19,38 @@ type MessageDialogProps = {
   onAction: (actionId: string) => void;
   onOpenChange?: (open: boolean) => void;
 };
+
+export type MessageDialogState = {
+  title: string;
+  description: ReactNode;
+  actions: MessageDialogAction[];
+  tone?: "info" | "danger";
+  onAction: (actionId: string) => void;
+};
+
+export function useMessageDialog() {
+  const [messageDialog, setMessageDialog] = useState<MessageDialogState | null>(null);
+
+  function showMessageDialog(options: Omit<MessageDialogState, "onAction">): Promise<string> {
+    return new Promise((resolve) => {
+      setMessageDialog({
+        ...options,
+        onAction: (actionId) => {
+          setMessageDialog(null);
+          resolve(actionId);
+        },
+      });
+    });
+  }
+
+  function handleMessageDialogOpenChange(open: boolean) {
+    if (!open) {
+      messageDialog?.onAction("cancel");
+    }
+  }
+
+  return { messageDialog, showMessageDialog, handleMessageDialogOpenChange };
+}
 
 export function MessageDialog({ open, title, description, actions, tone = "info", onAction, onOpenChange }: MessageDialogProps) {
   const Icon = tone === "danger" ? AlertTriangle : Info;

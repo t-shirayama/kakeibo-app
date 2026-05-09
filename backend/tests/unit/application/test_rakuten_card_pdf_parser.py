@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import fitz
+
 from app.infrastructure.parsers.rakuten_card_pdf_parser import RakutenCardPdfParser
 
 
@@ -124,3 +126,46 @@ def test_parse_rakuten_card_statement_keeps_new_purchase_marker_on_card_user() -
     assert parsed[0].card_user_name == "本人*"
     assert parsed[0].payment_method == "1回払い"
     assert parsed[0].amount.amount == 594
+
+
+def test_parse_extracts_text_from_pdf_bytes() -> None:
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((72, 72), "2026/05/01  Store  本人  1回払い  1,200")
+    pdf_bytes = document.write()
+    document.close()
+
+    parsed = RakutenCardPdfParser().parse(pdf_bytes)
+
+    assert len(parsed) == 1
+    assert parsed[0].shop_name == "Store"
+    assert parsed[0].amount.amount == 1200
+
+
+def test_parse_rakuten_card_statement_falls_back_and_ignores_malformed_rows() -> None:
+    text = """
+
+not a transaction
+2026/05/01
+2026/05/02
+short shop only
+2026/05/03
+Invalid Payment Store
+本人
+ボーナス払い
+1,000
+2026/05/04
+Only Shop
+本人
+2026/05/04 BadAmount 本人 1回払い ,
+2026/05/05 Fallback Store 本人 1回払い 2,500円
+"""
+
+    parsed = RakutenCardPdfParser().parse_text(text)
+
+    assert len(parsed) == 1
+    assert parsed[-1].transaction_date.isoformat() == "2026-05-05"
+    assert parsed[-1].amount.amount == 1
+    parser = RakutenCardPdfParser()
+    assert parser._read_structured_row(["Only Shop", "本人"], 0) is None
+    assert parser._parse_amount("invalid") is None

@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domain.entities import Upload, UploadStatus
-from app.infrastructure.models.audit_log import AuditLogModel
 from app.infrastructure.models.upload import UploadModel
 
 
@@ -88,26 +87,6 @@ class UploadRepository:
         model.deleted_at = datetime.now(UTC)
         self._session.commit()
         return self._to_upload(model)
-
-    def create_audit_log(
-        self,
-        *,
-        user_id: UUID,
-        action: str,
-        resource_type: str,
-        resource_id: UUID,
-        details: dict[str, object],
-    ) -> None:
-        self._session.add(
-            AuditLogModel(
-                user_id=str(user_id),
-                action=action,
-                resource_type=resource_type,
-                resource_id=str(resource_id),
-                details=details,
-            )
-        )
-        self._session.commit()
 
     def _must_get(self, upload_id: UUID) -> UploadModel:
         model = self._session.get(UploadModel, str(upload_id))

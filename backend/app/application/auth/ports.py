@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 
@@ -76,4 +76,31 @@ class AuthRepositoryPort(Protocol):
         raise NotImplementedError
 
     def mark_password_reset_token_used(self, token_id: str, *, used_at: datetime) -> None:
+        raise NotImplementedError
+
+
+class JwtServicePort(Protocol):
+    def issue_access_token(self, subject: str) -> str:
+        raise NotImplementedError
+
+    def issue_refresh_token(self, subject: str) -> str:
+        raise NotImplementedError
+
+    def issue_reset_token(self, subject: str) -> str:
+        raise NotImplementedError
+
+    def decode(self, token: str) -> dict[str, Any]:
+        raise NotImplementedError
+
+
+class PasswordHasherPort(Protocol):
+    def hash_password(self, password: str) -> str:
+        raise NotImplementedError
+
+    def verify(self, password: str, password_hash: str) -> bool:
+        raise NotImplementedError
+
+
+class TokenHasherPort(Protocol):
+    def hash_token(self, token: str) -> str:
         raise NotImplementedError

@@ -20,7 +20,7 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByText("検索対象: 店名 / メモ / カテゴリ")).toBeVisible();
   await expect(page.getByText("ソート: 日付 降順")).toBeVisible();
   await expect(page.getByText(/1ページ (10|20|50)件/)).toBeVisible();
-  await expect(page.getByRole("cell", { name: "成城石井" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "まいばすけっと" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Amazon.co.jp", exact: true })).toHaveCount(0);
   await expect(page.locator(".transaction-amount.expense").first()).toBeVisible();
 
@@ -74,7 +74,7 @@ test("searches, creates, edits, deletes, and exports transactions", async ({ pag
   await expect(page.getByLabel("適用中のフィルタ").getByText("2026-01-01 - 2026-12-31")).toBeVisible();
   await openTransactionCreateForm(page);
   await fillTransactionForm(page, {
-    transactionDate: "2026-05-02",
+    transactionDate: "2026-12-31",
     shopName: "E2Eテスト店舗",
     category: "食費",
     amount: "1234",

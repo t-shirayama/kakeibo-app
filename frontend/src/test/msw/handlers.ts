@@ -1,5 +1,13 @@
 import { http, HttpResponse } from "msw";
-import { dashboardSummary, mockCategories, mockSettings, mockUploadJobs, mockUser, transactionList } from "./fixtures";
+import {
+  dashboardSummary,
+  mockCategories,
+  mockCategoryRules,
+  mockSettings,
+  mockUploadJobs,
+  mockUser,
+  transactionList,
+} from "./fixtures";
 import { apiUrl } from "./http";
 
 export const handlers = [
@@ -7,6 +15,7 @@ export const handlers = [
   http.post(apiUrl("/api/auth/login"), () => HttpResponse.json(mockUser)),
   http.get(apiUrl("/api/settings"), () => HttpResponse.json(mockSettings)),
   http.get(apiUrl("/api/categories"), () => HttpResponse.json(mockCategories)),
+  http.get(apiUrl("/api/category-rules"), () => HttpResponse.json(mockCategoryRules)),
   http.get(apiUrl("/api/transactions"), () => HttpResponse.json(transactionList())),
   http.get(apiUrl("/api/uploads"), () => HttpResponse.json(mockUploadJobs)),
   http.get(apiUrl("/api/dashboard/summary"), ({ request }) => {

@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.application.errors import ApplicationError
 from app.application.importing.pdf_importer import CardStatementParser
-from app.application.importing.ports import UploadRepositoryProtocol, UploadStorageProtocol
-from app.application.transactions import TransactionCommand, TransactionRepositoryProtocol, TransactionUseCases
+from app.application.importing.ports import (
+    ImportedTransactionWriterProtocol,
+    UploadAuditLogRepositoryProtocol,
+    UploadRepositoryProtocol,
+    UploadStorageProtocol,
+)
+from app.application.transactions import TransactionCommand
 from app.domain.entities import TransactionType, Upload, UploadStatus
 
 
-class PdfUploadError(ValueError):
+class PdfUploadError(ApplicationError):
     pass
 
 
@@ -18,15 +24,15 @@ class PdfUploadUseCases:
         self,
         *,
         upload_repository: UploadRepositoryProtocol,
-        transaction_repository: TransactionRepositoryProtocol,
-        transactions: TransactionUseCases,
+        audit_log_repository: UploadAuditLogRepositoryProtocol,
+        transaction_writer: ImportedTransactionWriterProtocol,
         parser: CardStatementParser,
         storage: UploadStorageProtocol,
         max_upload_size_mb: int,
     ) -> None:
         self._upload_repository = upload_repository
-        self._transaction_repository = transaction_repository
-        self._transactions = transactions
+        self._audit_log_repository = audit_log_repository
+        self._transaction_writer = transaction_writer
         self._parser = parser
         self._storage = storage
         self._max_upload_size = max_upload_size_mb * 1024 * 1024
@@ -49,9 +55,9 @@ class PdfUploadUseCases:
             imported_count = 0
             for item in imported:
                 # 同一PDF行の再取込はsource_hashで重複排除する。
-                if self._transaction_repository.source_hash_exists(user_id=user_id, source_hash=item.source_hash):
+                if self._transaction_writer.source_hash_exists(user_id=user_id, source_hash=item.source_hash):
                     continue
-                self._transactions.create_transaction(
+                self._transaction_writer.create_imported_transaction(
                     user_id=user_id,
                     command=TransactionCommand(
                         transaction_date=item.transaction_date,
@@ -73,7 +79,7 @@ class PdfUploadUseCases:
         except Exception as exc:
             # 解析や登録に失敗しても例外を画面へ直接漏らさず、履歴と監査ログに残す。
             upload = self._upload_repository.mark_failed(upload_id=upload_id, error_message=str(exc))
-            self._upload_repository.create_audit_log(
+            self._audit_log_repository.create_audit_log(
                 user_id=user_id,
                 action="upload.failed",
                 resource_type="upload",
@@ -88,13 +94,13 @@ class PdfUploadUseCases:
     def get_upload(self, *, user_id: UUID, upload_id: UUID) -> Upload:
         upload = self._upload_repository.get_upload(user_id=user_id, upload_id=upload_id)
         if upload is None:
-            raise PdfUploadError("Upload not found.")
+            raise PdfUploadError.not_found("Upload not found.")
         return upload
 
     def delete_upload(self, *, user_id: UUID, upload_id: UUID) -> None:
         upload = self._upload_repository.soft_delete_upload(user_id=user_id, upload_id=upload_id)
         if upload is None:
-            raise PdfUploadError("Upload not found.")
+            raise PdfUploadError.not_found("Upload not found.")
         self._storage.delete(upload.stored_file_path)
 
     def _validate_pdf(self, *, file_name: str, content: bytes) -> None:

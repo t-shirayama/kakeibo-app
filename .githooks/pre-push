@@ -32,7 +32,7 @@ CHANGED_FILES="$(collect_changed_files)"
 needs_requirements_lock_check=false
 needs_e2e_build=false
 
-if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^backend/(pyproject\.toml|requirements\.lock|scripts/generate_requirements_lock\.py)$'; then
+if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(backend/|docker-compose\.yml$|docs/|README\.md$|\.codex/|\.github/)'; then
   needs_requirements_lock_check=true
 fi
 
@@ -42,7 +42,7 @@ fi
 
 if [ "$needs_requirements_lock_check" = true ]; then
   echo "pre-push: backend requirements.lock の整合性を確認します。"
-  docker compose run --rm backend python scripts/generate_requirements_lock.py --check
+  docker compose run --rm --no-deps backend python scripts/generate_requirements_lock.py --check
 fi
 
 if [ "$needs_e2e_build" = true ]; then

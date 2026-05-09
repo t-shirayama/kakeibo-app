@@ -40,6 +40,15 @@ def test_transaction_requires_shop_name() -> None:
         make_transaction(shop_name=" ")
 
 
+def test_transaction_requires_date_and_positive_source_numbers() -> None:
+    with pytest.raises(ValueError, match="Transaction date"):
+        make_transaction(transaction_date=None)
+    with pytest.raises(ValueError, match="source_row_number"):
+        make_transaction(source_row_number=0)
+    with pytest.raises(ValueError, match="source_page_number"):
+        make_transaction(source_page_number=-1)
+
+
 def test_transaction_requires_category() -> None:
     with pytest.raises(ValueError, match="Category"):
         make_transaction(category_id=None)
@@ -116,6 +125,27 @@ def test_failed_upload_requires_error_message() -> None:
         )
 
 
+def test_upload_requires_file_name_and_stored_path() -> None:
+    with pytest.raises(ValueError, match="File name"):
+        Upload(
+            id=uuid4(),
+            user_id=USER_ID,
+            file_name=" ",
+            stored_file_path="storage/uploads/user/upload/original.pdf",
+            status=UploadStatus.PROCESSING,
+            uploaded_at=datetime.now(UTC),
+        )
+    with pytest.raises(ValueError, match="Stored file path"):
+        Upload(
+            id=uuid4(),
+            user_id=USER_ID,
+            file_name="statement.pdf",
+            stored_file_path=" ",
+            status=UploadStatus.PROCESSING,
+            uploaded_at=datetime.now(UTC),
+        )
+
+
 def test_audit_log_details_are_immutable_copy() -> None:
     # 呼び出し元のdict変更やログ生成後の直接変更で、監査内容が変わらないことを守る。
     details = {"reason": "manual edit"}
@@ -132,6 +162,13 @@ def test_audit_log_details_are_immutable_copy() -> None:
     assert log.details["reason"] == "manual edit"
     with pytest.raises(TypeError):
         log.details["reason"] = "other"  # type: ignore[index]
+
+
+def test_audit_log_requires_action_and_resource_type() -> None:
+    with pytest.raises(ValueError, match="Audit action"):
+        AuditLog(id=uuid4(), user_id=USER_ID, action=" ", resource_type="transaction", resource_id=uuid4())
+    with pytest.raises(ValueError, match="Audit resource type"):
+        AuditLog(id=uuid4(), user_id=USER_ID, action="transaction.updated", resource_type=" ", resource_id=uuid4())
 
 
 def test_create_initial_categories_returns_unique_active_categories() -> None:

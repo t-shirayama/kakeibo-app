@@ -1,5 +1,6 @@
 import type {
   CategoryResponse,
+  CategoryRuleResponse,
   DashboardSummaryResponse,
   SettingsResponse,
   TransactionListResponse,
@@ -38,6 +39,15 @@ export const mockCategories: CategoryResponse[] = [
     color: "#0ea5e9",
     description: "移動費",
     monthly_budget: 12000,
+    is_active: true,
+  },
+];
+
+export const mockCategoryRules: CategoryRuleResponse[] = [
+  {
+    rule_id: "rule-amazon",
+    keyword: "Amazon",
+    category_id: "cat-food",
     is_active: true,
   },
 ];

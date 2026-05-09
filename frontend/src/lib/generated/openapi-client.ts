@@ -90,6 +90,22 @@ export type CategoryResponse = {
   is_active: boolean;
 };
 
+export type CategoryRuleRequest = {
+  keyword: string;
+  category_id: string;
+};
+
+export type CategoryRuleResponse = {
+  rule_id: string;
+  keyword: string;
+  category_id: string;
+  is_active: boolean;
+};
+
+export type CategoryRuleStatusRequest = {
+  is_active: boolean;
+};
+
 export type CategoryStatusRequest = {
   is_active: boolean;
 };
@@ -365,6 +381,22 @@ export type DeleteCategoryParams = {
   category_id: string;
 };
 
+export type ListCategoryRulesParams = {
+  include_inactive?: boolean;
+};
+
+export type UpdateCategoryRuleParams = {
+  rule_id: string;
+};
+
+export type SetCategoryRuleActiveParams = {
+  rule_id: string;
+};
+
+export type DeleteCategoryRuleParams = {
+  rule_id: string;
+};
+
 export type UpdateIncomeSettingParams = {
   income_setting_id: string;
 };
@@ -439,6 +471,11 @@ create_category: (body: CategoryRequest) => transport.requestJson<CategoryRespon
 update_category: (params: UpdateCategoryParams, body: CategoryRequest) => transport.requestJson<CategoryResponse>({ method: "PUT", path: `/api/categories/${params.category_id}`, body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),
 set_category_active: (params: SetCategoryActiveParams, body: CategoryStatusRequest) => transport.requestJson<CategoryResponse>({ method: "PATCH", path: `/api/categories/${params.category_id}/status`, body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),
 delete_category: (params: DeleteCategoryParams) => transport.requestJson<Record<string, string>>({ method: "DELETE", path: `/api/categories/${params.category_id}`, body: undefined, headers: {} }),
+list_category_rules: (params: ListCategoryRulesParams = {}) => transport.requestJson<Array<CategoryRuleResponse>>({ method: "GET", path: appendQuery("/api/category-rules", { include_inactive: params.include_inactive }), body: undefined, headers: {} }),
+create_category_rule: (body: CategoryRuleRequest) => transport.requestJson<CategoryRuleResponse>({ method: "POST", path: "/api/category-rules", body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),
+update_category_rule: (params: UpdateCategoryRuleParams, body: CategoryRuleRequest) => transport.requestJson<CategoryRuleResponse>({ method: "PUT", path: `/api/category-rules/${params.rule_id}`, body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),
+set_category_rule_active: (params: SetCategoryRuleActiveParams, body: CategoryRuleStatusRequest) => transport.requestJson<CategoryRuleResponse>({ method: "PATCH", path: `/api/category-rules/${params.rule_id}/status`, body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),
+delete_category_rule: (params: DeleteCategoryRuleParams) => transport.requestJson<Record<string, string>>({ method: "DELETE", path: `/api/category-rules/${params.rule_id}`, body: undefined, headers: {} }),
 list_income_settings: () => transport.requestJson<Array<IncomeSettingResponse>>({ method: "GET", path: "/api/income-settings", body: undefined, headers: {} }),
 create_income_setting: (body: IncomeSettingRequest) => transport.requestJson<IncomeSettingResponse>({ method: "POST", path: "/api/income-settings", body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),
 update_income_setting: (params: UpdateIncomeSettingParams, body: IncomeSettingRequest) => transport.requestJson<IncomeSettingResponse>({ method: "PUT", path: `/api/income-settings/${params.income_setting_id}`, body: toJsonBody(body), headers: { "Content-Type": "application/json" } }),

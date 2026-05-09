@@ -48,6 +48,7 @@ engine.dispose()
 
 runPython(["-m", "alembic", "downgrade", "base"], env);
 runPython(["-m", "alembic", "upgrade", "head"], env);
+runPython(["-m", "app.bootstrap.seed_sample_data", "--reset"], env);
 
 function runPython(args, env) {
   runOrExit(python, args, {

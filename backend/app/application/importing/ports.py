@@ -4,6 +4,7 @@ from typing import Protocol
 from uuid import UUID
 
 from app.domain.entities import Upload, UploadStatus
+from app.application.transactions import TransactionCommand
 
 
 class UploadRepositoryProtocol(Protocol):
@@ -36,6 +37,8 @@ class UploadRepositoryProtocol(Protocol):
     def soft_delete_upload(self, *, user_id: UUID, upload_id: UUID) -> Upload | None:
         raise NotImplementedError
 
+
+class UploadAuditLogRepositoryProtocol(Protocol):
     def create_audit_log(
         self,
         *,
@@ -45,6 +48,14 @@ class UploadRepositoryProtocol(Protocol):
         resource_id: UUID,
         details: dict[str, object],
     ) -> None:
+        raise NotImplementedError
+
+
+class ImportedTransactionWriterProtocol(Protocol):
+    def source_hash_exists(self, *, user_id: UUID, source_hash: str) -> bool:
+        raise NotImplementedError
+
+    def create_imported_transaction(self, *, user_id: UUID, command: TransactionCommand) -> None:
         raise NotImplementedError
 
 

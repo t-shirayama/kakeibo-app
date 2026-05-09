@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from uuid import UUID
 
+from app.application.dates import app_today
 from app.application.income_settings.commands import IncomeOverrideCommand, IncomeSettingCommand
 from app.application.income_settings.models import IncomeSetting, IncomeSettingsError
 from app.application.income_settings.policies import (
@@ -66,7 +67,7 @@ class IncomeSettingsUseCases:
         return self._ensure_setting(user_id=user_id, income_setting_id=income_setting_id)
 
     def apply_due_transactions(self, *, user_id: UUID, today: date | None = None) -> int:
-        current_date = today or date.today()
+        current_date = today or app_today()
         current_month = current_date.replace(day=1)
         created_count = 0
         for setting in self._repository.list_settings(user_id=user_id):
@@ -100,7 +101,7 @@ class IncomeSettingsUseCases:
     def _ensure_setting(self, *, user_id: UUID, income_setting_id: UUID) -> IncomeSetting:
         setting = self._repository.get_setting(user_id=user_id, income_setting_id=income_setting_id)
         if setting is None:
-            raise IncomeSettingsError("Income setting not found.")
+            raise IncomeSettingsError.not_found("Income setting not found.")
         return setting
 
     def _validate_command(self, *, user_id: UUID, command: IncomeSettingCommand) -> None:

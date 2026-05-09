@@ -1,7 +1,7 @@
 import { get_csrf_token, refresh_csrf_token } from "../csrf";
 import type { UploadResponse } from "../generated/openapi-client";
 import { get_api_base_url, refresh_auth_session, skips_auth_redirect, redirect_to_login } from "./core";
-import { ApiError } from "./error";
+import { ApiError, is_csrf_error } from "./error";
 import type { UploadPdfOptions } from "./types";
 
 export async function uploadPdfWithProgress(formData: FormData, options?: UploadPdfOptions): Promise<UploadResponse> {
@@ -41,7 +41,7 @@ async function retryAfterUploadCsrfRefresh(request: () => Promise<UploadResponse
 }
 
 function shouldRefreshUploadCsrf(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 403 && error.message.includes("CSRF");
+  return is_csrf_error(error);
 }
 
 async function executeUploadRequest(formData: FormData, options?: UploadPdfOptions): Promise<UploadResponse> {

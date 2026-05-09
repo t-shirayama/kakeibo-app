@@ -15,7 +15,7 @@ export async function createTransaction(
 ) {
   await openTransactionCreateForm(page);
   await fillTransactionForm(page, {
-    transactionDate: values.transactionDate ?? "2026-05-02",
+    transactionDate: values.transactionDate ?? "2026-12-31",
     shopName: values.shopName,
     category: values.category,
     amount: values.amount,

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from app.application.errors import ApplicationError
+from app.application.category_rules.ports import CategoryRuleRepositoryProtocol
 from app.application.transactions.commands import TransactionCommand
 from app.application.transactions.ports import CategoryRepositoryProtocol, TransactionQueryRepositoryProtocol
 
 
-class TransactionCategoryError(ValueError):
+class TransactionCategoryError(ApplicationError):
     pass
 
 
@@ -16,13 +18,19 @@ class TransactionCategoryPolicy:
         self,
         *,
         transaction_query_repository: TransactionQueryRepositoryProtocol,
+        category_rule_repository: CategoryRuleRepositoryProtocol,
         category_repository: CategoryRepositoryProtocol,
     ) -> None:
         self._transaction_query_repository = transaction_query_repository
+        self._category_rule_repository = category_rule_repository
         self._category_repository = category_repository
 
     def resolve_category_id_for_new_transaction(self, *, user_id: UUID, command: TransactionCommand) -> UUID:
-        category_id = command.category_id or self._transaction_query_repository.find_category_id_for_shop(
+        category_id = command.category_id or self._category_rule_repository.find_matching_category_id(
+            user_id=user_id,
+            shop_name=command.shop_name,
+        )
+        category_id = category_id or self._transaction_query_repository.find_category_id_for_shop(
             user_id=user_id,
             shop_name=command.shop_name,
             card_user_name=command.card_user_name,

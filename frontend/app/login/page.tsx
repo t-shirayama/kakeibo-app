@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ApiErrorAlert } from "@/components/api-error-alert";
-import { ApiError, api } from "@/lib/api";
+import { api, is_missing_csrf_session_error } from "@/lib/api";
 import { refresh_csrf_token } from "@/lib/csrf";
 
 export default function LoginPage() {
@@ -91,5 +91,5 @@ export default function LoginPage() {
 }
 
 function isMissingCsrfSessionError(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 403 && error.message.includes("CSRF session is required.");
+  return is_missing_csrf_session_error(error);
 }

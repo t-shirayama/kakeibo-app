@@ -30,14 +30,3 @@ class SettingsRepositoryProtocol(Protocol):
         dark_mode: bool,
     ) -> UserSettingsRecord:
         raise NotImplementedError
-
-    def list_active_upload_paths(self, *, user_id: UUID) -> list[str]:
-        raise NotImplementedError
-
-    def soft_delete_user_data(self, *, user_id: UUID) -> None:
-        raise NotImplementedError
-
-
-class UploadStorageProtocol(Protocol):
-    def delete(self, stored_file_path: str) -> None:
-        raise NotImplementedError

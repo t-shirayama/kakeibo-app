@@ -8,7 +8,7 @@ test.describe("authentication", () => {
     const context = await newAnonymousContext(browser);
     const page = await context.newPage();
 
-    for (const protectedPath of ["/dashboard", "/income-settings", "/reports"]) {
+    for (const protectedPath of ["/dashboard", "/income-settings", "/reports", "/category-rules"]) {
       await page.goto(protectedPath);
       await expectLoginRedirect(page, protectedPath);
     }

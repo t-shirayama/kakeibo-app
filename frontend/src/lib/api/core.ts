@@ -1,6 +1,6 @@
 import { getLoginPath } from "../auth";
 import { clear_csrf_token, get_csrf_token, refresh_csrf_token } from "../csrf";
-import { ApiError } from "./error";
+import { ApiError, type ApiErrorShape } from "./error";
 
 export function get_api_base_url(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -141,9 +141,44 @@ export function redirect_to_login(): void {
 
 export async function parse_json_response<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type") || "";
-  const body = contentType.includes("application/json") ? await response.json() : null;
+  const body = contentType.includes("application/json") ? await read_json_body(response) : null;
   if (!response.ok) {
-    throw new ApiError(response.status, body?.error ?? { message: response.statusText });
+    throw new ApiError(response.status, extract_error_shape(body, response.statusText));
+  }
+  if (body === malformedJson) {
+    throw new ApiError(response.status, { message: "APIレスポンスの解析に失敗しました。" });
+  }
+  if (body === null) {
+    return null as T;
   }
   return body as T;
+}
+
+const malformedJson = Symbol("malformed-json");
+
+type ApiErrorEnvelope = {
+  error?: ApiErrorShape;
+  detail?: string;
+};
+
+async function read_json_body(response: Response): Promise<unknown | typeof malformedJson> {
+  try {
+    return await response.json();
+  } catch {
+    return malformedJson;
+  }
+}
+
+function extract_error_shape(body: unknown | typeof malformedJson, fallbackMessage: string): ApiErrorShape {
+  if (body === malformedJson || body === null || typeof body !== "object") {
+    return { message: fallbackMessage || "APIリクエストに失敗しました。" };
+  }
+  const envelope = body as ApiErrorEnvelope;
+  if (envelope.error) {
+    return envelope.error;
+  }
+  if (envelope.detail) {
+    return { message: envelope.detail };
+  }
+  return { message: fallbackMessage || "APIリクエストに失敗しました。" };
 }

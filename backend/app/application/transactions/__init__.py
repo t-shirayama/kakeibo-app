@@ -3,6 +3,7 @@ from app.application.transactions.policies import TransactionCategoryError, Tran
 from app.application.transactions.ports import (
     AuditLogRepositoryProtocol,
     CategoryRepositoryProtocol,
+    CategoryRuleRepositoryProtocol,
     TransactionQueryRepositoryProtocol,
     TransactionRepositoryProtocol,
 )
@@ -12,6 +13,7 @@ __all__ = [
     "AuditLogRepositoryProtocol",
     "CategoryCommand",
     "CategoryRepositoryProtocol",
+    "CategoryRuleRepositoryProtocol",
     "CategoryUseCases",
     "TransactionCategoryError",
     "TransactionCategoryPolicy",

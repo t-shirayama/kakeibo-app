@@ -85,6 +85,23 @@ class Category:
 
 
 @dataclass(frozen=True, slots=True)
+class TransactionCategoryRule:
+    id: UUID
+    user_id: UUID
+    keyword: str
+    category_id: UUID
+    is_active: bool = True
+
+    def __post_init__(self) -> None:
+        normalized_keyword = self.keyword.strip()
+        if not normalized_keyword:
+            raise ValueError("Category rule keyword is required.")
+        object.__setattr__(self, "keyword", normalized_keyword)
+        if self.category_id is None:
+            raise ValueError("Category rule category is required.")
+
+
+@dataclass(frozen=True, slots=True)
 class Upload:
     id: UUID
     user_id: UUID

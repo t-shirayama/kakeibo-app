@@ -5,10 +5,13 @@ from io import BytesIO
 from uuid import UUID, uuid4
 from zipfile import ZipFile
 
+import pytest
+
 from app.application.common import Page, PageResult
 from app.application.exporting.transaction_workbook_exporter import TransactionWorkbookExporter
 from app.application.reports import ReportUseCases, TransactionExportFilters
-from app.application.transactions import CategoryCommand, CategoryUseCases, TransactionCommand, TransactionUseCases
+from app.application.reports.summaries import average_daily_expense, budget_summary, category_budget_summaries, category_summaries, monthly_sheet_summaries
+from app.application.transactions import CategoryCommand, CategoryUseCases, TransactionCategoryError, TransactionCommand, TransactionUseCases
 from app.application.transaction_views import TransactionWithCategory
 from app.domain.entities import Category, Transaction, TransactionType
 from app.domain.value_objects import MoneyJPY
@@ -46,6 +49,7 @@ class FakeFinanceRepository:
             ),
         }
         self.transactions: dict[UUID, Transaction] = {}
+        self.category_rules: list[tuple[str, UUID, bool]] = []
         self.audit_logs: list[tuple[str, UUID]] = []
 
     def next_id(self) -> UUID:
@@ -60,6 +64,8 @@ class FakeFinanceRepository:
         category_id: UUID | None = None,
         date_from=None,
         date_to=None,
+        sort_field: str = "date",
+        sort_direction: str = "desc",
     ):
         items = [
             self._to_row(transaction)
@@ -225,6 +231,18 @@ class FakeFinanceRepository:
                 return transaction.category_id
         return None
 
+    def find_matching_category_id(self, *, user_id: UUID, shop_name: str) -> UUID | None:
+        normalized_shop_name = shop_name.strip().casefold()
+        candidates = sorted(
+            [rule for rule in self.category_rules if rule[2] and self.categories[rule[1]].is_active],
+            key=lambda rule: len(rule[0]),
+            reverse=True,
+        )
+        for keyword, category_id, _is_active in candidates:
+            if keyword.strip().casefold() in normalized_shop_name:
+                return category_id
+        return None
+
     def create_audit_log(
         self,
         *,
@@ -261,6 +279,7 @@ def make_transaction_use_cases(repository: FakeFinanceRepository) -> Transaction
     return TransactionUseCases(
         transaction_repository=repository,
         transaction_query_repository=repository,
+        category_rule_repository=repository,
         category_repository=repository,
         audit_log_repository=repository,
     )
@@ -293,6 +312,119 @@ def test_create_transaction_reuses_past_category_for_same_shop() -> None:
     inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
 
     assert inferred.category_id == FOOD_ID
+
+
+def test_create_transaction_prefers_user_rule_over_past_same_shop_category() -> None:
+    repository = FakeFinanceRepository()
+    repository.category_rules.append(("Cafe", DAILY_ID, True))
+    use_cases = make_transaction_use_cases(repository)
+
+    use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe", category_id=FOOD_ID))
+    inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
+
+    assert inferred.category_id == DAILY_ID
+
+
+def test_create_transaction_rule_matching_uses_longest_active_keyword() -> None:
+    repository = FakeFinanceRepository()
+    repository.category_rules.append(("Amazon", FOOD_ID, True))
+    repository.category_rules.append(("Amazon.co.jp", DAILY_ID, True))
+    use_cases = make_transaction_use_cases(repository)
+
+    inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Amazon.co.jp"))
+
+    assert inferred.category_id == DAILY_ID
+
+
+def test_create_transaction_ignores_rule_with_inactive_category() -> None:
+    repository = FakeFinanceRepository()
+    repository.category_rules.append(("Cafe", FOOD_ID, True))
+    repository.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=False)
+    use_cases = make_transaction_use_cases(repository)
+
+    inferred = use_cases.create_transaction(user_id=USER_ID, command=make_command(shop_name="Cafe"))
+
+    assert inferred.category_id == UNCATEGORIZED_ID
+
+
+def test_create_transaction_creates_uncategorized_when_initial_category_is_missing() -> None:
+    class RepositoryWithoutUncategorized(FakeFinanceRepository):
+        def get_uncategorized_category_id(self, user_id: UUID) -> UUID | None:
+            return None
+
+        def create_uncategorized_category(self, user_id: UUID) -> UUID:
+            self.categories[UNCATEGORIZED_ID] = Category(
+                id=UNCATEGORIZED_ID,
+                user_id=user_id,
+                name="未分類",
+                color="#6B7280",
+            )
+            return UNCATEGORIZED_ID
+
+    repository = RepositoryWithoutUncategorized()
+    repository.categories.pop(UNCATEGORIZED_ID)
+    use_cases = make_transaction_use_cases(repository)
+
+    transaction = use_cases.create_transaction(user_id=USER_ID, command=make_command())
+
+    assert transaction.category_id == UNCATEGORIZED_ID
+
+
+def test_create_transaction_rejects_inactive_category() -> None:
+    repository = FakeFinanceRepository()
+    repository.set_category_active(user_id=USER_ID, category_id=FOOD_ID, is_active=False)
+    use_cases = make_transaction_use_cases(repository)
+
+    with pytest.raises(TransactionCategoryError, match="inactive"):
+        use_cases.create_transaction(user_id=USER_ID, command=make_command(category_id=FOOD_ID))
+
+
+def test_list_and_update_transaction_delegate_filters_and_record_audit_log() -> None:
+    repository = FakeFinanceRepository()
+    use_cases = make_transaction_use_cases(repository)
+    transaction = use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 5, 1),
+            shop_name="Cafe",
+            amount=1200,
+            transaction_type=TransactionType.EXPENSE,
+            category_id=FOOD_ID,
+            source_upload_id=uuid4(),
+            source_file_name="statement.pdf",
+            source_row_number=1,
+            source_page_number=2,
+            source_format="rakuten_card_pdf",
+            source_hash="source-hash",
+        ),
+    )
+
+    result = use_cases.list_transactions(
+        user_id=USER_ID,
+        page=Page(page=1, page_size=10),
+        keyword="Cafe",
+        category_id=FOOD_ID,
+        date_from=date(2026, 5, 1),
+        date_to=date(2026, 5, 31),
+    )
+    updated = use_cases.update_transaction(user_id=USER_ID, transaction_id=transaction.id, command=make_command(shop_name="Cafe Updated"))
+
+    assert result.total == 1
+    assert updated.shop_name == "Cafe Updated"
+    assert updated.category_id == FOOD_ID
+    assert updated.source_upload_id == transaction.source_upload_id
+    assert ("transaction.updated", transaction.id) in repository.audit_logs
+
+
+def test_get_or_update_transaction_missing_record_raises() -> None:
+    use_cases = make_transaction_use_cases(FakeFinanceRepository())
+
+    with pytest.raises(TransactionCategoryError, match="Transaction not found") as get_exc:
+        use_cases.get_transaction(user_id=USER_ID, transaction_id=uuid4())
+    with pytest.raises(TransactionCategoryError, match="Transaction not found") as update_exc:
+        use_cases.update_transaction(user_id=USER_ID, transaction_id=uuid4(), command=make_command())
+    assert get_exc.value.status_code == 404
+    assert update_exc.value.status_code == 404
 
 
 def test_delete_transaction_records_audit_log() -> None:
@@ -332,6 +464,46 @@ def test_update_category_changes_name_color_and_description() -> None:
     assert category.monthly_budget is not None
     assert category.monthly_budget.amount == 42000
     assert category.is_active is True
+
+
+def test_create_and_list_categories_validate_duplicates() -> None:
+    repository = FakeFinanceRepository()
+    use_cases = make_category_use_cases(repository)
+
+    category = use_cases.create_category(
+        user_id=USER_ID,
+        command=CategoryCommand(name="交通", color="#2563EB", description=None, monthly_budget=None),
+    )
+    categories = use_cases.list_categories(user_id=USER_ID)
+
+    assert category.name == "交通"
+    assert category.monthly_budget is None
+    assert category in categories
+    with pytest.raises(TransactionCategoryError, match="already exists"):
+        use_cases.create_category(user_id=USER_ID, command=CategoryCommand(name="交通", color="#2563EB"))
+
+
+def test_category_updates_reject_missing_and_duplicate_names() -> None:
+    repository = FakeFinanceRepository()
+    use_cases = make_category_use_cases(repository)
+
+    with pytest.raises(TransactionCategoryError, match="Category not found"):
+        use_cases.update_category(user_id=USER_ID, category_id=uuid4(), command=CategoryCommand(name="交通", color="#2563EB"))
+    with pytest.raises(TransactionCategoryError, match="already exists"):
+        use_cases.update_category(user_id=USER_ID, category_id=DAILY_ID, command=CategoryCommand(name="食費", color="#EF4444"))
+    with pytest.raises(TransactionCategoryError, match="Category not found"):
+        use_cases.set_category_active(user_id=USER_ID, category_id=uuid4(), is_active=False)
+    with pytest.raises(TransactionCategoryError, match="Category not found"):
+        use_cases.deactivate_category(user_id=USER_ID, category_id=uuid4())
+
+
+def test_deactivate_category_marks_category_inactive() -> None:
+    repository = FakeFinanceRepository()
+    use_cases = make_category_use_cases(repository)
+
+    use_cases.deactivate_category(user_id=USER_ID, category_id=FOOD_ID)
+
+    assert repository.categories[FOOD_ID].is_active is False
 
 
 def test_update_same_shop_category_updates_other_matching_shop_transactions_only() -> None:
@@ -476,3 +648,72 @@ def test_report_export_workbook_filters_transactions_by_search_conditions() -> N
 
     assert "Amazon.co.jp" in workbook_text
     assert "成城石井" not in workbook_text
+
+
+def test_report_use_cases_cover_recent_category_weekly_yearly_and_default_export() -> None:
+    repository = FakeFinanceRepository()
+    transaction_use_cases = make_transaction_use_cases(repository)
+    report_use_cases = make_report_use_cases(repository)
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 1, 5),
+            shop_name="January Store",
+            amount=1000,
+            transaction_type=TransactionType.EXPENSE,
+            category_id=FOOD_ID,
+        ),
+    )
+    transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 5, 20),
+            shop_name="May Store",
+            amount=2000,
+            transaction_type=TransactionType.EXPENSE,
+            category_id=DAILY_ID,
+        ),
+    )
+
+    recent = report_use_cases.recent_transactions(user_id=USER_ID, limit=1)
+    category_summary = report_use_cases.category_summary(user_id=USER_ID, start_date=date(2026, 5, 1), end_date=date(2026, 5, 31))
+    weekly = report_use_cases.weekly_report(user_id=USER_ID, year=2026, week=21)
+    yearly = report_use_cases.yearly_report(user_id=USER_ID, year=2026)
+    workbook = report_use_cases.export_workbook(user_id=USER_ID, filters=None)
+
+    assert recent[0].transaction.shop_name == "May Store"
+    assert category_summary[0].name == "日用品"
+    assert weekly.period == "2026-W21"
+    assert yearly.period == "2026"
+    assert yearly.total_expense == 3000
+    assert workbook
+
+
+def test_report_summaries_handle_income_empty_rows_and_zero_budget() -> None:
+    repository = FakeFinanceRepository()
+    transaction_use_cases = make_transaction_use_cases(repository)
+    income = transaction_use_cases.create_transaction(
+        user_id=USER_ID,
+        command=TransactionCommand(
+            transaction_date=date(2026, 5, 20),
+            shop_name="Salary",
+            amount=300000,
+            transaction_type=TransactionType.INCOME,
+            category_id=FOOD_ID,
+        ),
+    )
+    row = repository._to_row(income)
+    zero_budget_category = Category(
+        id=FOOD_ID,
+        user_id=USER_ID,
+        name="食費",
+        color="#EF4444",
+        monthly_budget=MoneyJPY(0),
+    )
+    no_budget_category = Category(id=DAILY_ID, user_id=USER_ID, name="日用品", color="#8B5CF6")
+
+    assert category_summaries([row]) == []
+    assert category_budget_summaries([row], [zero_budget_category, no_budget_category])[0].progress_ratio == 0
+    assert budget_summary([], [zero_budget_category]).progress_ratio == 0
+    assert monthly_sheet_summaries([]) == []
+    assert average_daily_expense([row], date(2026, 5, 2), date(2026, 5, 1)) == 0
