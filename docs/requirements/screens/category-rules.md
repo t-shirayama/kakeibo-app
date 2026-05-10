@@ -1,5 +1,9 @@
 # 分類ルール要件
 
+## 対応デザイン
+
+- `docs/designs/screens/category-rules.png`
+
 ## 目的
 
 PDF取込時に、店名キーワードからカテゴリを自動設定できるようにする。
