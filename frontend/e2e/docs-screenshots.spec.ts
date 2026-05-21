@@ -29,6 +29,7 @@ test("captures current application screenshots for docs", async ({ page }) => {
     { fileName: "income-settings.png", path: "/income-settings", heading: "収入設定" },
     { fileName: "upload.png", path: "/upload", heading: "アップロード" },
     { fileName: "categories.png", path: "/categories", heading: "カテゴリ管理" },
+    { fileName: "category-rules.png", path: "/category-rules", heading: "分類ルール" },
     { fileName: "audit-logs.png", path: "/audit-logs", heading: "監査ログ" },
     { fileName: "settings.png", path: "/settings", heading: "設定" },
   ] as const;

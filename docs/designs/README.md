@@ -12,6 +12,7 @@
 - [収入設定](screens/income-settings.png)
 - [アップロード](screens/upload.png)
 - [カテゴリ管理](screens/categories.png)
+- [分類ルール](screens/category-rules.png)
 - [監査ログ](screens/audit-logs.png)
 - [設定](screens/settings.png)
 

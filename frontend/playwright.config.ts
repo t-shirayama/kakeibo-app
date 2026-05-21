@@ -37,6 +37,11 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         launchOptions: {
           args: ["--lang=ja-JP"],
+          env: {
+            ...process.env,
+            LANG: "ja_JP.UTF-8",
+            LC_ALL: "ja_JP.UTF-8",
+          },
         },
         storageState: "e2e/.auth/sample-user.json",
       },
