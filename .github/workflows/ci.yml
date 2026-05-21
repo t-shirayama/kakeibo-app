@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
 
@@ -113,7 +113,10 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: サプライチェーンガードレール
+        run: python scripts/security/check_supply_chain.py
 
       - name: ripgrepをインストール
         run: sudo apt-get update && sudo apt-get install -y ripgrep
@@ -139,7 +142,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Backend layer dependency check
         run: docker compose run --rm --no-deps backend python -m pytest tests/unit/application/test_layer_dependencies.py
@@ -161,7 +164,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Frontend lint
         run: docker compose run --rm --no-deps frontend npm run lint
@@ -182,7 +185,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Backend unit
         run: docker compose run --rm --no-deps backend python -m pytest tests/unit --cov=app --cov-report=term-missing
@@ -197,7 +200,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Frontend unit
         run: docker compose run --rm --no-deps frontend npm run test:unit
@@ -212,7 +215,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Backend integration
         run: docker compose run --rm backend python -m pytest -m integration
@@ -227,7 +230,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Frontend integration
         run: docker compose run --rm --no-deps frontend npm run test:integration
@@ -265,7 +268,7 @@ jobs:
 
     steps:
       - name: ソースコードを取得
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: E2E
         run: docker compose run --rm e2e

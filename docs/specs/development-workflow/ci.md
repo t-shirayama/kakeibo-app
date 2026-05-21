@@ -8,7 +8,9 @@
 - CI の段階は、step1 を `backend-check` / `frontend-check`、step2 を `backend-unit` / `frontend-unit`、step3 を `backend-integration` / `frontend-integration`、最後を `e2e` とする。E2E は backend または frontend の変更、E2E関連ファイルの変更、または全実行条件のときに実行する。
 - `backend-check` ではバックエンドのレイヤ依存チェック、Alembic適用確認、OpenAPI生成物チェック、`backend/requirements.lock` の再生成差分チェックを実行する。Pythonアプリには独立した build script がないため、Docker Compose 上での migration smoke と生成物/lock 検証をバックエンド側のビルド相当チェックとして扱う。
 - `frontend-check` では `frontend` の `lint` / `typecheck` / `build` を実行する。Next.js の production build は静的チェック段階に含め、単体テストやIntegration Testより前にビルド不能な状態を検知する。
-- `repo-check` では未確定事項チェックとシークレットスキャンを実行する。段階制御上は preflight 扱いとし、テストの step1 には含めない。
+- `repo-check` ではサプライチェーンガードレール、未確定事項チェック、シークレットスキャンを実行する。段階制御上は preflight 扱いとし、テストの step1 には含めない。
+- サプライチェーンガードレールは `python scripts/security/check_supply_chain.py` で実行し、`frontend/package-lock.json`、`backend/requirements.lock`、`.github/workflows/` をローカルに検査する。denylist と npm install script の許可リストは `scripts/security/supply-chain-rules.json` で管理する。
+- GitHub Actions の外部 action はタグではなくコミットSHAで固定する。Dependabot で action を更新した場合は、該当タグのSHAへ workflow を更新し、サプライチェーンガードレールを通す。
 - APIクライアント生成物の差分は `docker compose run --rm backend python scripts/generate_openapi_client.py --check` で検証する。
 - バックエンド依存のlockファイルは `docker compose run --rm backend python scripts/generate_requirements_lock.py` で更新し、`--check` で差分確認する。
 - clone 後は `scripts/install-git-hooks.ps1` または `scripts/install-git-hooks.sh` で `core.hooksPath=.githooks` を設定する。`push` 前には、CI の `backend-check` と同じく `backend/`、`docker-compose.yml`、`docs/`、`README.md`、`.codex/`、`.github/` の変更で `requirements.lock` 整合性チェックを実行し、E2E関連変更時は `docker compose build e2e` を自動実行する。
