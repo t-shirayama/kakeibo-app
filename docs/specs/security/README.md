@@ -89,3 +89,11 @@
 - ZAP実行時は `GET /api/auth/csrf` でCSRFトークンを取得し、サンプルユーザーで `POST /api/auth/login` して認証Cookieを取得する。
 - ZAPにはBearerトークンではなく、ログイン時にSet-CookieされたHttpOnly認証Cookieと `X-CSRF-Token` ヘッダーを渡す。
 - ZAPレポートは `zap-reports/` にHTML、JSON、Markdownで出力し、Git管理対象外とする。
+
+## サプライチェーン対策
+
+- CIの `repo-check` で `python scripts/security/check_supply_chain.py` を実行し、外部監査APIへ依存一覧を送らずにローカルのlockfileとworkflowを検査する。
+- npmは `frontend/package-lock.json` を正とし、registry から取得するパッケージに `resolved` と `integrity` があること、既知の侵害バージョンに一致しないこと、install script を持つ依存が許可リストに含まれることを検査する。
+- Pythonは `backend/requirements.lock` を正とし、依存が `==` で固定され、既知の侵害バージョンに一致しないことを検査する。
+- GitHub Actions の外部 action はコミットSHAで固定し、タグ参照のままにしない。
+- 既知の侵害パッケージや、正当な install script を持つ依存を追加・更新する場合は `scripts/security/supply-chain-rules.json` を同じPRで更新する。
