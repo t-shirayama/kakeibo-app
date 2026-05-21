@@ -22,6 +22,7 @@ jobs:
       frontend_changed: ${{ steps.detect.outputs.frontend_changed }}
       e2e_changed: ${{ steps.detect.outputs.e2e_changed }}
       common_static_changed: ${{ steps.detect.outputs.common_static_changed }}
+      supply_chain_changed: ${{ steps.detect.outputs.supply_chain_changed }}
 
     steps:
       - name: ソースコードを取得
@@ -70,6 +71,7 @@ jobs:
           frontend_changed=false
           e2e_changed=false
           common_static_changed=false
+          supply_chain_changed=false
 
           if has_changed '^(backend/|docker-compose\.yml$)'; then
             backend_changed=true
@@ -87,12 +89,17 @@ jobs:
             common_static_changed=true
           fi
 
+          if has_changed '^(frontend/package(-lock)?\.json$|backend/(pyproject\.toml|requirements\.lock)$|scripts/security/)'; then
+            supply_chain_changed=true
+          fi
+
           {
             echo "full_run=$full_run"
             echo "backend_changed=$backend_changed"
             echo "frontend_changed=$frontend_changed"
             echo "e2e_changed=$e2e_changed"
             echo "common_static_changed=$common_static_changed"
+            echo "supply_chain_changed=$supply_chain_changed"
           } >> "$GITHUB_OUTPUT"
 
           {
@@ -103,12 +110,13 @@ jobs:
             echo "- frontend_changed: $frontend_changed"
             echo "- e2e_changed: $e2e_changed"
             echo "- common_static_changed: $common_static_changed"
+            echo "- supply_chain_changed: $supply_chain_changed"
           } >> "$GITHUB_STEP_SUMMARY"
 
   repo-check:
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.full_run == 'true' || needs.changes.outputs.common_static_changed == 'true'
+    if: needs.changes.outputs.full_run == 'true' || needs.changes.outputs.common_static_changed == 'true' || needs.changes.outputs.supply_chain_changed == 'true'
     timeout-minutes: 15
 
     steps:
