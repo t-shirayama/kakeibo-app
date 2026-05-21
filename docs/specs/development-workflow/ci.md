@@ -4,7 +4,7 @@
 
 - GitHub Actions のCIは `.github/workflows/ci.yml` に集約する。workflow 間では `needs` を張れないため、品質チェックとテストを1つの workflow 内の job として分割する。
 - CI は `main` / `develop` への push と、`main` / `develop` 宛ての pull request で実行する。`main` / `develop` への push と feature 系以外の pull request は全 job を実行する。
-- pull request の head branch が `feature/**` または `features/**` の場合だけ、変更パスに応じて backend / frontend / E2E 関連 job を絞る。`docs/`、`README.md`、`.codex/`、`.github/` だけの共通変更では repo-check、backend-check、frontend-check までを実行し、unit / integration / E2E は省略する。
+- pull request の head branch が `feature/**` または `features/**` の場合だけ、変更パスに応じて backend / frontend / E2E 関連 job を絞る。`docs/`、`README.md`、`.codex/`、`.github/` だけの共通変更では repo-check、backend-check、frontend-check までを実行し、unit / integration / E2E は省略する。`frontend/package-lock.json`、`backend/requirements.lock`、依存manifest、`scripts/security/` の変更では repo-check を必ず実行する。
 - CI の段階は、step1 を `backend-check` / `frontend-check`、step2 を `backend-unit` / `frontend-unit`、step3 を `backend-integration` / `frontend-integration`、最後を `e2e` とする。E2E は backend または frontend の変更、E2E関連ファイルの変更、または全実行条件のときに実行する。
 - `backend-check` ではバックエンドのレイヤ依存チェック、Alembic適用確認、OpenAPI生成物チェック、`backend/requirements.lock` の再生成差分チェックを実行する。Pythonアプリには独立した build script がないため、Docker Compose 上での migration smoke と生成物/lock 検証をバックエンド側のビルド相当チェックとして扱う。
 - `frontend-check` では `frontend` の `lint` / `typecheck` / `build` を実行する。Next.js の production build は静的チェック段階に含め、単体テストやIntegration Testより前にビルド不能な状態を検知する。
