@@ -12,10 +12,10 @@ import {
 } from "./helpers/transactions";
 
 test("searches, creates, edits, deletes, and exports transactions", async ({ page }) => {
-  await gotoAppPage(page, "/transactions", "明細一覧");
+  await gotoAppPage(page, "/transactions?date_from=2026-05-01&date_to=2026-05-31", "明細一覧");
 
-  // 初期表示は今月の明細に絞られるため、今月・先月の切り替えをまず確認する。
-  await expect(page.getByLabel("適用中のフィルタ").getByText("今月")).toBeVisible();
+  // 期待データのある月を明示し、実行日の月替わりに左右されないようにする。
+  await expect(page.getByLabel("適用中のフィルタ").getByText("2026-05-01 - 2026-05-31")).toBeVisible();
   await expect(page.getByText(/件ヒット/)).toBeVisible();
   await expect(page.getByText("検索対象: 店名 / メモ / カテゴリ")).toBeVisible();
   await expect(page.getByText("ソート: 日付 降順")).toBeVisible();

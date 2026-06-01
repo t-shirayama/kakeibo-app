@@ -30,10 +30,10 @@ PyMySQL==1.2.0
 pytest==9.0.3
 pytest-cov==7.1.0
 python-dotenv==1.2.2
-python-multipart==0.0.29
+python-multipart==0.0.30
 PyYAML==6.0.3
 SQLAlchemy==2.0.50
-starlette==1.2.0
+starlette==1.2.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.48.0
