@@ -3,11 +3,10 @@ import { addMonths, expectDisplayedMonth, getMonthDateRange, moveDisplayedMonth 
 import { gotoAppPage } from "./helpers/navigation";
 
 test("shows integrated report dashboard metrics, charts, and export action", async ({ page }) => {
-  await gotoAppPage(page, "/dashboard", "ダッシュボード");
+  await gotoAppPage(page, "/dashboard?month=2026-05", "ダッシュボード");
 
-  await expect(page.getByLabel("表示月")).toHaveValue(/^\d{4}-\d{2}$/);
+  await expectDisplayedMonth(page, "2026-05");
   await expect(page.getByLabel("表示月")).toHaveAttribute("type", "month");
-  await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
   await expect(page.locator(".month-input-label span", { hasText: "表示月" })).toHaveClass(/sr-only/);
   const summarySection = page.getByLabel("家計サマリー");
   await expect(summarySection.getByText("収入", { exact: true })).toBeVisible();
@@ -57,7 +56,7 @@ test("shows integrated report dashboard metrics, charts, and export action", asy
 });
 
 test("changes dashboard month with month picker and arrow buttons", async ({ page }) => {
-  await gotoAppPage(page, "/dashboard", "ダッシュボード");
+  await gotoAppPage(page, "/dashboard?month=2026-05", "ダッシュボード");
 
   const monthInput = page.getByLabel("表示月");
   const currentValue = await monthInput.inputValue();
@@ -90,7 +89,7 @@ test("changes dashboard month with month picker and arrow buttons", async ({ pag
 });
 
 test("opens transactions filtered by selected month and category from category summary", async ({ page }) => {
-  await gotoAppPage(page, "/dashboard", "ダッシュボード");
+  await gotoAppPage(page, "/dashboard?month=2026-05", "ダッシュボード");
 
   const selectedMonth = await page.getByLabel("表示月").inputValue();
   const expectedRange = getMonthDateRange(selectedMonth);
@@ -110,7 +109,7 @@ test("opens transactions filtered by selected month and category from category s
 
 test("keeps category legend scrolling inside the dashboard panel", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 640 });
-  await gotoAppPage(page, "/dashboard", "ダッシュボード");
+  await gotoAppPage(page, "/dashboard?month=2026-05", "ダッシュボード");
 
   const legend = page.getByLabel("カテゴリ別支出割合のカテゴリ一覧");
   await expect(legend).toBeVisible();
